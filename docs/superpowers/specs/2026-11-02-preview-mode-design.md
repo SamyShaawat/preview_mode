@@ -101,7 +101,7 @@ Security
 
 ## 6. Repository and versions
 
-- One private GitHub repo, `SamyShaawat/Preview-Mode` (GitHub names cannot contain spaces), with branches `16.0`, `17.0`, `18.0`, `19.0`, `20.0`. The repo root is the Odoo module itself (the manifest is at the root), so a clone loads straight from an addons folder. (Owner approved on 2026-11-02, replacing the earlier nested-folder layout.)
+- One private GitHub repo, `SamyShaawat/preview_mode` (same as the module's technical name, so a plain clone lands in the right folder), with branches `16.0`, `17.0`, `18.0`, `19.0`, `20.0`. The repo root is the Odoo module itself (the manifest is at the root), so a clone loads straight from an addons folder. (Owner approved on 2026-11-02, replacing the earlier nested-folder layout.)
 - Each `odoo-X.0/addons/preview_mode` is a clone of that repo with branch `X.0` checked out, so the module shows up in all five without hand-edited copies. Add `preview_mode` to each Odoo checkout's `.git/info/exclude` so Odoo's own repo stays clean.
 - Build order: 19.0 as the reference, then 18.0, 17.0, 16.0, and 20.0. Shared Python is ported by cherry-pick; frontend ported by hand.
 - Checkouts: 17.0, 18.0, 19.0 exist at `/media/samy/Home/My-Github/Odoo/odoo-X.0/` each with `odoo-venv/` and `odoo.conf`. 16.0 and 20.0 do not exist; clone them from the Odoo GitHub repo (branches exist) into the same parent folder and set up a venv and `odoo.conf` like the other three.
