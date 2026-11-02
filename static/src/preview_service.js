@@ -1,8 +1,7 @@
+/** @odoo-module **/
 import { reactive } from "@odoo/owl";
 import { registry } from "@web/core/registry";
-import { rpc } from "@web/core/network/rpc";
 import { session } from "@web/session";
-import { user } from "@web/core/user";
 import { makeContext } from "@web/core/context";
 import { _t } from "@web/core/l10n/translation";
 import { PreviewDialog } from "./preview_dialog";
@@ -22,8 +21,9 @@ function buttonText(button) {
 }
 
 export const previewService = {
-    dependencies: ["action", "dialog", "notification", "orm"],
-    start(env, { action, dialog, notification, orm }) {
+    // PORT: Odoo 17 has an `rpc` service (18 and later export an `rpc` function).
+    dependencies: ["action", "dialog", "notification", "orm", "rpc"],
+    start(env, { action, dialog, notification, orm, rpc }) {
         const state = reactive({ enabled: Boolean(session.preview_mode_enabled) });
         const original = action.doActionButton.bind(action);
         // Button params carry no visible text, so remember the last clicked button for the label.
@@ -123,7 +123,7 @@ export const previewService = {
             state,
             async toggle() {
                 const enabled = !state.enabled;
-                await orm.write("res.users", [user.userId], { preview_mode_enabled: enabled });
+                await orm.write("res.users", [session.uid], { preview_mode_enabled: enabled });
                 state.enabled = enabled;
             },
         };
