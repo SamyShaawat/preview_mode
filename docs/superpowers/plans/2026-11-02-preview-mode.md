@@ -18,7 +18,7 @@
 - Look: Odoo native dialog (`web.Dialog` or the version's equivalent), one accent `#714b67`, flat tables, yellow only for the warning banner, no pills, no emoji, no gradients, no absolute positioning, header and footer fixed with a scrolling middle, logical start/end for RTL.
 - The preview never commits, never sends email, never calls an outside service, never consumes a real sequence number, and reports `incomplete` instead of an all-clear when it cannot be sure.
 - With the switch off, no extra RPC and no behaviour change. Server hooks cost one thread-local lookup.
-- No assistant commits or pushes unless the owner says so for a specific task. Steps that would commit are marked OWNER. Never add attribution lines.
+- Every task ships as a pull request: topic branch `<type>/<series>-<topic>`, base the matching version branch, squash merge, branch deleted after merge, no Claude attribution lines. See `CONTRIBUTING.md`.
 - Ignore list for "what counts as a change" lives in one place: `IGNORED_MODELS` and `IGNORED_FIELDS` in `models/recorder.py`.
 
 ## Review Focus
@@ -63,7 +63,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - [ ] **Step 1:** Write `__manifest__.py` with name `Preview Mode`, summary `See what a button click will do before it does it`, category `Productivity`, `depends: ['base','web']`, `license: 'OPL-1'`, `installable: True`, `application: False`, assets bundle `web.assets_backend` listing the files in `static/src/`, and `post_load: 'post_load'`.
 - [ ] **Step 2:** Create the empty package `__init__.py` files and an empty `post_load()` function in `__init__.py`. Add `preview_mode` to `odoo-19.0/.git/info/exclude`.
 - [ ] **Step 3:** Install on a fresh database. Run (from `odoo-19.0`): `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm19 -i preview_mode --stop-after-init`. Expected: exits 0, log shows `Module preview_mode loaded`, no warnings naming `preview_mode`.
-- [ ] **Step 4:** OWNER commits the first state of branch `19.0`. The assistant does not commit unless asked.
+- [ ] **Step 4:** Open the first PR against `19.0` (see `CONTRIBUTING.md`).
 
 ---
 
@@ -92,7 +92,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - [ ] **Step 2:** Run `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm19 -u preview_mode --test-tags /preview_mode:TestRecorder --stop-after-init`. Expected: FAIL (names missing).
 - [ ] **Step 3:** Implement `recorder.py` and `base.py` per Interfaces. The thread-local is a module-level `threading.local()`. In `write`, read old values with `read(list(vals))` only when a recorder is active. Many2one, selection and monetary values are rendered through `display_name` or the selection label.
 - [ ] **Step 4:** Re-run the same command. Expected: PASS.
-- [ ] **Step 5:** Leave uncommitted (OWNER commits).
+- [ ] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 
@@ -122,7 +122,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - [ ] **Step 2:** Run `... -u preview_mode --test-tags /preview_mode:TestGuards,/preview_mode:TestWhere --stop-after-init`. Expected: FAIL.
 - [ ] **Step 3:** Implement `guards.py` and `where.py`. Commit neutralisation on 19.0: replace the commit callable on the cursor instance for the duration of the run (verify the cursor class allows this; otherwise wrap `Cursor.commit` once with a thread-local check). HTTP guard patches `requests.Session.send` once in `post_load` with a thread-local check. Cursor guard patches `Registry.cursor` the same way.
 - [ ] **Step 4:** Re-run. Expected: PASS.
-- [ ] **Step 5:** Leave uncommitted (OWNER commits).
+- [ ] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 
@@ -155,7 +155,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - [ ] **Step 2:** Run `... --test-tags /preview_mode:TestPayload,/preview_mode:TestController --stop-after-init`. Expected: FAIL.
 - [ ] **Step 3:** Implement. The controller must call `build_preview` with the request's real environment and the user's own rights (no `sudo`). Do not override `call_button`.
 - [ ] **Step 4:** Re-run. Expected: PASS.
-- [ ] **Step 5:** Leave uncommitted (OWNER commits).
+- [ ] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 
@@ -173,7 +173,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - [ ] **Step 2:** Run the test. Expected: FAIL.
 - [ ] **Step 3:** Implement by reading the recorded new `account.move` lines before rollback.
 - [ ] **Step 4:** Re-run. Expected: PASS. Also run on a fresh database without `account` (`-i preview_mode`). Expected: PASS, test skipped.
-- [ ] **Step 5:** Leave uncommitted (OWNER commits).
+- [ ] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 
@@ -193,7 +193,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - [ ] **Step 4:** Manual check, switch off. Expected: no `/preview_mode/run` call in the network tab and normal behaviour.
 - [ ] **Step 5:** Manual check: click Print and a smart button with the switch on. Expected: no popup.
 - [ ] **Step 6:** Manual check with a dirty form: edit a field, click the button. Expected: the edit is saved first as in stock Odoo, then the popup shows only the button's effects.
-- [ ] **Step 7:** Leave uncommitted (OWNER commits).
+- [ ] **Step 7:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 
@@ -207,7 +207,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - [ ] **Step 2:** Manual check in Arabic (user language `ar_001`). Expected: dialog mirrors, numbers keep left-to-right inside, no overlap.
 - [ ] **Step 3:** Manual check at phone width. Expected: dialog is full width, footer pinned.
 - [ ] **Step 4:** Write `index.html` (app-neutral copy: what it does, three screenshots from sales, inventory and accounting) and the icon. Expected: Odoo Apps list shows the icon and description.
-- [ ] **Step 5:** Milestone 1 acceptance: run the spec's Done list on 19.0 (switch, popup, Where, journal view, toast links, no commit, no email sent, no sequence burned). Expected: all pass. OWNER commits branch `19.0`.
+- [ ] **Step 5:** Milestone 1 acceptance: run the spec's Done list on 19.0 (switch, popup, Where, journal view, toast links, no commit, no email sent, no sequence burned). Expected: all pass. Open the milestone 1 PR against `19.0`.
 
 ---
 
@@ -221,7 +221,7 @@ One pass per version, in this order, each ending with the same acceptance as Tas
 - [ ] **Step 2 (per version):** Adjust and re-run the Python tests. Known differences to handle: controller RPC `type='json'` on 16.0, 17.0, 18.0 versus `'jsonrpc'` on 19.0, 20.0; manifest version prefix; cursor commit neutralisation technique; `session_info` location; the `readonly` route flag only exists on 18.0 and later.
 - [ ] **Step 3 (per version):** Port the frontend. 18.0 and 17.0: same service approach on `doActionButton` in `action_service.js` (signature differs, see `odoo-18.0/addons/web/static/src/webclient/actions/action_service.js:1442` and `odoo-17.0/...:1229`). 16.0: OWL 1 and legacy widgets, wrap `doActionButton` at `action_service.js:1267`, and check legacy views that bypass it. 20.0: the code moved to `webclient/actions/action_plugin.js` (plugin architecture), so write the wrapper against that file.
 - [ ] **Step 4 (per version):** Run Task 6 steps 2 to 6 manually and Task 7 steps 1 to 3. Expected: same results as 19.0.
-- [ ] **Step 5 (per version):** OWNER commits the branch. Repeat for the next version.
+- [ ] **Step 5 (per version):** Open a port PR against branch `<v>`. Repeat for the next version.
 
 ---
 
@@ -230,4 +230,4 @@ One pass per version, in this order, each ending with the same acceptance as Tas
 - Spec coverage: intent and goals map to Tasks 2 to 6; non-goals need no task; anti-goals are pinned by Task 3 tests; UX section by Tasks 6 and 7; Where lookup by Task 3; toast links by Tasks 4 and 6; repo and versions by Tasks 1 and 8; security by `SELF_WRITEABLE_FIELDS` and no `sudo` in Task 4.
 - Open owner items from the spec (price, support policy) are not in any task.
 - Automated tests cover the Python engine; frontend is verified by numbered manual steps with expected results.
-- Layout change from the spec: the repo root is the module (spec section 6 had a nested `preview_mode/` folder), so a clone drops straight into `addons/`. Spec to be updated to match once the owner confirms.
+- Layout change from the spec: the repo root is the module (spec section 6 had a nested `preview_mode/` folder), so a clone drops straight into `addons/`. The spec was updated to match on 2026-11-02.
