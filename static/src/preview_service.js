@@ -28,7 +28,7 @@ export const previewService = {
             if (!created.length) {
                 return;
             }
-            notification.add(_t("Done. Created:"), {
+            notification.add(_t("Created:"), {
                 type: "success",
                 buttons: created.map((rec) => ({
                     name: rec.name,

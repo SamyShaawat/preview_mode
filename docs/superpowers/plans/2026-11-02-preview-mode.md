@@ -54,7 +54,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 
 ---
 
-**Progress (2026-11-03):** Tasks 1 to 5 done on 20.0 (47 tests with Accounting). Task 6 client built and checked by hand on 20.0 (toggle, popup, smart button, one row per record); Confirm toast, dirty form still to check by hand. Task 7 next. Ports (Task 8) wait for the owner.
+**Progress (2026-11-03):** Tasks 1 to 5 done on 20.0 (47 tests with Accounting). Task 6 client built and checked by hand on 20.0 (toggle, popup, smart button, one row per record); Task 6 steps 1, 2, 7 ticked, steps 1b, 3, 4, 5, 5b, 6 still to check by hand. Task 7 next. Ports (Task 8) wait for the owner.
 
 ### Task 1: Module skeleton and 20.0 wiring
 
@@ -194,15 +194,15 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - Produces: a service `preview_mode` that wraps `env.services.action.doActionButton`. For `params.type === 'object'` with the toggle on, it calls `/preview_mode/run`; empty `changes` runs the original; otherwise it opens `PreviewDialog` with props `{ title, summary, warnings, changes, journal, confirmLabel, onConfirm, onBack }`. `onConfirm` runs the original `doActionButton` with `context.preview_mode_token = <uuid>`, then calls `/preview_mode/created` and shows a toast with one link per record. `onBack` only closes the dialog.
 - Toggle: a systray item (registered in the `systray` registry) in the top bar, label `Preview mode`, an eye icon, pressed state while on (`aria-pressed`), tooltip, keyboard operable, writing `preview_mode_enabled` on the current user; it must appear on every page on Community and Enterprise.
 
-- [ ] **Step 1:** First read `odoo-20.0/addons/web/static/src/webclient/actions/action_plugin.js` and find where button clicks are executed; the `doActionButton` wrapper described here is the 19.0 and earlier shape, so wrap the 20.0 equivalent and note it in the PR. Then build per the Interfaces, following the design document's section 3 for every visible string and layout rule.
-- [ ] **Step 1b:** Manual check, the toggle itself: it is in the top bar on every page (Community and Enterprise), shows a pressed look and accent colour while on and a plain look while off, has a tooltip and `aria-pressed`, works with Tab and Enter or Space, and keeps its state after a page reload and after logging out and in. Expected: all true.
-- [ ] **Step 2:** Manual check: click the Preview mode toggle in the top bar (it shows a pressed state), open a draft record with a Confirm-type button, click it. Expected: popup titled `Preview: <label>`, exact subtext, What/Where table, footer `[<label>] [Go back]`. Click `Go back`. Expected: record unchanged in the database, no message in chatter.
+- [x] **Step 1:** First read `odoo-20.0/addons/web/static/src/webclient/actions/action_plugin.js` and find where button clicks are executed; the `doActionButton` wrapper described here is the 19.0 and earlier shape, so wrap the 20.0 equivalent and note it in the PR. Then build per the Interfaces, following the design document's section 3 for every visible string and layout rule.
+- [ ] **Step 1b:** Manual check, the toggle itself: it is in the top bar on every page (Community and Enterprise), shows a pressed look and accent colour while on and a plain look while off, has a tooltip and `aria-pressed`, works with Tab and Enter or Space, and keeps its state after a page reload and after logging out and in. Expected: all true. (Community done 2026-11-03: eye in top bar, aria-pressed, kept after reload; Tab/Enter and Enterprise not yet checked.)
+- [x] **Step 2:** Manual check: click the Preview mode toggle in the top bar (it shows a pressed state), open a draft record with a Confirm-type button, click it. Expected: popup titled `Preview: <label>`, exact subtext, What/Where table, footer `[<label>] [Go back]`. Click `Go back`. Expected: record unchanged in the database, no message in chatter.
 - [ ] **Step 3:** Manual check: click the button again, then the primary button. Expected: real action runs once, toast appears with clickable links, each opens its record.
 - [ ] **Step 4:** Manual check: click the toggle again to turn it off. Expected: it looks plain again, no `/preview_mode/run` call in the network tab and normal behaviour.
 - [ ] **Step 5:** Manual check: click Print and a smart button with the toggle on. Expected: no popup.
 - [ ] **Step 5b:** Manual check, any app and any user: with a plain internal user (no special group) and no per-app setup, preview a Confirm in Sales, a Validate in Inventory, and a button in a third app or a custom model. Expected: the same popup behaviour in all three, nothing to configure.
 - [ ] **Step 6:** Manual check with a dirty form: edit a field, click the button. Expected: the edit is saved first as in stock Odoo, then the popup shows only the button's effects.
-- [ ] **Step 7:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
+- [x] **Step 7:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 
