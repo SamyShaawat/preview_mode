@@ -1,9 +1,10 @@
+import threading
 from email.message import EmailMessage
 from unittest.mock import patch
 
 import requests
 
-from odoo import api
+from odoo import api, sql_db
 from odoo.tests.common import TransactionCase, tagged
 
 from ..models import guards
@@ -81,3 +82,50 @@ class TestGuards(TransactionCase):
         self.assertEqual(cr.commit, commit)
         self.assertEqual(len(cr.postcommit), 0)
         self.registry.cursor().close()  # cursor guard is off again
+
+    def _message(self):
+        message = EmailMessage()
+        message['From'], message['To'], message['Subject'] = 'a@example.com', 'b@example.com', 'Nested'
+        message.set_content('Body')
+        return message
+
+    def test_nested_run_keeps_outer_guards(self):
+        with safe_run(self.env) as outer:
+            with safe_run(self.env) as inner:
+                pass
+            self.assertIs(guards.guarded(), outer)
+            self.env['ir.mail_server'].send_email(self._message())
+        self.assertIsNone(guards.guarded())
+        self.assertEqual(len(outer.emails), 1)
+        self.assertEqual(inner.emails, [])
+
+    def test_db_connect_cursor_marks_incomplete(self):
+        db = sql_db.db_connect(self.env.cr.dbname)
+        with safe_run(self.env) as rec:
+            with self.assertRaises(PreviewIncomplete):
+                db.cursor()
+        self.assertTrue(rec.incomplete)
+        db.cursor().close()  # outside a preview it works
+
+    def test_other_thread_cursor_unaffected(self):
+        db = sql_db.db_connect(self.env.cr.dbname)
+        result = []
+
+        def work():
+            with db.cursor() as cr:
+                cr.execute('SELECT 1')
+                result.append(cr.fetchone()[0])
+
+        with safe_run(self.env):
+            thread = threading.Thread(target=work)
+            thread.start()
+            thread.join()
+        self.assertEqual(result, [1])
+
+    def test_rollback_marks_incomplete(self):
+        name = 'Preview Rollback Guard'
+        with self.assertRaises(PreviewIncomplete), safe_run(self.env) as rec:
+            self.env['res.partner'].create({'name': name})
+            self.env.cr.rollback()
+        self.assertTrue(rec.incomplete)
+        self.assertEqual(self.env['res.partner'].search_count([('name', '=', name)]), 0)
