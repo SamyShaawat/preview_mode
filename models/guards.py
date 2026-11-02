@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 import requests
 
 from odoo import models, sql_db
+from odoo.addons.base.models import ir_mail_server
 from odoo.tools.misc import Callbacks
 
 from .recorder import ChangeRecorder
@@ -126,14 +127,23 @@ class IrSequence(models.Model):
         return super()._next(sequence_date=sequence_date)
 
 
+# The SMTP connect method is `_connect__` on Odoo 19/20 and `connect` on 16 to 18. Class names
+# differ too, so find the base model class by _name and detect the name once, no rename per port.
+_base_mail = next(c for c in vars(ir_mail_server).values() if getattr(c, '_name', None) == 'ir.mail_server')
+_CONNECT = '_connect__' if hasattr(_base_mail, '_connect__') else 'connect'
+
+
 class IrMailServer(models.Model):
     _inherit = 'ir.mail_server'
 
-    # PORT: the only Odoo-20-only name in this module; rename to `connect` for Odoo 16 to 19.
-    def _connect__(self, *args, **kwargs):  # noqa: PLW3201
+    # PORT: none needed, the connect method name is detected (see _CONNECT above).
+    def _guarded_connect(self, *args, **kwargs):
         if guarded() is not None:
             return None
-        return super()._connect__(*args, **kwargs)
+        return getattr(super(), _CONNECT)(*args, **kwargs)
+
+    vars()[_CONNECT] = _guarded_connect
+    del _guarded_connect
 
     def send_email(self, message, *args, **kwargs):
         recorder = guarded()
