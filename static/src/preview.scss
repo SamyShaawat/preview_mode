@@ -1,0 +1,41 @@
+// The on/off switch in the top bar: an eye and a sliding knob, like a light switch.
+.o_preview_toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+
+    .o_preview_track {
+        position: relative;
+        width: 2.1rem;
+        height: 1.1rem;
+        border-radius: 1.1rem;
+        background: rgba(255, 255, 255, 0.35);
+        transition: background 0.15s ease;
+    }
+    .o_preview_knob {
+        position: absolute;
+        top: 0.125rem;
+        inset-inline-start: 0.125rem;
+        width: 0.85rem;
+        height: 0.85rem;
+        border-radius: 50%;
+        background: #fff;
+        transition: inset-inline-start 0.15s ease;
+    }
+    &.o_preview_on {
+        .o_preview_track { background: #714b67; box-shadow: 0 0 0 1px #fff; }
+        .o_preview_knob { inset-inline-start: 1.125rem; }
+    }
+    &:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+}
+.o_preview_mode_dialog {
+    .modal-body { overflow-y: auto; }
+    .o_preview_table {
+        td, th { vertical-align: top; }
+        .o_preview_what, .o_preview_where { overflow-wrap: anywhere; }
+        .o_preview_value { white-space: nowrap; }
+    }
+}
