@@ -1,0 +1,83 @@
+from email.message import EmailMessage
+from unittest.mock import patch
+
+import requests
+
+from odoo import api
+from odoo.tests.common import TransactionCase, tagged
+
+from ..models import guards
+from ..models.guards import PreviewBlocked, PreviewIncomplete, safe_run
+
+
+@tagged('post_install', '-at_install')
+class TestGuards(TransactionCase):
+
+    def test_rollback_after_run(self):
+        with safe_run(self.env):
+            self.env['res.partner'].create({'name': 'Preview Rollback'})
+        self.assertEqual(self.env['res.partner'].search_count([('name', '=', 'Preview Rollback')]), 0)
+
+    def test_commit_does_not_persist(self):
+        # TransactionCase already forbids commit on self.cr: use a real cursor.
+        name = 'Preview Commit Guard'
+        try:
+            with self.registry.cursor() as cr:
+                env = api.Environment(cr, self.env.uid, {})
+                with safe_run(env):
+                    env['res.partner'].create({'name': name})
+                    cr.commit()
+            with self.registry.cursor() as cr:
+                self.assertEqual(self._count(cr, name), 0)
+        finally:
+            with self.registry.cursor() as cr:
+                cr.execute("DELETE FROM res_partner WHERE name = %s", [name])
+
+    @staticmethod
+    def _count(cr, name):
+        cr.execute("SELECT count(*) FROM res_partner WHERE name = %s", [name])
+        return cr.fetchone()[0]
+
+    def test_sequence_is_placeholder_and_not_consumed(self):
+        code = 'preview_mode.test'
+        self.env['ir.sequence'].create({'name': 'Preview test', 'code': code, 'prefix': 'PT', 'padding': 3})
+        with safe_run(self.env):
+            self.assertEqual(self.env['ir.sequence'].next_by_code(code), '(new)')
+        self.assertEqual(self.env['ir.sequence'].next_by_code(code), 'PT001')
+
+    def test_email_listed_not_sent(self):
+        server = self.env['ir.mail_server']
+        message = EmailMessage()  # stdlib: build_email was renamed _build_email__ in 20
+        message['From'], message['To'], message['Subject'] = 'a@example.com', 'b@example.com', 'Hello'
+        message.set_content('Body')
+        with patch('smtplib.SMTP', side_effect=AssertionError('SMTP touched')), \
+                patch('smtplib.SMTP_SSL', side_effect=AssertionError('SMTP touched')), \
+                safe_run(self.env) as rec:
+            server.send_email(message)
+        self.assertEqual(len(rec.emails), 1)
+        self.assertEqual(rec.emails[0]['subject'], 'Hello')
+
+    def test_http_blocked(self):
+        # The test framework replaces Session.send with its own blocker for the
+        # whole class, so put back the wrapper post_load installed.
+        with patch.object(requests.Session, 'send', guards.guarded_send), safe_run(self.env) as rec:
+            with self.assertRaises(PreviewBlocked):
+                requests.get('http://example.invalid')
+        self.assertTrue(any('example.invalid' in w for w in rec.warnings))
+
+    def test_separate_cursor_marks_incomplete(self):
+        with safe_run(self.env) as rec:
+            with self.assertRaises(PreviewIncomplete):
+                self.registry.cursor()
+        self.assertTrue(rec.incomplete)
+
+    def test_exception_clears_every_guard(self):
+        cr = self.env.cr
+        commit = cr.commit
+        with self.assertRaises(ZeroDivisionError), safe_run(self.env):
+            cr.postcommit.add(lambda: None)
+            1 / 0
+        self.assertIsNone(guards.guarded())
+        self.assertEqual(cr.commit, commit)
+        self.assertEqual(len(cr.postcommit), 0)
+        self.registry.cursor().close()  # cursor guard is off again
