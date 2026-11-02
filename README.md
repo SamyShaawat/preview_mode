@@ -1,20 +1,24 @@
+<img src="static/description/icon.png" alt="Preview Mode icon" width="64" align="right">
+
 # Preview Mode
 
 **See what a button click will do before it does it.**
 
-Preview Mode is an Odoo app for every user of every app. Turn on a switch, click a button that changes data (Confirm, Validate, Post, and so on), and a popup lists what the click would create, change or delete, and where each change lands in Odoo's menus. Then you confirm for real or go back. Nothing from the click is saved during the preview.
+Preview Mode is an Odoo app for every user of every app. Turn on the Preview toggle in the top bar, click a button that changes data (Confirm, Validate, Post, and so on), and a popup lists what the click would create, change or delete, and where each change lands in Odoo's menus. Then you confirm for real or go back. Nothing from the click is saved during the preview.
 
-> **Status: in development.** The design and implementation plan are written (see [Docs](#docs)). The module code is not written yet, so this README describes what Preview Mode is built to do, not something you can install today.
+> **Status: in development.** Built so far: the module skeleton, the change recorder (it records what a click would create, change or delete), and the safe-run guards in review (they make sure a preview never saves, emails, calls out or uses real numbers). The switch and the popup are not built yet, so there is nothing to click today. The design and plan are in [Docs](#docs).
 
 ## Why
 
 Confirming a vendor bill posts journal entries. Confirming a sales order creates deliveries. Validating a transfer moves stock. These clicks are hard to undo, and Odoo does not show you the result first. Preview Mode does.
 
+It works on any button that changes data, in any app, for any user. There is no list of supported apps, models, buttons or users, and nothing to configure per app: install it, turn the Preview toggle on, and it applies everywhere.
+
 It is not an accounting module. Sales, purchase, inventory, manufacturing, CRM, HR, project and third-party apps all get the same preview.
 
 ## How it works for the user
 
-1. Turn on **Preview mode** with the switch on the right side of the control bar. It is remembered for your user.
+1. Click the **Preview mode** toggle button in the top bar. It is on every page, and it lights up while preview is on. Click it again to turn it off. Your choice is remembered for your user.
 2. Click a button that changes data, for example **Confirm** on a vendor bill.
 3. A popup titled **Preview: Confirm** opens with the message "This is a preview. Nothing from this click has been saved yet."
 4. Read it, then press **Confirm** to run the real action, or **Go back** to leave everything as it was.
@@ -52,13 +56,13 @@ The popup uses Odoo's own dialog. Long names wrap, numbers stay on one line, onl
 
 | Branch | Odoo version | Status |
 |---|---|---|
-| `16.0` | Odoo 16.0 | planned |
-| `17.0` | Odoo 17.0 | planned |
-| `18.0` | Odoo 18.0 | planned |
-| `19.0` | Odoo 19.0 | planned |
-| `20.0` | Odoo 20.0 | reference version, built first (default branch) |
+| `16.0` | Odoo 16.0 | skeleton and change recorder |
+| `17.0` | Odoo 17.0 | skeleton and change recorder |
+| `18.0` | Odoo 18.0 | skeleton and change recorder |
+| `19.0` | Odoo 19.0 | skeleton and change recorder |
+| `20.0` | Odoo 20.0 | reference version, default branch: skeleton and change recorder, guards in review |
 
-Works on Community and Enterprise. Depends only on `base` and `web`.
+Works on Community, and it works when Enterprise is installed. Depends only on `base` and `web`.
 
 ## Install
 
@@ -76,6 +80,7 @@ git clone --branch 20.0 https://github.com/SamyShaawat/preview_mode.git /path/to
 - Repo root is the Odoo module itself (the manifest sits at the root). One branch per Odoo version.
 - Security: available to internal users. A preview runs with the user's own access rights, so it can never show or do more than the real click.
 - Menu paths shown in the "Where" column only include menus the user can open.
+- Enterprise: it stays a Community module with no Enterprise dependency. Working next to Enterprise is a requirement, checked per version.
 - Odoo.sh: built to work there. No external Python packages, no system changes, no files written outside Odoo's own storage, and safe with several workers. On Odoo.sh, add this repo as a git submodule named `preview_mode` in your project repository.
 - License: OPL-1 (Odoo Proprietary License v1.0). See [LICENSE](LICENSE).
 
