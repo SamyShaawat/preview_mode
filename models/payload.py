@@ -68,11 +68,17 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
         })
     if len(changes) > MAX_ROWS:
         rows.append({'kind': 'more', 'what': _('and %s more', len(changes) - MAX_ROWS), 'where': '', 'fields': []})
+    blocking = [w for w in warnings if w['blocking']]
+    summary = _summary(env, changes, recorder.emails)
+    if blocking and not summary:
+        summary = blocking[0]['text']
     return {
+        # The client decides on `show`, never on `changes == []`.
+        'show': bool(rows or blocking or recorder.incomplete or recorder.emails),
         'changes': rows,
         'emails': recorder.emails,
         'warnings': warnings,
         'incomplete': recorder.incomplete,
-        'summary': _summary(env, changes, recorder.emails),
+        'summary': summary,
         'journal': [],
     }

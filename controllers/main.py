@@ -1,3 +1,4 @@
+from odoo.exceptions import AccessError
 from odoo.http import Controller, request, route
 
 from ..models.payload import build_preview
@@ -5,6 +6,19 @@ from ..models.where import locate
 
 # PORT: the RPC route type is 'jsonrpc' on Odoo 19/20 and 'json' on 16 to 18.
 RPC = 'jsonrpc'
+
+
+def _readable(records):
+    # PORT: has_access exists on Odoo 18+; 16 and 17 need the rights + rules pair.
+    if hasattr(records, 'has_access'):
+        return records.has_access('read')
+    if not records.check_access_rights('read', raise_exception=False):
+        return False
+    try:
+        records.check_access_rule('read')
+    except AccessError:
+        return False
+    return True
 
 
 class PreviewModeController(Controller):
@@ -19,11 +33,15 @@ class PreviewModeController(Controller):
     def preview_mode_created(self, token):
         rows = request.env['preview.mode.created'].search([
             ('token', '=', token), ('create_uid', '=', request.env.uid)])
+        env = request.env
+        # A deleted record (empty recordset) would pass the access check, so require it to exist.
+        rows_shown = rows.filtered(lambda r: r.model in env and (rec := env[r.model].browse(r.res_id).exists())
+                                   and _readable(rec))
         result = [{
             'model': row.model,
             'res_id': row.res_id,
             'name': row.name,
             'menu_path': locate(request.env, row.model),
-        } for row in rows]
+        } for row in rows_shown]
         rows.unlink()
         return result

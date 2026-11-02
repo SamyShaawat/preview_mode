@@ -1,3 +1,4 @@
+from email.message import EmailMessage
 from unittest.mock import patch
 
 from odoo.exceptions import UserError
@@ -36,6 +37,36 @@ class TestPayload(TransactionCase):
             payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Open')
         self.assertEqual(payload['changes'], [])
         self.assertFalse(payload['warnings'])
+        self.assertFalse(payload['show'])
+
+    def test_payload_failure_before_write_is_shown(self):
+        def button(self):
+            raise UserError('Period locked')
+        with self._patch(button):
+            payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Post')
+        self.assertTrue(payload['show'])
+        self.assertEqual(payload['changes'], [])
+        self.assertIn({'text': 'Confirming will fail: Period locked', 'blocking': True}, payload['warnings'])
+        self.assertTrue(payload['summary'])
+
+    def test_payload_incomplete_is_shown(self):
+        def button(self):
+            self.env.cr.rollback()
+        with self._patch(button):
+            payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Go')
+        self.assertTrue(payload['incomplete'])
+        self.assertTrue(payload['show'])
+
+    def test_payload_email_only_is_shown(self):
+        def button(self):
+            msg = EmailMessage()
+            msg['To'], msg['Subject'] = 'b@example.com', 'Hello'
+            self.env['ir.mail_server'].send_email(msg)
+        with self._patch(button):
+            payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Send')
+        self.assertTrue(payload['show'])
+        self.assertEqual(payload['changes'], [])
+        self.assertEqual(payload['emails'][0]['subject'], 'Hello')
 
     def test_payload_failing_button_is_blocking_warning(self):
         def button(self):

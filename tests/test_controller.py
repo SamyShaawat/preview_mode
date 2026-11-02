@@ -1,4 +1,4 @@
-from odoo.tests.common import HttpCase, tagged
+from odoo.tests.common import HttpCase, new_test_user, tagged
 
 
 @tagged('post_install', '-at_install')
@@ -23,3 +23,19 @@ class TestController(HttpCase):
         self.assertTrue(payload['changes'], payload)
         self.assertEqual(payload['changes'][0]['kind'], 'new')
         self.assertEqual(self.env['res.partner'].search_count([('name', 'like', 'Route Co')]), 1)
+
+    def test_sudo_create_not_recorded(self):
+        admin = self.env.ref('base.user_admin')
+        self.env['res.partner'].with_user(admin).with_context(preview_mode_token='t2').sudo().create({'name': 'Hidden'})
+        self.assertFalse(self.env['preview.mode.created'].search([('token', '=', 't2')]))
+
+    def test_unreadable_record_not_returned(self):
+        user = new_test_user(self.env, 'preview_reader', password='preview_reader', groups='base.group_user')
+        param = self.env['ir.config_parameter'].create({'key': 'preview_mode.secret', 'value': 'x'})
+        Created = self.env['preview.mode.created'].with_user(user)
+        Created.create({'token': 't3', 'model': 'ir.config_parameter', 'res_id': param.id, 'name': 'secret'})
+        Created.create({'token': 't3', 'model': 'res.partner', 'res_id': user.partner_id.id, 'name': 'Mine'})
+        self.authenticate('preview_reader', 'preview_reader')
+        result = self.make_jsonrpc_request('/preview_mode/created', {'token': 't3'})
+        self.assertEqual([r['name'] for r in result], ['Mine'])
+        self.assertFalse(self.env['preview.mode.created'].search([('token', '=', 't3')]))

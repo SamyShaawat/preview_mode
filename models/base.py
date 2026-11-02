@@ -13,7 +13,8 @@ class Base(models.AbstractModel):
         if recorder is not None:
             recorder.note_create(records)
         token = self.env.context.get('preview_mode_token')
-        if token and not records._transient and records._name not in IGNORED_MODELS:
+        if token and not self.env.su and not records._transient and records._name not in IGNORED_MODELS:
+            # sudo creates are skipped: the user may not be allowed to see them.
             # Stored in the database, not memory: the toast request may hit another worker.
             self.env['preview.mode.created'].create([
                 {'token': token, 'model': rec._name, 'res_id': rec.id, 'name': rec.display_name}
