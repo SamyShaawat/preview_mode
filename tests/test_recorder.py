@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+from odoo.models import BaseModel
 from odoo.tests.common import TransactionCase, tagged
 
 from ..models.recorder import ChangeRecorder, active_recorder
@@ -44,7 +47,9 @@ class TestRecorder(TransactionCase):
     def test_no_recorder_means_no_effect(self):
         self.assertIsNone(active_recorder())
         partner = self.env['res.partner'].create({'name': 'A'})
-        partner.write({'name': 'B'})
+        with patch.object(BaseModel, 'read', autospec=True) as read:
+            partner.write({'name': 'B'})
+        read.assert_not_called()
         self.assertEqual(partner.name, 'B')
 
     def test_recorder_cleared_after_exception(self):
@@ -53,3 +58,35 @@ class TestRecorder(TransactionCase):
                 self.assertIsNotNone(active_recorder())
                 raise ValueError
         self.assertIsNone(active_recorder())
+
+    def test_ignored_model_write_does_not_read(self):
+        att = self.env['ir.attachment'].create({'name': 'f', 'raw': b'x'})
+        with ChangeRecorder() as rec:
+            with patch.object(BaseModel, 'read', autospec=True) as read:
+                att.write({'raw': b'y'})
+        read.assert_not_called()
+        self.assertEqual(rec.changes, [])
+
+    def test_many2many_only_write(self):
+        partner = self.env['res.partner'].create({'name': 'A'})
+        cat = self.env['res.partner.category'].create({'name': 'Cat'})
+        with ChangeRecorder() as rec:
+            partner.write({'category_id': [(6, 0, cat.ids)]})
+        self.assertEqual(rec.changes[0].fields, [('Tags', '', 'Cat')])
+
+    def test_binary_only_write(self):
+        partner = self.env['res.partner'].create({'name': 'A'})
+        png = ('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/'
+               'iZk9HQAAAABJRU5ErkJggg==')
+        with ChangeRecorder() as rec:
+            partner.write({'image_1920': png})
+        self.assertEqual(rec.changes[0].fields, [('Image', '', '(changed)')])
+
+    def test_snapshot_failure_does_not_break_write(self):
+        partner = self.env['res.partner'].create({'name': 'A'})
+        with ChangeRecorder() as rec:
+            with patch.object(BaseModel, 'read', side_effect=RuntimeError):
+                partner.write({'name': 'B'})
+        self.assertEqual(partner.name, 'B')
+        self.assertTrue(rec.incomplete)
+        self.assertTrue(rec.warnings)

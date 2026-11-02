@@ -18,7 +18,7 @@ class Base(models.AbstractModel):
         recorder = active_recorder()
         if recorder is None:
             return super().write(vals)
-        old = self.read([n for n in vals if n in self._fields])
+        old = recorder.snapshot(self, vals)
         result = super().write(vals)
         recorder.note_write(self, old, vals)
         return result
