@@ -6,6 +6,8 @@
     'author': 'Samy Mostafa Shaawat',
     'license': 'OPL-1',
     'depends': ['base', 'web'],
+    # PORT: Odoo 20 has one ACL file with a domain; 16 to 19 use ir.model.access + an ir.rule.
+    'data': ['security/ir.model.access.csv', 'security/preview_mode_security.xml'],
     'assets': {
         'web.assets_backend': [
             'preview_mode/static/src/**/*',
