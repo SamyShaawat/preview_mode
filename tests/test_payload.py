@@ -102,3 +102,36 @@ class TestPayload(TransactionCase):
         user = new_test_user(self.env, 'preview_flag', groups='base.group_user')
         user.with_user(user).write({'preview_mode_enabled': True})
         self.assertTrue(user.preview_mode_enabled)
+
+
+@tagged('post_install', '-at_install')
+class TestPayloadMerge(TransactionCase):
+    def test_merge_one_row_per_record_and_drops_noise(self):
+        from ..models.payload import _merge
+        from ..models.recorder import Change
+        rows = _merge([
+            Change('changed', 'res.partner', 1, 'A', [('Name', 'A', 'B')]),
+            Change('changed', 'res.partner', 1, 'false', [('Name', 'B', 'C'), ('Note', 'x', 'x')]),
+            Change('changed', 'res.partner', 2, 'Z', [('Name', 'Z', 'Z')]),
+            Change('new', 'res.partner', 3, 'N', []),
+        ])
+        self.assertEqual([(r['kind'], r['what']) for r in rows], [('changed', 'A'), ('new', 'N')])
+        self.assertEqual(rows[0]['fields'], {'Name': ('A', 'C')})
+
+
+@tagged('post_install', '-at_install')
+class TestJournal(TransactionCase):
+    def test_journal_for_post_button(self):
+        if 'account.move' not in self.env:
+            self.skipTest('account is not installed')
+        partner = self.env['res.partner'].create({'name': 'Vendor X'})
+        bill = self.env['account.move'].create({
+            'move_type': 'in_invoice', 'partner_id': partner.id, 'invoice_date': '2026-01-01',
+            'invoice_line_ids': [(0, 0, {'name': 'Item', 'quantity': 1, 'price_unit': 100})],
+        })
+        result = build_preview(self.env, 'account.move', 'action_post', [bill.id], [], {}, 'Confirm')
+        self.assertEqual(len(result['journal']), 1)
+        self.assertTrue(result['journal'][0]['balanced'])
+        self.assertEqual(sum(l['debit'] for l in result['journal'][0]['lines']),
+                         sum(l['credit'] for l in result['journal'][0]['lines']))
+        self.assertEqual(bill.state, 'draft')

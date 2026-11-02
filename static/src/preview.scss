@@ -1,0 +1,17 @@
+.o_preview_toggle {
+    border: 0;
+    background: transparent;
+    &.o_preview_on {
+        color: #fff;
+        background: #714b67;
+        border-radius: 0.25rem;
+    }
+}
+.o_preview_mode_dialog {
+    .modal-body { overflow-y: auto; }
+    .o_preview_table {
+        td, th { vertical-align: top; }
+        .o_preview_what, .o_preview_where { overflow-wrap: anywhere; }
+        .o_preview_value { white-space: nowrap; }
+    }
+}

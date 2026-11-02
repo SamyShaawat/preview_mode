@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="preview_mode.Toggle">
+        <button type="button" class="o_nav_entry o_preview_toggle" t-att-class="{ o_preview_on: this.preview.state.enabled }"
+                t-att-aria-pressed="this.preview.state.enabled ? 'true' : 'false'"
+                title="Preview mode: see what a button will do before it does it"
+                aria-label="Preview mode" t-on-click="this.preview.toggle">
+            <i class="fa fa-eye" role="img"/>
+        </button>
+    </t>
+</templates>
