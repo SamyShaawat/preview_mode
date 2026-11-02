@@ -55,8 +55,8 @@ The popup uses Odoo's own dialog. Long names wrap, numbers stay on one line, onl
 | `16.0` | Odoo 16.0 | planned |
 | `17.0` | Odoo 17.0 | planned |
 | `18.0` | Odoo 18.0 | planned |
-| `19.0` | Odoo 19.0 | reference version, built first |
-| `20.0` | Odoo 20.0 | planned |
+| `19.0` | Odoo 19.0 | planned |
+| `20.0` | Odoo 20.0 | reference version, built first (default branch) |
 
 Works on Community and Enterprise. Depends only on `base` and `web`.
 
@@ -65,7 +65,7 @@ Works on Community and Enterprise. Depends only on `base` and `web`.
 Clone the branch that matches your Odoo version into your addons path under the folder name `preview_mode`, then update the apps list and install **Preview Mode**:
 
 ```bash
-git clone --branch 19.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode
+git clone --branch 20.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode
 ```
 
 (The repository is private for now, so you need access to it.)
@@ -76,6 +76,7 @@ git clone --branch 19.0 https://github.com/SamyShaawat/preview_mode.git /path/to
 - Repo root is the Odoo module itself (the manifest sits at the root). One branch per Odoo version.
 - Security: available to internal users. A preview runs with the user's own access rights, so it can never show or do more than the real click.
 - Menu paths shown in the "Where" column only include menus the user can open.
+- Odoo.sh: built to work there. No external Python packages, no system changes, no files written outside Odoo's own storage, and safe with several workers. On Odoo.sh, add this repo as a git submodule named `preview_mode` in your project repository.
 - License: OPL-1 (planned).
 
 ## Docs

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** An Odoo Community app, `preview_mode`, that shows what a data-changing button click would create, change or delete, and where, before the user commits to it. Versions 16.0 to 20.0, milestone 1 is 19.0.
+**Goal:** An Odoo Community app, `preview_mode`, that shows what a data-changing button click would create, change or delete, and where, before the user commits to it. Versions 16.0 to 20.0, milestone 1 is 20.0.
 
 **Architecture:** A server route runs the clicked method inside a savepoint with every side channel guarded (commit, sequences, mail, HTTP, extra cursors), records changes through a thread-local recorder hooked on `base` create/write/unlink, then always rolls back and returns a JSON payload. A client wrapper around `doActionButton` calls it when the per-user switch is on, shows a native dialog, and on Confirm runs the original click with a token so the real run reports the records it created for the toast links.
 
@@ -12,7 +12,8 @@
 
 ## Global Constraints
 
-- Manifest `depends` is `['base', 'web']` only. Must install on Community. `license` is `OPL-1`. Version string `<series>.1.0.0` (for example `19.0.1.0.0`).
+- Manifest `depends` is `['base', 'web']` only. Must install on Community. `license` is `OPL-1`. Version string `<series>.1.0.0` (for example `20.0.1.0.0`).
+- Must work on Odoo.sh (owner requirement, 2026-11-02): no external Python packages and no `requirements.txt`, no system or `subprocess` calls, no writes to the file system outside Odoo's own storage, all state in the database (several workers share no memory), no route marked `readonly`, no dependence on `odoo.conf` options or server flags, no Enterprise-only code. Odoo.sh users add the repo as a git submodule named `preview_mode`. Every task review checks this.
 - Audience is every user of every app. No accounting dependency. No accounting wording in names, defaults or screenshots.
 - Popup title is `Preview: <button label>`. Subtext is exactly `This is a preview. Nothing from this click has been saved yet.` Footer left to right: primary button with the clicked button's label, then `Go back`. Warning wording for a failing click starts `Confirming will fail:`. The Confirm button is never disabled.
 - Look: Odoo native dialog (`web.Dialog` or the version's equivalent), one accent `#714b67`, flat tables, yellow only for the warning banner, no pills, no emoji, no gradients, no absolute positioning, header and footer fixed with a scrolling middle, logical start/end for RTL.
@@ -31,7 +32,7 @@
 
 ---
 
-## File Structure (19.0 reference; other branches mirror it)
+## File Structure (20.0 reference; other branches mirror it)
 
 The git repo root is the Odoo module itself, so a clone placed at `odoo-<v>/addons/preview_mode` is directly loadable.
 
@@ -51,19 +52,19 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 
 ---
 
-### Task 1: Module skeleton and 19.0 wiring
+### Task 1: Module skeleton and 20.0 wiring
 
 **Files:**
 - Create: the tree above as empty modules plus `__manifest__.py`.
-- Place: the repo at `/media/samy/Home/My-Github/Odoo/odoo-19.0/addons/preview_mode`.
+- Place: the repo at `/media/samy/Home/My-Github/Odoo/odoo-20.0/addons/preview_mode`.
 
 **Interfaces:**
-- Produces: an installable module `preview_mode` on 19.0 that later tasks fill.
+- Produces: an installable module `preview_mode` on 20.0 that later tasks fill.
 
-- [ ] **Step 1:** Write `__manifest__.py` with name `Preview Mode`, summary `See what a button click will do before it does it`, category `Productivity`, `depends: ['base','web']`, `license: 'OPL-1'`, `installable: True`, `application: False`, assets bundle `web.assets_backend` listing the files in `static/src/`, and `post_load: 'post_load'`.
-- [ ] **Step 2:** Create the empty package `__init__.py` files and an empty `post_load()` function in `__init__.py`. Add `preview_mode` to `odoo-19.0/.git/info/exclude`.
-- [ ] **Step 3:** Install on a fresh database. Run (from `odoo-19.0`): `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm19 -i preview_mode --stop-after-init`. Expected: exits 0, log shows `Module preview_mode loaded`, no warnings naming `preview_mode`.
-- [ ] **Step 4:** Open the first PR against `19.0` (see `CONTRIBUTING.md`).
+- [ ] **Step 1:** Write `__manifest__.py` with name `Preview Mode`, summary `See what a button click will do before it does it`, category `Productivity`, `depends: ['base','web']`, `license: 'OPL-1'`, `installable: True`, `application: False`, assets bundle `web.assets_backend` with the glob `preview_mode/static/src/**/*` (an empty glob is harmless before Task 6), and `post_load: 'post_load'`.
+- [ ] **Step 2:** Create the empty package `__init__.py` files and an empty `post_load()` function in `__init__.py`. Add `preview_mode` to `odoo-20.0/.git/info/exclude`.
+- [ ] **Step 3:** Install on a fresh database. Run (from `odoo-20.0`): `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm20 -i preview_mode --stop-after-init`. Expected: exits 0, log shows `Module preview_mode loaded`, no warnings naming `preview_mode`.
+- [ ] **Step 4:** Open the first PR against `20.0` (see `CONTRIBUTING.md`).
 
 ---
 
@@ -89,7 +90,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
   - `test_transient_ignored`: creating a wizard record produces zero changes.
   - `test_no_recorder_means_no_effect`: with no recorder active, `active_recorder() is None` and create/write behave normally.
   - `test_recorder_cleared_after_exception`: raise inside `with ChangeRecorder()`; afterwards `active_recorder() is None`. (Review Focus 5.)
-- [ ] **Step 2:** Run `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm19 -u preview_mode --test-tags /preview_mode:TestRecorder --stop-after-init`. Expected: FAIL (names missing).
+- [ ] **Step 2:** Run `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm20 -u preview_mode --test-tags /preview_mode:TestRecorder --stop-after-init`. Expected: FAIL (names missing).
 - [ ] **Step 3:** Implement `recorder.py` and `base.py` per Interfaces. The thread-local is a module-level `threading.local()`. In `write`, read old values with `read(list(vals))` only when a recorder is active. Many2one, selection and monetary values are rendered through `display_name` or the selection label.
 - [ ] **Step 4:** Re-run the same command. Expected: PASS.
 - [ ] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
@@ -99,7 +100,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 ### Task 3: Safe-run guards and the Where lookup
 
 **Files:**
-- Create: `models/guards.py`, `models/where.py`
+- Create: `models/guards.py` (also holds the `_inherit` classes for `ir.sequence` and `ir.mail_server`), `models/where.py`
 - Modify: `__init__.py` (`post_load` installs the HTTP guard)
 - Test: `tests/test_guards.py`, `tests/test_where.py`
 
@@ -120,7 +121,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
   - `test_where_hides_inaccessible_menu`: for a user without the menu's group, the path is the model description, not the menu path. (Review Focus 4.)
   - `test_where_falls_back_to_parent`: a model with no menu returns the parent's path.
 - [ ] **Step 2:** Run `... -u preview_mode --test-tags /preview_mode:TestGuards,/preview_mode:TestWhere --stop-after-init`. Expected: FAIL.
-- [ ] **Step 3:** Implement `guards.py` and `where.py`. Commit neutralisation on 19.0: replace the commit callable on the cursor instance for the duration of the run (verify the cursor class allows this; otherwise wrap `Cursor.commit` once with a thread-local check). HTTP guard patches `requests.Session.send` once in `post_load` with a thread-local check. Cursor guard patches `Registry.cursor` the same way.
+- [ ] **Step 3:** Implement `guards.py` and `where.py`. Commit neutralisation on 20.0: replace the commit callable on the cursor instance for the duration of the run (verify the cursor class allows this; otherwise wrap `Cursor.commit` once with a thread-local check). HTTP guard patches `requests.Session.send` once in `post_load` with a thread-local check. Cursor guard patches `Registry.cursor` the same way.
 - [ ] **Step 4:** Re-run. Expected: PASS.
 - [ ] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
@@ -129,7 +130,8 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 ### Task 4: Preview payload and the controller routes
 
 **Files:**
-- Create: `models/payload.py`, `models/res_users.py`, `models/ir_http.py`, `controllers/main.py`
+- Create: `models/payload.py`, `models/res_users.py`, `models/ir_http.py`, `models/created.py` (the `preview.mode.created` TransientModel), `controllers/main.py`
+- Modify: `models/base.py` (token recording)
 - Test: `tests/test_payload.py`, `tests/test_controller.py`
 
 **Interfaces:**
@@ -140,7 +142,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - Produces in `res_users.py`: boolean field `preview_mode_enabled` on `res.users`, writable by the user (add to `SELF_WRITEABLE_FIELDS`), default `False`.
 - Produces in `ir_http.py`: `session_info()` also returns `preview_mode_enabled`.
 - Produces in `controllers/main.py`:
-  - `POST /preview_mode/run` (RPC type `jsonrpc` on 19.0, params `model, method, res_ids, args, kwargs, label`) returns `build_preview(...)`.
+  - `POST /preview_mode/run` (RPC type `jsonrpc` on 20.0, params `model, method, res_ids, args, kwargs, label`) returns `build_preview(...)`.
   - `POST /preview_mode/created` (params `token: str`) returns `[{'model','res_id','name','menu_path'}]` for records created by the real run carrying that token, then deletes the rows.
 - Token recording: a transient model `preview.mode.created` (fields `token`, `model`, `res_id`, `name`); `base.create` writes a row when `self.env.context.get('preview_mode_token')` is set, ignoring the same models as the recorder and ignoring `preview.mode.created` itself.
 
@@ -177,7 +179,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 
 ---
 
-### Task 6: Client service, switch, dialog, toast (19.0)
+### Task 6: Client service, switch, dialog, toast (20.0)
 
 **Files:**
 - Create: `static/src/preview_service.js`, `preview_dialog.js`, `preview_dialog.xml`, `preview_switch.js`, `preview_switch.xml`, `preview_toast.js`, `preview.scss`
@@ -187,7 +189,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - Produces: a service `preview_mode` that wraps `env.services.action.doActionButton`. For `params.type === 'object'` with the switch on, it calls `/preview_mode/run`; empty `changes` runs the original; otherwise it opens `PreviewDialog` with props `{ title, summary, warnings, changes, journal, confirmLabel, onConfirm, onBack }`. `onConfirm` runs the original `doActionButton` with `context.preview_mode_token = <uuid>`, then calls `/preview_mode/created` and shows a toast with one link per record. `onBack` only closes the dialog.
 - Switch: a toggle on the right side of the control panel, label `Preview mode`, writing `preview_mode_enabled` on the current user.
 
-- [ ] **Step 1:** Build per the Interfaces, following the design document's section 3 for every visible string and layout rule.
+- [ ] **Step 1:** First read `odoo-20.0/addons/web/static/src/webclient/actions/action_plugin.js` and find where button clicks are executed; the `doActionButton` wrapper described here is the 19.0 and earlier shape, so wrap the 20.0 equivalent and note it in the PR. Then build per the Interfaces, following the design document's section 3 for every visible string and layout rule.
 - [ ] **Step 2:** Manual check: enable the switch, open a draft record with a Confirm-type button, click it. Expected: popup titled `Preview: <label>`, exact subtext, What/Where table, footer `[<label>] [Go back]`. Click `Go back`. Expected: record unchanged in the database, no message in chatter.
 - [ ] **Step 3:** Manual check: click the button again, then the primary button. Expected: real action runs once, toast appears with clickable links, each opens its record.
 - [ ] **Step 4:** Manual check, switch off. Expected: no `/preview_mode/run` call in the network tab and normal behaviour.
@@ -197,7 +199,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 
 ---
 
-### Task 7: Layout hardening and Store assets (19.0)
+### Task 7: Layout hardening and Store assets (20.0)
 
 **Files:**
 - Modify: `static/src/preview.scss`, `static/src/preview_dialog.xml`
@@ -207,20 +209,20 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - [ ] **Step 2:** Manual check in Arabic (user language `ar_001`). Expected: dialog mirrors, numbers keep left-to-right inside, no overlap.
 - [ ] **Step 3:** Manual check at phone width. Expected: dialog is full width, footer pinned.
 - [ ] **Step 4:** Write `index.html` (app-neutral copy: what it does, three screenshots from sales, inventory and accounting) and the icon. Expected: Odoo Apps list shows the icon and description.
-- [ ] **Step 5:** Milestone 1 acceptance: run the spec's Done list on 19.0 (switch, popup, Where, journal view, toast links, no commit, no email sent, no sequence burned). Expected: all pass. Open the milestone 1 PR against `19.0`.
+- [ ] **Step 5:** Milestone 1 acceptance: run the spec's Done list on 20.0 (switch, popup, Where, journal view, toast links, no commit, no email sent, no sequence burned). Expected: all pass. Open the milestone 1 PR against `20.0`.
 
 ---
 
-### Task 8: Port to 18.0, 17.0, 16.0, 20.0
+### Task 8: Port to 19.0, 18.0, 17.0, 16.0
 
 One pass per version, in this order, each ending with the same acceptance as Task 7 step 5.
 
 **Files per version:** the same module tree on the branch named for the version, cloned at `odoo-<v>/addons/preview_mode`.
 
-- [ ] **Step 1 (per version):** The branch `<v>` is cut from `19.0`. Its clone sits at `odoo-<v>/addons/preview_mode` and is listed in that Odoo checkout's `.git/info/exclude`. Install on a fresh `pm<v>` database.
+- [ ] **Step 1 (per version):** The branch `<v>` is cut from `20.0`. Its clone sits at `odoo-<v>/addons/preview_mode` and is listed in that Odoo checkout's `.git/info/exclude`. Install on a fresh `pm<v>` database.
 - [ ] **Step 2 (per version):** Adjust and re-run the Python tests. Known differences to handle: controller RPC `type='json'` on 16.0, 17.0, 18.0 versus `'jsonrpc'` on 19.0, 20.0; manifest version prefix; cursor commit neutralisation technique; `session_info` location; the `readonly` route flag only exists on 18.0 and later.
-- [ ] **Step 3 (per version):** Port the frontend. 18.0 and 17.0: same service approach on `doActionButton` in `action_service.js` (signature differs, see `odoo-18.0/addons/web/static/src/webclient/actions/action_service.js:1442` and `odoo-17.0/...:1229`). 16.0: OWL 1 and legacy widgets, wrap `doActionButton` at `action_service.js:1267`, and check legacy views that bypass it. 20.0: the code moved to `webclient/actions/action_plugin.js` (plugin architecture), so write the wrapper against that file.
-- [ ] **Step 4 (per version):** Run Task 6 steps 2 to 6 manually and Task 7 steps 1 to 3. Expected: same results as 19.0.
+- [ ] **Step 3 (per version):** Port the frontend from the 20.0 reference. 19.0: `doActionButton` in `odoo-19.0/addons/web/static/src/webclient/actions/action_service.js:1499`, same service approach. 18.0: same file `:1442`. 17.0: `:1229`. 16.0: OWL 1 and legacy widgets, wrap `doActionButton` at `:1267` and check legacy views that bypass it.
+- [ ] **Step 4 (per version):** Run Task 6 steps 2 to 6 manually and Task 7 steps 1 to 3. Expected: same results as 20.0.
 - [ ] **Step 5 (per version):** Open a port PR against branch `<v>`. Repeat for the next version.
 
 ---
