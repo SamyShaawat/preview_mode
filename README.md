@@ -77,7 +77,7 @@ git clone --branch 20.0 https://github.com/SamyShaawat/preview_mode.git /path/to
 - Security: available to internal users. A preview runs with the user's own access rights, so it can never show or do more than the real click.
 - Menu paths shown in the "Where" column only include menus the user can open.
 - Odoo.sh: built to work there. No external Python packages, no system changes, no files written outside Odoo's own storage, and safe with several workers. On Odoo.sh, add this repo as a git submodule named `preview_mode` in your project repository.
-- License: OPL-1 (planned).
+- License: OPL-1 (Odoo Proprietary License v1.0). See [LICENSE](LICENSE).
 
 ## Docs
 
