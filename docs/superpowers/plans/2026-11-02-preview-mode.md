@@ -54,6 +54,8 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 
 ---
 
+**Progress (2026-11-03):** Tasks 1 to 5 done on 20.0 (47 tests with Accounting). Task 6 client built and checked by hand on 20.0 (toggle, popup, smart button, one row per record); Task 6 steps 1, 2, 7 ticked, steps 3 and 6 checked by hand (toast, dirty form); 1b (Enterprise only), 4, 5b still open, Arabic and phone width not testable here so far. Task 7 next. Ports (Task 8) wait for the owner.
+
 ### Task 1: Module skeleton and 20.0 wiring
 
 **Files:**
@@ -63,10 +65,10 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 **Interfaces:**
 - Produces: an installable module `preview_mode` on 20.0 that later tasks fill.
 
-- [ ] **Step 1:** Write `__manifest__.py` with name `Preview Mode`, summary `See what a button click will do before it does it`, category `Productivity`, `depends: ['base','web']`, `license: 'OPL-1'`, `installable: True`, `application: False`, assets bundle `web.assets_backend` with the glob `preview_mode/static/src/**/*` (an empty glob is harmless before Task 6), and `post_load: 'post_load'`.
-- [ ] **Step 2:** Create the empty package `__init__.py` files and an empty `post_load()` function in `__init__.py`. Add `preview_mode` to `odoo-20.0/.git/info/exclude`.
-- [ ] **Step 3:** Install on a fresh database. Run (from `odoo-20.0`): `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm20 -i preview_mode --stop-after-init`. Expected: exits 0, log shows `Module preview_mode loaded`, no warnings naming `preview_mode`.
-- [ ] **Step 4:** Open the first PR against `20.0` (see `CONTRIBUTING.md`).
+- [x] **Step 1:** Write `__manifest__.py` with name `Preview Mode`, summary `See what a button click will do before it does it`, category `Productivity`, `depends: ['base','web']`, `license: 'OPL-1'`, `installable: True`, `application: False`, assets bundle `web.assets_backend` with the glob `preview_mode/static/src/**/*` (an empty glob is harmless before Task 6), and `post_load: 'post_load'`.
+- [x] **Step 2:** Create the empty package `__init__.py` files and an empty `post_load()` function in `__init__.py`. Add `preview_mode` to `odoo-20.0/.git/info/exclude`.
+- [x] **Step 3:** Install on a fresh database. Run (from `odoo-20.0`): `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm20 -i preview_mode --stop-after-init`. Expected: exits 0, log shows `Module preview_mode loaded`, no warnings naming `preview_mode`.
+- [x] **Step 4:** Open the first PR against `20.0` (see `CONTRIBUTING.md`).
 
 ---
 
@@ -84,7 +86,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
   - `active_recorder() -> ChangeRecorder | None`.
 - Produces in `base.py`: `class Base(models.AbstractModel)` with `_inherit = 'base'` overriding `create`, `write`, `unlink`. Each calls `active_recorder()` once; when it is `None` the override just calls `super()`.
 
-- [ ] **Step 1: Failing tests** in `test_recorder.py`:
+- [x] **Step 1: Failing tests** in `test_recorder.py`:
   - `test_create_is_recorded`: inside `ChangeRecorder()`, `env['res.partner'].create({'name': 'A'})` gives one `Change` with `kind == 'new'`, `model == 'res.partner'`, `display_name == 'A'`.
   - `test_write_records_old_and_new`: write `name` from `A` to `B` gives `kind == 'changed'` and `fields == [('Name', 'A', 'B')]`.
   - `test_unlink_is_recorded`: `kind == 'deleted'`.
@@ -92,10 +94,10 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
   - `test_transient_ignored`: creating a wizard record produces zero changes.
   - `test_no_recorder_means_no_effect`: with no recorder active, `active_recorder() is None` and create/write behave normally.
   - `test_recorder_cleared_after_exception`: raise inside `with ChangeRecorder()`; afterwards `active_recorder() is None`. (Review Focus 5.)
-- [ ] **Step 2:** Run `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm20 -u preview_mode --test-tags /preview_mode:TestRecorder --stop-after-init`. Expected: FAIL (names missing).
-- [ ] **Step 3:** Implement `recorder.py` and `base.py` per Interfaces. The thread-local is a module-level `threading.local()`. In `write`, read old values with `read(list(vals))` only when a recorder is active. Many2one, selection and monetary values are rendered through `display_name` or the selection label.
-- [ ] **Step 4:** Re-run the same command. Expected: PASS.
-- [ ] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
+- [x] **Step 2:** Run `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm20 -u preview_mode --test-tags /preview_mode:TestRecorder --stop-after-init`. Expected: FAIL (names missing).
+- [x] **Step 3:** Implement `recorder.py` and `base.py` per Interfaces. The thread-local is a module-level `threading.local()`. In `write`, read old values with `read(list(vals))` only when a recorder is active. Many2one, selection and monetary values are rendered through `display_name` or the selection label.
+- [x] **Step 4:** Re-run the same command. Expected: PASS.
+- [x] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 
@@ -111,7 +113,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - Produces in `guards.py`: `safe_run(env) -> ContextManager[ChangeRecorder]`. Opens a savepoint, activates a recorder, neutralises `cr.commit`, makes `ir.sequence._next` return `'(new)'`, makes `ir.mail_server.send_email` record to `recorder.emails` and send nothing, makes outgoing `requests` calls raise `PreviewBlocked` and add a warning, and makes opening any other cursor set `recorder.incomplete = True` and raise `PreviewIncomplete`. Always rolls back the savepoint. Also defines `class PreviewBlocked(Exception)` and `class PreviewIncomplete(Exception)`.
 - Produces in `where.py`: `locate(env, model_name: str, record=None) -> str` returning a menu path such as `Accounting › Accounting › Journal Entries` using the `complete_name` of the nearest-to-root visible `ir.ui.menu` whose window action has that `res_model`. Falls back to the parent record's path (first required many2one such as `move_id`, `order_id`, `picking_id`), then to the model's description. Menus the user cannot open are never used.
 
-- [ ] **Step 1: Failing tests** in `test_guards.py` (use a real second cursor from `self.registry.cursor()` for the commit test, because `TransactionCase` already neutralises commit):
+- [x] **Step 1: Failing tests** in `test_guards.py` (use a real second cursor from `self.registry.cursor()` for the commit test, because `TransactionCase` already neutralises commit):
   - `test_rollback_after_run`: create a partner inside `safe_run`, afterwards `search_count` of that name is 0.
   - `test_commit_does_not_persist`: inside `safe_run` on a real cursor, create a partner then call `cr.commit()`; a fresh cursor then finds none. Clean up any row on failure.
   - `test_sequence_is_placeholder_and_not_consumed`: `env['ir.sequence'].next_by_code(code)` inside returns `'(new)'`; the next call outside returns the first real number.
@@ -122,10 +124,10 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
   - `test_where_uses_menu_path`: `locate(env, 'res.partner')` returns a string containing `›` and ending with a menu name.
   - `test_where_hides_inaccessible_menu`: for a user without the menu's group, the path is the model description, not the menu path. (Review Focus 4.)
   - `test_where_falls_back_to_parent`: a model with no menu returns the parent's path.
-- [ ] **Step 2:** Run `... -u preview_mode --test-tags /preview_mode:TestGuards,/preview_mode:TestWhere --stop-after-init`. Expected: FAIL.
-- [ ] **Step 3:** Implement `guards.py` and `where.py`. Commit neutralisation on 20.0: replace the commit callable on the cursor instance for the duration of the run (verify the cursor class allows this; otherwise wrap `Cursor.commit` once with a thread-local check). HTTP guard patches `requests.Session.send` once in `post_load` with a thread-local check. Cursor guard patches `Registry.cursor` the same way.
-- [ ] **Step 4:** Re-run. Expected: PASS.
-- [ ] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
+- [x] **Step 2:** Run `... -u preview_mode --test-tags /preview_mode:TestGuards,/preview_mode:TestWhere --stop-after-init`. Expected: FAIL.
+- [x] **Step 3:** Implement `guards.py` and `where.py`. Commit neutralisation on 20.0: replace the commit callable on the cursor instance for the duration of the run (verify the cursor class allows this; otherwise wrap `Cursor.commit` once with a thread-local check). HTTP guard patches `requests.Session.send` once in `post_load` with a thread-local check. Cursor guard patches `Registry.cursor` the same way.
+- [x] **Step 4:** Re-run. Expected: PASS.
+- [x] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 
@@ -149,7 +151,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
   - `POST /preview_mode/created` (params `token: str`) returns `[{'model','res_id','name','menu_path'}]` for records created by the real run carrying that token, then deletes the rows.
 - Token recording: a transient model `preview.mode.created` (fields `token`, `model`, `res_id`, `name`); `base.create` writes a row when `self.env.context.get('preview_mode_token')` is set, ignoring the same models as the recorder and ignoring `preview.mode.created` itself.
 
-- [ ] **Step 1: Failing tests:**
+- [x] **Step 1: Failing tests:**
   - `test_payload_for_create_button`: `build_preview(env,'res.partner','create_company',[partner.id],[],{},'Create company')` has one `changes` row with `kind 'new'`, nonempty `where`, and `summary` starting `Confirming will create`.
   - `test_payload_empty_for_action_only_button`: a method returning `{'type':'ir.actions.act_window',...}` with no writes gives `changes == []`. (Review Focus 1.)
   - `test_payload_failing_button_is_blocking_warning`: a method raising `UserError('Period locked')` gives a warning with `blocking == True` and text `Confirming will fail: Period locked`. (Review Focus 2.)
@@ -157,10 +159,10 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
   - `test_payload_rolls_back`: after `build_preview` the changes are not in the database.
   - `test_user_flag_is_self_writable`: a plain internal user can write `preview_mode_enabled` on themselves.
   - `test_created_endpoint_returns_and_clears`: a real call carrying `preview_mode_token='t1'` that creates a partner, then `/preview_mode/created` with `'t1'` returns one entry; a second call returns `[]`.
-- [ ] **Step 2:** Run `... --test-tags /preview_mode:TestPayload,/preview_mode:TestController --stop-after-init`. Expected: FAIL.
-- [ ] **Step 3:** Implement. The controller must call `build_preview` with the request's real environment and the user's own rights (no `sudo`). Do not override `call_button`.
-- [ ] **Step 4:** Re-run. Expected: PASS.
-- [ ] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
+- [x] **Step 2:** Run `... --test-tags /preview_mode:TestPayload,/preview_mode:TestController --stop-after-init`. Expected: FAIL.
+- [x] **Step 3:** Implement. The controller must call `build_preview` with the request's real environment and the user's own rights (no `sudo`). Do not override `call_button`.
+- [x] **Step 4:** Re-run. Expected: PASS.
+- [x] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 
@@ -174,11 +176,11 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - Consumes: `build_preview` from Task 4.
 - Produces: `payload['journal']` as `[{'move': str, 'lines': [{'account': str, 'debit': float, 'credit': float}], 'balanced': bool}]`, filled only when `'account.move' in env` and a new `account.move` was recorded. Otherwise `[]`.
 
-- [ ] **Step 1: Failing test** (tagged `post_install`, skipped when `account` is not installed): `test_journal_for_post_button`: previewing `action_post` on a draft vendor bill returns one journal entry whose debit total equals credit total and `balanced is True`.
-- [ ] **Step 2:** Run the test. Expected: FAIL.
-- [ ] **Step 3:** Implement by reading the recorded new `account.move` lines before rollback.
-- [ ] **Step 4:** Re-run. Expected: PASS. Also run on a fresh database without `account` (`-i preview_mode`). Expected: PASS, test skipped.
-- [ ] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
+- [x] **Step 1: Failing test** (tagged `post_install`, skipped when `account` is not installed): `test_journal_for_post_button`: previewing `action_post` on a draft vendor bill returns one journal entry whose debit total equals credit total and `balanced is True`.
+- [x] **Step 2:** Run the test. Expected: FAIL.
+- [x] **Step 3:** Implement by reading the recorded new `account.move` lines before rollback.
+- [x] **Step 4:** Re-run. Expected: PASS. Also run on a fresh database without `account` (`-i preview_mode`). Expected: PASS, test skipped.
+- [x] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 
@@ -192,15 +194,15 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - Produces: a service `preview_mode` that wraps `env.services.action.doActionButton`. For `params.type === 'object'` with the toggle on, it calls `/preview_mode/run`; empty `changes` runs the original; otherwise it opens `PreviewDialog` with props `{ title, summary, warnings, changes, journal, confirmLabel, onConfirm, onBack }`. `onConfirm` runs the original `doActionButton` with `context.preview_mode_token = <uuid>`, then calls `/preview_mode/created` and shows a toast with one link per record. `onBack` only closes the dialog.
 - Toggle: a systray item (registered in the `systray` registry) in the top bar, label `Preview mode`, an eye icon, pressed state while on (`aria-pressed`), tooltip, keyboard operable, writing `preview_mode_enabled` on the current user; it must appear on every page on Community and Enterprise.
 
-- [ ] **Step 1:** First read `odoo-20.0/addons/web/static/src/webclient/actions/action_plugin.js` and find where button clicks are executed; the `doActionButton` wrapper described here is the 19.0 and earlier shape, so wrap the 20.0 equivalent and note it in the PR. Then build per the Interfaces, following the design document's section 3 for every visible string and layout rule.
-- [ ] **Step 1b:** Manual check, the toggle itself: it is in the top bar on every page (Community and Enterprise), shows a pressed look and accent colour while on and a plain look while off, has a tooltip and `aria-pressed`, works with Tab and Enter or Space, and keeps its state after a page reload and after logging out and in. Expected: all true.
-- [ ] **Step 2:** Manual check: click the Preview mode toggle in the top bar (it shows a pressed state), open a draft record with a Confirm-type button, click it. Expected: popup titled `Preview: <label>`, exact subtext, What/Where table, footer `[<label>] [Go back]`. Click `Go back`. Expected: record unchanged in the database, no message in chatter.
-- [ ] **Step 3:** Manual check: click the button again, then the primary button. Expected: real action runs once, toast appears with clickable links, each opens its record.
+- [x] **Step 1:** First read `odoo-20.0/addons/web/static/src/webclient/actions/action_plugin.js` and find where button clicks are executed; the `doActionButton` wrapper described here is the 19.0 and earlier shape, so wrap the 20.0 equivalent and note it in the PR. Then build per the Interfaces, following the design document's section 3 for every visible string and layout rule.
+- [ ] **Step 1b:** Manual check, the toggle itself: it is in the top bar on every page (Community and Enterprise), shows a pressed look and accent colour while on and a plain look while off, has a tooltip and `aria-pressed`, works with Tab and Enter or Space, and keeps its state after a page reload and after logging out and in. Expected: all true. (Community done 2026-11-03: eye in top bar, aria-pressed, kept after reload; Tab/Enter and Enterprise Tab, Space and Enter checked on 2026-11-03; Enterprise not checked.)
+- [x] **Step 2:** Manual check: click the Preview mode toggle in the top bar (it shows a pressed state), open a draft record with a Confirm-type button, click it. Expected: popup titled `Preview: <label>`, exact subtext, What/Where table, footer `[<label>] [Go back]`. Click `Go back`. Expected: record unchanged in the database, no message in chatter.
+- [x] **Step 3:** Manual check: click the button again, then the primary button. Expected: real action runs once, toast appears with clickable links, each opens its record.
 - [ ] **Step 4:** Manual check: click the toggle again to turn it off. Expected: it looks plain again, no `/preview_mode/run` call in the network tab and normal behaviour.
 - [ ] **Step 5:** Manual check: click Print and a smart button with the toggle on. Expected: no popup.
 - [ ] **Step 5b:** Manual check, any app and any user: with a plain internal user (no special group) and no per-app setup, preview a Confirm in Sales, a Validate in Inventory, and a button in a third app or a custom model. Expected: the same popup behaviour in all three, nothing to configure.
-- [ ] **Step 6:** Manual check with a dirty form: edit a field, click the button. Expected: the edit is saved first as in stock Odoo, then the popup shows only the button's effects.
-- [ ] **Step 7:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
+- [x] **Step 6:** Manual check with a dirty form: edit a field, click the button. Expected: the edit is saved first as in stock Odoo, then the popup shows only the button's effects.
+- [x] **Step 7:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 
