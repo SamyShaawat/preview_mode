@@ -35,8 +35,11 @@ class PreviewModeController(Controller):
             ('token', '=', token), ('create_uid', '=', request.env.uid)])
         env = request.env
         # A deleted record (empty recordset) would pass the access check, so require it to exist.
-        rows_shown = rows.filtered(lambda r: r.model in env and (rec := env[r.model].browse(r.res_id).exists())
-                                   and _readable(rec))
+        rows_shown = rows.browse()
+        for row in rows:
+            rec = env[row.model].browse(row.res_id).exists() if row.model in env else None
+            if rec and _readable(rec):
+                rows_shown |= row
         result = [{
             'model': row.model,
             'res_id': row.res_id,

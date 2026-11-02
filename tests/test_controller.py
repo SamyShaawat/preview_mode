@@ -63,6 +63,11 @@ class TestController(HttpCase):
         self.assertFalse(Created.search([('token', '=', 'iso2')]))
         with self.assertRaises(AccessError):
             Created.browse(rows_a.ids).read(['name'])
+        with self.assertRaises(AccessError):
+            Created.browse(rows_a.ids).unlink()
+        with self.assertRaises(AccessError):
+            Created.browse(rows_a.ids).write({'name': 'hijacked'})
+        self.assertEqual(rows_a.name, 'A made')
 
     def test_owner_gets_own_records_and_rows_removed(self):
         user_a, user_b, rows_a = self._two_users_with_rows('iso3')
