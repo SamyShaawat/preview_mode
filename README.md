@@ -4,7 +4,7 @@
 
 **See what a button click will do before it does it.**
 
-Preview Mode is an Odoo app for every user of every app. Turn on a switch, click a button that changes data (Confirm, Validate, Post, and so on), and a popup lists what the click would create, change or delete, and where each change lands in Odoo's menus. Then you confirm for real or go back. Nothing from the click is saved during the preview.
+Preview Mode is an Odoo app for every user of every app. Turn on the Preview toggle in the top bar, click a button that changes data (Confirm, Validate, Post, and so on), and a popup lists what the click would create, change or delete, and where each change lands in Odoo's menus. Then you confirm for real or go back. Nothing from the click is saved during the preview.
 
 > **Status: in development.** Built so far: the module skeleton, the change recorder (it records what a click would create, change or delete), and the safe-run guards in review (they make sure a preview never saves, emails, calls out or uses real numbers). The switch and the popup are not built yet, so there is nothing to click today. The design and plan are in [Docs](#docs).
 
@@ -12,13 +12,13 @@ Preview Mode is an Odoo app for every user of every app. Turn on a switch, click
 
 Confirming a vendor bill posts journal entries. Confirming a sales order creates deliveries. Validating a transfer moves stock. These clicks are hard to undo, and Odoo does not show you the result first. Preview Mode does.
 
-It works on any button that changes data, in any app, for any user. There is no list of supported apps, models, buttons or users, and nothing to configure per app: install it, turn the switch on, and it applies everywhere.
+It works on any button that changes data, in any app, for any user. There is no list of supported apps, models, buttons or users, and nothing to configure per app: install it, turn the Preview toggle on, and it applies everywhere.
 
 It is not an accounting module. Sales, purchase, inventory, manufacturing, CRM, HR, project and third-party apps all get the same preview.
 
 ## How it works for the user
 
-1. Turn on **Preview mode** with the switch on the right side of the control bar. It is remembered for your user.
+1. Click the **Preview mode** toggle button in the top bar. It is on every page, and it lights up while preview is on. Click it again to turn it off. Your choice is remembered for your user.
 2. Click a button that changes data, for example **Confirm** on a vendor bill.
 3. A popup titled **Preview: Confirm** opens with the message "This is a preview. Nothing from this click has been saved yet."
 4. Read it, then press **Confirm** to run the real action, or **Go back** to leave everything as it was.

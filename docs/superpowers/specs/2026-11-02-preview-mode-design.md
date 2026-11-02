@@ -6,7 +6,7 @@ Date: 2026-11-02. Status: draft for approval. Technical module name: `preview_mo
 
 An accountant is afraid of clicking Confirm on a vendor bill and posting wrong journal entries. Posting is hard to undo, so they want to see the result first. The same fear exists everywhere in Odoo: confirming a sales order creates deliveries, validating a transfer moves stock, and so on.
 
-Preview Mode lets any user see what a button click would do before it does it. With a switch on, clicking a button that would change data opens a popup listing what would be created, changed or deleted, and where each change lands in Odoo's menus. The user then confirms for real or goes back. Nothing is saved during the preview.
+Preview Mode lets any user see what a button click would do before it does it. With the Preview mode toggle on, clicking a button that would change data opens a popup listing what would be created, changed or deleted, and where each change lands in Odoo's menus. The user then confirms for real or goes back. Nothing is saved during the preview.
 
 The product is a paid app for the Odoo Store, for Community (and so Enterprise), versions 16.0, 17.0, 18.0, 19.0 and 20.0.
 
@@ -34,18 +34,18 @@ Anti-goals (failure even if it technically works)
 - A preview that saves anything, sends an email, or calls an outside service.
 - A preview that burns real sequence numbers (invoice, delivery, etc.).
 - A preview that says "all fine" when it could not fully run (a blocked external call, a separate database connection). It must say it is incomplete instead.
-- A popup or switch that looks like generic AI styling, or that overlaps, truncates or collides text.
-- Slowing normal use when the switch is off.
+- A popup or toggle that looks like generic AI styling, or that overlaps, truncates or collides text.
+- Slowing normal use when the toggle is off.
 
 ## 3. The user experience (decided by the owner unless marked)
 
 Turning it on
-- A "Preview mode" switch in the control bar, top right of the form, away from the action buttons. (Owner approved; name and position chosen as best practice.)
+- A **Preview mode** toggle button in the top bar (a systray item), always visible on every page and in the same place on Community and Enterprise. Click it to turn preview on, click it again to turn it off. It shows a clear state: pressed look and accent colour while on, plain while off, `aria-pressed`, a tooltip, and it works with the keyboard. Owner request 2026-11-02: a toggle button at the top of the page. The author put it in the systray (top bar, right side) because that is the stable, documented place for global toggles on 16 to 20; the left side of the bar differs between Community and Enterprise.
 - Per user, remembered between sessions (author's call).
 
 What counts as a button to preview
 - Only buttons that change data. Smart buttons, Print, Open, filters and anything read-only behave normally with no popup.
-- Mechanism (author's call, owner agreed in principle): with the switch on, the click runs inside a rollback. If nothing real would be created, changed or deleted, the click runs normally and no popup appears. So no per-button list is needed.
+- Mechanism (author's call, owner agreed in principle): with the toggle on, the click runs inside a rollback. If nothing real would be created, changed or deleted, the click runs normally and no popup appears. So no per-button list is needed.
 - Records of transient (wizard) models are ignored when deciding. A click that only opens a wizard is not a change.
 - In scope for v1: buttons that call a method on a model (`type="object"`), on forms, statusbars, list headers and inside wizards.
 
@@ -69,7 +69,7 @@ After the user confirms
 ## 4. How it works (author's calls, not yet agreed by the owner)
 
 Interception
-- With the switch on, the web client adds a context flag to the button call. On the server a controller override of the button-call route runs the method in preview. Route name and shape differ by version and must be verified per branch (known route: `/web/dataset/call_button`).
+- With the toggle on, the web client adds a context flag to the button call. On the server a controller override of the button-call route runs the method in preview. Route name and shape differ by version and must be verified per branch (known route: `/web/dataset/call_button`).
 - The real run (user presses Confirm in the popup) calls the same method with the same arguments. Its behaviour is unchanged. The one addition: the server also notes the ids and names of records created during that run, only to build the toast links. It changes and blocks nothing. Links come from the real run, never from the preview's rolled-back ids.
 - Unsaved edits: the web client normally saves a dirty form before calling an object button. That save is kept as is (it is the user's own draft edit) and happens before the preview starts. The popup subtext therefore says "Nothing from this click has been saved yet", not "nothing saved". The popup shows only what the button itself would do. Previewing the save and the button together is out of scope.
 - What counts as a change: ignore audit fields (`write_date`, `write_uid`, `create_date`, `create_uid`), `mail.tracking.value`, `mail.followers`, `mail.message` notes and logs, `ir.attachment`, and transient models. Emails that would be sent are shown as "Email to <recipient> (queued)". If everything else is empty, the click runs normally with no popup. Anything not on this ignore list counts and is shown. The builder may extend the list when a version shows noise, and must keep the list in one place.
@@ -98,7 +98,7 @@ Security
 - Depends on `base` and `web` only. Must install on Community.
 - Must work on Odoo.sh (owner requirement, 2026-11-02): no external Python packages and no `requirements.txt`, no system or `subprocess` calls, no writes to the file system outside Odoo's own storage, all state in the database (several workers share no memory), no route marked `readonly`, no dependence on `odoo.conf` options or server flags, no Enterprise-only code. Odoo.sh users add the repo as a git submodule named `preview_mode`.
 - Must work when installed next to Odoo Enterprise (owner requirement, 2026-11-02): it stays a Community module with no Enterprise dependency, but it must install and run with the Enterprise addons present. Enterprise's `web_enterprise` replaces parts of the web client (navbar, control panel), so UI hooks use stable, documented entry points and the Preview mode switch must render in both layouts.
-- No allow-list or deny-list of any kind: once the module is installed and the Preview mode switch is on, it works on every button that changes data, in every app (core, Enterprise, third-party or custom), for every internal user. No per-app, per-model, per-button or per-user configuration.
+- No allow-list or deny-list of any kind: once the module is installed and the Preview mode toggle is on, it works on every button that changes data, in every app (core, Enterprise, third-party or custom), for every internal user. No per-app, per-model, per-button or per-user configuration.
 - Licence: OPL-1, the Odoo Proprietary License v1.0 (owner decision, 2026-11-02). Store review required per version. A paid listing also needs `price` and `currency` in the manifest.
 - No commit or push by the assistant: the owner commits.
 
@@ -109,7 +109,7 @@ Security
 - Build order: 20.0 as the reference and default branch, then 19.0, 18.0, 17.0 and 16.0. Shared Python is ported by cherry-pick; frontend ported by hand.
 - Checkouts: all five exist at `/media/samy/Home/My-Github/Odoo/odoo-X.0/`, each with `odoo-venv/` (Python 3.12) and `odoo.conf`. 16.0 and 20.0 were cloned from GitHub on 2026-11-02 like the other three.
 - Manifest version format follows Odoo: `20.0.1.0.0`, and so on per branch.
-- Done means: milestone 1 is 20.0 working end to end (switch, popup, Where column, journal entry view, toast links, no commit, no email sent, no real sequence number burned). Each other version is done when its branch meets the same list. The Store release can go version by version. The `20.0` branch exists on GitHub (checked 2026-11-02), so no fallback is needed; if it later turns out unusable, drop 20.0 and say so.
+- Done means: milestone 1 is 20.0 working end to end (toggle, popup, Where column, journal entry view, toast links, no commit, no email sent, no real sequence number burned). Each other version is done when its branch meets the same list. The Store release can go version by version. The `20.0` branch exists on GitHub (checked 2026-11-02), so no fallback is needed; if it later turns out unusable, drop 20.0 and say so.
 
 ## 7. Left to the builder
 
@@ -130,7 +130,7 @@ Approved visuals were shown in a browser session (three screens: the popup with 
 ## 10. Calls the author made (check these)
 
 1. Module name `preview_mode`.
-2. Switch remembered per user.
+2. Toggle state remembered per user.
 3. Detecting "would change data" by running inside a rollback, with no per-button list.
 4. v1 covers `type="object"` buttons only.
 5. Wizard-only (transient) records ignored when deciding whether to show the popup.
@@ -145,3 +145,4 @@ Approved visuals were shown in a browser session (three screens: the popup with 
 14. 20.0 working end to end is milestone 1; the Store release can go version by version.
 15. Odoo.sh compatibility is a hard requirement (owner, 2026-11-02): see section 5.
 16. Enterprise compatibility is a hard requirement (owner, 2026-11-02): see section 5. Verified on the versions where Enterprise source is available.
+17. The Preview mode control is a toggle button in the top bar (systray), per the owner's request on 2026-11-02; top-right systray rather than top-left is the author's call (see section 3).

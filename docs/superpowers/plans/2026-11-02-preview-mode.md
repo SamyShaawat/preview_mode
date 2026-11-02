@@ -4,7 +4,7 @@
 
 **Goal:** An Odoo Community app, `preview_mode`, that shows what a data-changing button click would create, change or delete, and where, before the user commits to it. Versions 16.0 to 20.0, milestone 1 is 20.0.
 
-**Architecture:** A server route runs the clicked method inside a savepoint with every side channel guarded (commit, sequences, mail, HTTP, extra cursors), records changes through a thread-local recorder hooked on `base` create/write/unlink, then always rolls back and returns a JSON payload. A client wrapper around `doActionButton` calls it when the per-user switch is on, shows a native dialog, and on Confirm runs the original click with a token so the real run reports the records it created for the toast links.
+**Architecture:** A server route runs the clicked method inside a savepoint with every side channel guarded (commit, sequences, mail, HTTP, extra cursors), records changes through a thread-local recorder hooked on `base` create/write/unlink, then always rolls back and returns a JSON payload. A client wrapper around `doActionButton` calls it when the per-user toggle is on, shows a native dialog, and on Confirm runs the original click with a token so the real run reports the records it created for the toast links.
 
 **Tech Stack:** Python (Odoo ORM, werkzeug), OWL (JS) per Odoo version, QWeb XML, PostgreSQL savepoints. No external dependencies.
 
@@ -14,13 +14,13 @@
 
 - Manifest `depends` is `['base', 'web']` only. Must install on Community. `license` is `OPL-1`. Version string `<series>.1.0.0` (for example `20.0.1.0.0`).
 - Must work on Odoo.sh (owner requirement, 2026-11-02): no external Python packages and no `requirements.txt`, no system or `subprocess` calls, no writes to the file system outside Odoo's own storage, all state in the database (several workers share no memory), no route marked `readonly`, no dependence on `odoo.conf` options or server flags, no Enterprise-only code. Odoo.sh users add the repo as a git submodule named `preview_mode`. Every task review checks this.
-- Must work when installed next to Odoo Enterprise (owner requirement, 2026-11-02): it stays a Community module with no Enterprise dependency, but it must install and run with the Enterprise addons present. Enterprise's `web_enterprise` replaces parts of the web client (navbar, control panel), so UI hooks use stable, documented entry points and the Preview mode switch must render in both layouts. Every task review checks this.
-- No allow-list or deny-list of any kind: once the module is installed and the Preview mode switch is on, it works on every button that changes data, in every app (core, Enterprise, third-party or custom), for every internal user. No per-app, per-model, per-button or per-user configuration. Every task review checks this.
+- Must work when installed next to Odoo Enterprise (owner requirement, 2026-11-02): it stays a Community module with no Enterprise dependency, but it must install and run with the Enterprise addons present. Enterprise's `web_enterprise` replaces parts of the web client (navbar, control panel), so UI hooks use stable, documented entry points and the Preview mode toggle must render in both layouts. Every task review checks this.
+- No allow-list or deny-list of any kind: once the module is installed and the Preview mode toggle is on, it works on every button that changes data, in every app (core, Enterprise, third-party or custom), for every internal user. No per-app, per-model, per-button or per-user configuration. Every task review checks this.
 - Audience is every user of every app. No accounting dependency. No accounting wording in names, defaults or screenshots.
 - Popup title is `Preview: <button label>`. Subtext is exactly `This is a preview. Nothing from this click has been saved yet.` Footer left to right: primary button with the clicked button's label, then `Go back`. Warning wording for a failing click starts `Confirming will fail:`. The Confirm button is never disabled.
 - Look: Odoo native dialog (`web.Dialog` or the version's equivalent), one accent `#714b67`, flat tables, yellow only for the warning banner, no pills, no emoji, no gradients, no absolute positioning, header and footer fixed with a scrolling middle, logical start/end for RTL.
 - The preview never commits, never sends email, never calls an outside service, never consumes a real sequence number, and reports `incomplete` instead of an all-clear when it cannot be sure.
-- With the switch off, no extra RPC and no behaviour change. Server hooks cost one thread-local lookup.
+- With the toggle off, no extra RPC and no behaviour change. Server hooks cost one thread-local lookup.
 - Every task ships as a pull request: topic branch `<type>/<series>-<topic>`, base the matching version branch, squash merge, branch deleted after merge, no Claude attribution lines. See `CONTRIBUTING.md`.
 - Ignore list for "what counts as a change" lives in one place: `IGNORED_MODELS` and `IGNORED_FIELDS` in `models/recorder.py`.
 
@@ -44,7 +44,7 @@ preview_mode/                       (repo root = Odoo module; one branch per Odo
   __init__.py
   models/{__init__,recorder,base,guards,where,payload,res_users,ir_http}.py
   controllers/{__init__,main}.py
-  static/src/{preview_service.js,preview_dialog.js,preview_dialog.xml,preview_switch.js,preview_switch.xml,preview_toast.js,preview.scss}
+  static/src/{preview_service.js,preview_dialog.js,preview_dialog.xml,preview_toggle.js,preview_toggle.xml,preview_toast.js,preview.scss}
   static/description/{icon.png,index.html}
   tests/{__init__,test_recorder,test_guards,test_where,test_payload,test_controller}.py
   docs/superpowers/{specs,plans}/
@@ -182,21 +182,22 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 
 ---
 
-### Task 6: Client service, switch, dialog, toast (20.0)
+### Task 6: Client service, toggle, dialog, toast (20.0)
 
 **Files:**
-- Create: `static/src/preview_service.js`, `preview_dialog.js`, `preview_dialog.xml`, `preview_switch.js`, `preview_switch.xml`, `preview_toast.js`, `preview.scss`
+- Create: `static/src/preview_service.js`, `preview_dialog.js`, `preview_dialog.xml`, `preview_toggle.js`, `preview_toggle.xml`, `preview_toast.js`, `preview.scss`
 
 **Interfaces:**
 - Consumes: routes from Task 4, `session_info.preview_mode_enabled`.
-- Produces: a service `preview_mode` that wraps `env.services.action.doActionButton`. For `params.type === 'object'` with the switch on, it calls `/preview_mode/run`; empty `changes` runs the original; otherwise it opens `PreviewDialog` with props `{ title, summary, warnings, changes, journal, confirmLabel, onConfirm, onBack }`. `onConfirm` runs the original `doActionButton` with `context.preview_mode_token = <uuid>`, then calls `/preview_mode/created` and shows a toast with one link per record. `onBack` only closes the dialog.
-- Switch: a toggle on the right side of the control panel, label `Preview mode`, writing `preview_mode_enabled` on the current user.
+- Produces: a service `preview_mode` that wraps `env.services.action.doActionButton`. For `params.type === 'object'` with the toggle on, it calls `/preview_mode/run`; empty `changes` runs the original; otherwise it opens `PreviewDialog` with props `{ title, summary, warnings, changes, journal, confirmLabel, onConfirm, onBack }`. `onConfirm` runs the original `doActionButton` with `context.preview_mode_token = <uuid>`, then calls `/preview_mode/created` and shows a toast with one link per record. `onBack` only closes the dialog.
+- Toggle: a systray item (registered in the `systray` registry) in the top bar, label `Preview mode`, an eye icon, pressed state while on (`aria-pressed`), tooltip, keyboard operable, writing `preview_mode_enabled` on the current user; it must appear on every page on Community and Enterprise.
 
 - [ ] **Step 1:** First read `odoo-20.0/addons/web/static/src/webclient/actions/action_plugin.js` and find where button clicks are executed; the `doActionButton` wrapper described here is the 19.0 and earlier shape, so wrap the 20.0 equivalent and note it in the PR. Then build per the Interfaces, following the design document's section 3 for every visible string and layout rule.
-- [ ] **Step 2:** Manual check: enable the switch, open a draft record with a Confirm-type button, click it. Expected: popup titled `Preview: <label>`, exact subtext, What/Where table, footer `[<label>] [Go back]`. Click `Go back`. Expected: record unchanged in the database, no message in chatter.
+- [ ] **Step 1b:** Manual check, the toggle itself: it is in the top bar on every page (Community and Enterprise), shows a pressed look and accent colour while on and a plain look while off, has a tooltip and `aria-pressed`, works with Tab and Enter or Space, and keeps its state after a page reload and after logging out and in. Expected: all true.
+- [ ] **Step 2:** Manual check: click the Preview mode toggle in the top bar (it shows a pressed state), open a draft record with a Confirm-type button, click it. Expected: popup titled `Preview: <label>`, exact subtext, What/Where table, footer `[<label>] [Go back]`. Click `Go back`. Expected: record unchanged in the database, no message in chatter.
 - [ ] **Step 3:** Manual check: click the button again, then the primary button. Expected: real action runs once, toast appears with clickable links, each opens its record.
-- [ ] **Step 4:** Manual check, switch off. Expected: no `/preview_mode/run` call in the network tab and normal behaviour.
-- [ ] **Step 5:** Manual check: click Print and a smart button with the switch on. Expected: no popup.
+- [ ] **Step 4:** Manual check: click the toggle again to turn it off. Expected: it looks plain again, no `/preview_mode/run` call in the network tab and normal behaviour.
+- [ ] **Step 5:** Manual check: click Print and a smart button with the toggle on. Expected: no popup.
 - [ ] **Step 5b:** Manual check, any app and any user: with a plain internal user (no special group) and no per-app setup, preview a Confirm in Sales, a Validate in Inventory, and a button in a third app or a custom model. Expected: the same popup behaviour in all three, nothing to configure.
 - [ ] **Step 6:** Manual check with a dirty form: edit a field, click the button. Expected: the edit is saved first as in stock Odoo, then the popup shows only the button's effects.
 - [ ] **Step 7:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
@@ -213,7 +214,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - [ ] **Step 2:** Manual check in Arabic (user language `ar_001`). Expected: dialog mirrors, numbers keep left-to-right inside, no overlap.
 - [ ] **Step 3:** Manual check at phone width. Expected: dialog is full width, footer pinned.
 - [ ] **Step 4:** Write `index.html` (app-neutral copy: what it does, three screenshots from sales, inventory and accounting) and the icon. Expected: Odoo Apps list shows the icon and description.
-- [ ] **Step 5:** Milestone 1 acceptance: run the spec's Done list on 20.0 (switch, popup, Where, journal view, toast links, no commit, no email sent, no sequence burned). Expected: all pass. Open the milestone 1 PR against `20.0`.
+- [ ] **Step 5:** Milestone 1 acceptance: run the spec's Done list on 20.0 (toggle, popup, Where, journal view, toast links, no commit, no email sent, no sequence burned). Expected: all pass. Open the milestone 1 PR against `20.0`.
 
 ---
 
@@ -237,7 +238,7 @@ One pass per version, in this order, each ending with the same acceptance as Tas
 
 - [ ] **Step 1:** On 19.0, 18.0 and 17.0 (their `odoo.conf` already lists the Enterprise path) install with Enterprise apps present. Run from `odoo-<v>`: `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm<v>e -i web_enterprise,account_accountant,sale_management,stock,preview_mode --stop-after-init`. Expected: exit 0, no warning naming `preview_mode`.
 - [ ] **Step 2:** In the same database run `-u preview_mode --test-tags /preview_mode --stop-after-init`. Expected: all tests pass.
-- [ ] **Step 3:** Manual, in the browser with `web_enterprise` active: the Preview mode switch shows and works in the Enterprise control panel; the popup opens over the Enterprise layout; previewing Confirm on a sales order and on a vendor bill behaves as on Community; an Enterprise-only button (for example in `account_accountant`) previews or runs normally. Expected: same results as Community.
+- [ ] **Step 3:** Manual, in the browser with `web_enterprise` active: the Preview mode toggle shows and works in the Enterprise top bar; the popup opens over the Enterprise layout; previewing Confirm on a sales order and on a vendor bill behaves as on Community; an Enterprise-only button (for example in `account_accountant`) previews or runs normally. Expected: same results as Community.
 - [ ] **Step 3b:** With Enterprise installed, open Apps and find Preview Mode. Expected: the icon is crisp, centered and not cropped in the app card; there is no home-menu tile, because the module has no root menu.
 - [ ] **Step 4:** 20.0 and 16.0 have no Enterprise source locally. Ask the owner for it; until then mark them "Enterprise: not verified" in the README table.
 
