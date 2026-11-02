@@ -75,12 +75,16 @@ class TestGuards(TransactionCase):
     def test_exception_clears_every_guard(self):
         cr = self.env.cr
         commit = cr.commit
+        postcommit = cr.postcommit
+        calls = []
         with self.assertRaises(ZeroDivisionError), safe_run(self.env):
-            cr.postcommit.add(lambda: None)
+            cr.postcommit.add(lambda: calls.append(1))
             1 / 0
         self.assertIsNone(guards.guarded())
         self.assertEqual(cr.commit, commit)
-        self.assertEqual(len(cr.postcommit), 0)
+        self.assertIs(cr.postcommit, postcommit)
+        cr.postcommit.run()  # Callbacks.run exists on 16 to 20; __len__ does not
+        self.assertEqual(calls, [])
         self.registry.cursor().close()  # cursor guard is off again
 
     def _message(self):
