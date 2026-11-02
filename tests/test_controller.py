@@ -15,6 +15,15 @@ class TestController(HttpCase):
         self.assertEqual(first[0]['name'], 'Real run')
         self.assertEqual(self.make_jsonrpc_request('/preview_mode/created', {'token': 't1'}), [])
 
+    def test_created_endpoint_skips_child_lines(self):
+        admin = self.env.ref('base.user_admin')
+        partner = self.env['res.partner'].with_user(admin).with_context(preview_mode_token='t9').create({'name': 'P'})
+        self.env['res.partner.bank'].with_user(admin).with_context(preview_mode_token='t9').create({
+            'partner_id': partner.id, 'account_number': '123456'})
+        self.authenticate('admin', 'admin')
+        models = [r['model'] for r in self.make_jsonrpc_request('/preview_mode/created', {'token': 't9'})]
+        self.assertEqual(models, ['res.partner'])
+
     def test_run_route_returns_payload(self):
         partner = self.env['res.partner'].create({'name': 'Route Co'})
         self.authenticate('admin', 'admin')

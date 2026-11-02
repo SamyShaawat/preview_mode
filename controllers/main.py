@@ -21,6 +21,12 @@ def _readable(records):
     return True
 
 
+def _is_child_model(model):
+    # A line-like model (a required parent that deletes it by cascade) is part of its parent's
+    # link in the toast, e.g. journal items belong to the journal entry.
+    return any(f.type == 'many2one' and f.required and f.ondelete == 'cascade' for f in model._fields.values())
+
+
 class PreviewModeController(Controller):
     # Never readonly: the preview needs a savepoint on a writable cursor.
 
@@ -38,7 +44,7 @@ class PreviewModeController(Controller):
         rows_shown = rows.browse()
         for row in rows:
             rec = env[row.model].browse(row.res_id).exists() if row.model in env else None
-            if rec and _readable(rec):
+            if rec and not _is_child_model(rec) and _readable(rec):
                 rows_shown |= row
         result = [{
             'model': row.model,
