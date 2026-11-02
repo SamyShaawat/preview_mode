@@ -92,6 +92,7 @@ export const previewService = {
                         warnings: result.warnings,
                         changes: result.changes,
                         emails: result.emails,
+                        journal: result.journal,
                         incomplete: result.incomplete,
                         onConfirm: async () => {
                             const token = newToken();

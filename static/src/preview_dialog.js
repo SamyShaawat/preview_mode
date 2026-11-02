@@ -12,6 +12,7 @@ export class PreviewDialog extends Component {
         warnings: t.any(),
         changes: t.any(),
         emails: t.any(),
+        journal: t.any(),
         incomplete: t.any(),
         onConfirm: t.function(),
     });

@@ -9,7 +9,7 @@
                 <t t-out="warning.text"/>
             </div>
             <p t-if="this.props.incomplete" class="text-muted">Some effects could not be previewed and may still happen when you confirm.</p>
-            <table t-if="this.props.changes.length" class="table table-sm o_preview_table">
+            <table t-if="this.props.changes.length" class="table table-sm o_preview_table caption-top">
                 <caption class="fw-bold text-start">What will happen</caption>
                 <thead>
                     <tr><th>What</th><th>Where</th></tr>
@@ -18,23 +18,38 @@
                     <tr t-foreach="this.props.changes" t-as="row" t-key="row_index">
                         <td class="o_preview_what">
                             <div>
-                                <span t-if="row.kind === 'new'" class="fw-bold">New</span>
-                                <span t-elif="row.kind === 'changed'" class="fw-bold">Changed</span>
-                                <span t-elif="row.kind === 'deleted'" class="fw-bold">Deleted</span>
+                                <span t-if="row.kind === 'new'" class="fw-bold me-2">New</span>
+                                <span t-elif="row.kind === 'changed'" class="fw-bold me-2">Changed</span>
+                                <span t-elif="row.kind === 'deleted'" class="fw-bold me-2">Deleted</span>
                                 <t t-out="row.what"/>
                             </div>
                             <div t-foreach="row.fields" t-as="field" t-key="field_index" class="o_preview_field">
                                 <span class="text-muted" t-out="field.label"/>:
                                 <s t-if="field.old" class="text-muted" t-out="field.old"/>
                                 <span t-if="field.old"> → </span>
-                                <span class="o_preview_value" t-out="field.new"/>
+                                <span class="o_preview_value"><t t-out="field.new or '(empty)'"/></span>
                             </div>
                         </td>
                         <td class="o_preview_where" t-out="row.where"/>
                     </tr>
                 </tbody>
             </table>
-            <table t-if="this.props.emails.length" class="table table-sm o_preview_table">
+            <t t-foreach="this.props.journal" t-as="move" t-key="move_index">
+                <table class="table table-sm o_preview_table o_preview_journal caption-top">
+                    <caption class="fw-bold text-start">Journal entry <t t-out="move.move"/></caption>
+                    <thead>
+                        <tr><th>Account</th><th class="text-end">Debit</th><th class="text-end">Credit</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="move.lines" t-as="line" t-key="line_index">
+                            <td t-out="line.account"/>
+                            <td class="text-end text-nowrap"><t t-if="line.debit" t-out="line.debit.toFixed(2)"/></td>
+                            <td class="text-end text-nowrap"><t t-if="line.credit" t-out="line.credit.toFixed(2)"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </t>
+            <table t-if="this.props.emails.length" class="table table-sm o_preview_table caption-top">
                 <caption class="fw-bold text-start">Emails (not sent during the preview)</caption>
                 <tbody>
                     <tr t-foreach="this.props.emails" t-as="mail" t-key="mail_index">

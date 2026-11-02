@@ -54,7 +54,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 
 ---
 
-**Progress (2026-11-03):** Tasks 1 to 4 done and merged on 20.0 (43 tests). Task 6 client in progress (first code written, manual checks pending). Task 5 optional, not started. Ports (Task 8) wait for the owner.
+**Progress (2026-11-03):** Tasks 1 to 5 done on 20.0 (47 tests with Accounting). Task 6 client built and checked by hand on 20.0 (toggle, popup, smart button, one row per record); Confirm toast, dirty form still to check by hand. Task 7 next. Ports (Task 8) wait for the owner.
 
 ### Task 1: Module skeleton and 20.0 wiring
 
@@ -176,11 +176,11 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 - Consumes: `build_preview` from Task 4.
 - Produces: `payload['journal']` as `[{'move': str, 'lines': [{'account': str, 'debit': float, 'credit': float}], 'balanced': bool}]`, filled only when `'account.move' in env` and a new `account.move` was recorded. Otherwise `[]`.
 
-- [ ] **Step 1: Failing test** (tagged `post_install`, skipped when `account` is not installed): `test_journal_for_post_button`: previewing `action_post` on a draft vendor bill returns one journal entry whose debit total equals credit total and `balanced is True`.
-- [ ] **Step 2:** Run the test. Expected: FAIL.
-- [ ] **Step 3:** Implement by reading the recorded new `account.move` lines before rollback.
-- [ ] **Step 4:** Re-run. Expected: PASS. Also run on a fresh database without `account` (`-i preview_mode`). Expected: PASS, test skipped.
-- [ ] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
+- [x] **Step 1: Failing test** (tagged `post_install`, skipped when `account` is not installed): `test_journal_for_post_button`: previewing `action_post` on a draft vendor bill returns one journal entry whose debit total equals credit total and `balanced is True`.
+- [x] **Step 2:** Run the test. Expected: FAIL.
+- [x] **Step 3:** Implement by reading the recorded new `account.move` lines before rollback.
+- [x] **Step 4:** Re-run. Expected: PASS. Also run on a fresh database without `account` (`-i preview_mode`). Expected: PASS, test skipped.
+- [x] **Step 5:** Commit on the task branch and open a PR against the series branch (see `CONTRIBUTING.md`).
 
 ---
 

@@ -2,7 +2,12 @@ import threading
 from typing import NamedTuple
 
 IGNORED_MODELS = ('mail.tracking.value', 'mail.followers', 'mail.message', 'ir.attachment')
-IGNORED_FIELDS = ('write_date', 'write_uid', 'create_date', 'create_uid')
+IGNORED_FIELDS = (
+    'write_date', 'write_uid', 'create_date', 'create_uid',
+    # Internal bookkeeping flags of Accounting, never meaningful to a person.
+    'made_sequence_gap', 'is_manually_modified',
+)
+IGNORED_FIELD_SUFFIXES = ('_dirty',)
 
 _local = threading.local()
 
@@ -54,7 +59,8 @@ class ChangeRecorder:
         return '' if value is False or value is None else str(value)
 
     def _names(self, records, vals):
-        return [n for n in vals if n not in IGNORED_FIELDS and n in records._fields]
+        return [n for n in vals
+                if n not in IGNORED_FIELDS and not n.endswith(IGNORED_FIELD_SUFFIXES) and n in records._fields]
 
     def snapshot(self, records, vals):
         """Old values as text, {id: {field: text}}; never raises (a failure marks the recorder incomplete)."""
