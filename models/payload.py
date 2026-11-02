@@ -46,7 +46,7 @@ def _merge(changes):
     by_record = {}
     for c in changes:
         row = by_record.setdefault((c.model, c.res_id), {
-            'kind': c.kind, 'model': c.model, 'what': c.display_name, 'fields': {}})
+            'kind': c.kind, 'model': c.model, 'res_id': c.res_id, 'what': c.display_name, 'fields': {}})
         if c.kind == 'deleted' or row['kind'] == 'changed':
             row['kind'] = c.kind
         if c.display_name and c.display_name.lower() != 'false':
@@ -114,7 +114,8 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
             where[change['model']] = locate(env, change['model'])
         rows.append({
             'kind': change['kind'],
-            'what': change['what'],
+            # Records without a real name show as "model,id"; say what they are instead.
+            'what': env[change['model']]._description if change['what'] == '%s,%s' % (change['model'], change['res_id']) else change['what'],
             'where': where[change['model']],
             'fields': [{'label': lbl, 'old': old, 'new': new} for lbl, (old, new) in change['fields'].items()],
         })

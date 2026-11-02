@@ -14,6 +14,13 @@ function newToken() {
     return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+// The button's text without Odoo's keyboard-hint overlay (shown while Alt is held).
+function buttonText(button) {
+    const clone = button.cloneNode(true);
+    clone.querySelectorAll(".o_web_hotkey_overlay").forEach((el) => el.remove());
+    return clone.textContent.trim();
+}
+
 export const previewService = {
     dependencies: ["action", "dialog", "notification", "orm"],
     start(env, { action, dialog, notification, orm }) {
@@ -58,7 +65,7 @@ export const previewService = {
             // The clicked button's own text; falls back to the method name.
             const label =
                 params.string ||
-                (lastButton?.name === params.name && lastButton.innerText.trim()) ||
+                (lastButton?.name === params.name && buttonText(lastButton)) ||
                 params.name;
             let result;
             try {
