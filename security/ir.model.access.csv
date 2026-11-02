@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_preview_mode_created_user,preview.mode.created: own rows,model_preview_mode_created,base.group_user,1,1,1,1
