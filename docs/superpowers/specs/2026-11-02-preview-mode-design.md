@@ -97,6 +97,8 @@ Security
 - Python 3 as required by each Odoo version; JavaScript following each version's web client.
 - Depends on `base` and `web` only. Must install on Community.
 - Must work on Odoo.sh (owner requirement, 2026-11-02): no external Python packages and no `requirements.txt`, no system or `subprocess` calls, no writes to the file system outside Odoo's own storage, all state in the database (several workers share no memory), no route marked `readonly`, no dependence on `odoo.conf` options or server flags, no Enterprise-only code. Odoo.sh users add the repo as a git submodule named `preview_mode`.
+- Must work when installed next to Odoo Enterprise (owner requirement, 2026-11-02): it stays a Community module with no Enterprise dependency, but it must install and run with the Enterprise addons present. Enterprise's `web_enterprise` replaces parts of the web client (navbar, control panel), so UI hooks use stable, documented entry points and the Preview mode switch must render in both layouts.
+- No allow-list or deny-list of any kind: once the module is installed and the Preview mode switch is on, it works on every button that changes data, in every app (core, Enterprise, third-party or custom), for every internal user. No per-app, per-model, per-button or per-user configuration.
 - Licence: OPL-1, the Odoo Proprietary License v1.0 (owner decision, 2026-11-02). Store review required per version. A paid listing also needs `price` and `currency` in the manifest.
 - No commit or push by the assistant: the owner commits.
 
@@ -142,3 +144,4 @@ Approved visuals were shown in a browser session (three screens: the popup with 
 13. Default ignore list for what counts as a change (audit fields, tracking, followers, chatter notes, attachments, transient models).
 14. 20.0 working end to end is milestone 1; the Store release can go version by version.
 15. Odoo.sh compatibility is a hard requirement (owner, 2026-11-02): see section 5.
+16. Enterprise compatibility is a hard requirement (owner, 2026-11-02): see section 5. Verified on the versions where Enterprise source is available.
