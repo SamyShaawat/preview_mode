@@ -230,4 +230,4 @@ One pass per version, in this order, each ending with the same acceptance as Tas
 - Spec coverage: intent and goals map to Tasks 2 to 6; non-goals need no task; anti-goals are pinned by Task 3 tests; UX section by Tasks 6 and 7; Where lookup by Task 3; toast links by Tasks 4 and 6; repo and versions by Tasks 1 and 8; security by `SELF_WRITEABLE_FIELDS` and no `sudo` in Task 4.
 - Open owner items from the spec (price, support policy) are not in any task.
 - Automated tests cover the Python engine; frontend is verified by numbered manual steps with expected results.
-- Layout change from the spec: the repo root is the module (spec section 6 had a nested `preview_mode/` folder), so a clone drops straight into `addons/`. Spec to be updated to match once the owner confirms.
+- Layout change from the spec: the repo root is the module (spec section 6 had a nested `preview_mode/` folder), so a clone drops straight into `addons/`. The spec was updated to match on 2026-11-02.
