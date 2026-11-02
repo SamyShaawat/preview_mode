@@ -1,0 +1,146 @@
+"""Safe-run guards: a preview never commits, sends, calls out or burns a sequence number.
+
+Every guard keys on the per-thread ``_guard.recorder`` that only ``safe_run`` sets,
+so other threads and requests that are not a preview are untouched.
+"""
+import functools
+import threading
+from contextlib import contextmanager
+from urllib.parse import urlsplit
+
+import requests
+
+from odoo import models, sql_db
+from odoo.tools.misc import Callbacks
+
+from .recorder import ChangeRecorder
+
+_guard = threading.local()
+
+
+class PreviewBlocked(Exception):
+    """An outgoing call was attempted during a preview."""
+
+
+class PreviewIncomplete(Exception):
+    """The previewed code needed something a preview cannot simulate."""
+
+
+def guarded():
+    """The recorder of the preview running in this thread, or None."""
+    return getattr(_guard, 'recorder', None)
+
+
+def _no_commit():
+    # The savepoint is the only transaction boundary during a preview.
+    pass
+
+
+def _incomplete(reason):
+    recorder = guarded()
+    recorder.incomplete = True
+    recorder.warnings.append(reason)
+    raise PreviewIncomplete(reason)
+
+
+def _no_rollback():
+    # A real rollback would drop the savepoint and the work done before the preview.
+    _incomplete('The action rolled back its own transaction')
+
+
+@contextmanager
+def safe_run(env):
+    cr = env.cr
+    # A test (or an outer safe_run) may already shadow these per instance: put them back after.
+    own = {name: cr.__dict__.get(name) for name in ('commit', 'rollback')}
+    postcommit = cr.postcommit
+    previous = guarded()  # nested run: the outer preview's guards must stay on
+    savepoint = cr.savepoint()
+    try:
+        with ChangeRecorder() as recorder:
+            # Instance attributes: shadow Cursor.commit/rollback for this cursor only, no class patch.
+            cr.commit = _no_commit
+            cr.rollback = _no_rollback
+            # Callbacks queued during the preview (mail, bus...) must not run at the real commit.
+            cr.postcommit = Callbacks()
+            _guard.recorder = recorder
+            yield recorder
+    finally:
+        _guard.recorder = previous
+        cr.postcommit = postcommit
+        for name, value in own.items():
+            if value is None:
+                cr.__dict__.pop(name, None)
+            else:
+                setattr(cr, name, value)
+        savepoint.close(rollback=True)
+
+
+def _guarded_send(send):
+    @functools.wraps(send)
+    def guarded_send(session, request, **kwargs):
+        recorder = guarded()
+        if recorder is not None:
+            host = urlsplit(request.url).hostname or request.url
+            recorder.warnings.append('Blocked a call to %s' % host)
+            raise PreviewBlocked(host)
+        return send(session, request, **kwargs)
+    guarded_send._preview_guard = True
+    return guarded_send
+
+
+def _guarded_cursor(cursor):
+    @functools.wraps(cursor)
+    def guarded_cursor(self, *args, **kwargs):
+        if guarded() is not None:
+            # A second cursor could commit behind the savepoint's back.
+            _incomplete('A separate database transaction was needed')
+        return cursor(self, *args, **kwargs)
+    guarded_cursor._preview_guard = True
+    return guarded_cursor
+
+
+guarded_send = None
+
+
+def install_patches():
+    """Called once from post_load. Both patches are inert unless this thread runs a preview."""
+    global guarded_send
+    # WHY: outgoing HTTP is not transactional; Session.send is the single chokepoint of requests.
+    if not getattr(requests.Session.send, '_preview_guard', False):
+        requests.Session.send = _guarded_send(requests.Session.send)
+    guarded_send = requests.Session.send
+    # WHY: a new cursor commits independently of the preview savepoint. Connection.cursor is
+    # where Registry.cursor, db_connect(...).cursor() (cron, bus) all meet, before a pool borrow.
+    if not getattr(sql_db.Connection.cursor, '_preview_guard', False):
+        sql_db.Connection.cursor = _guarded_cursor(sql_db.Connection.cursor)
+
+
+class IrSequence(models.Model):
+    _inherit = 'ir.sequence'
+
+    def _next(self, sequence_date=None):
+        # Postgres sequences ignore rollback: never draw a real number in a preview.
+        if guarded() is not None:
+            return '(new)'
+        return super()._next(sequence_date=sequence_date)
+
+
+class IrMailServer(models.Model):
+    _inherit = 'ir.mail_server'
+
+    # PORT: the only Odoo-20-only name in this module; rename to `connect` for Odoo 16 to 19.
+    def _connect__(self, *args, **kwargs):  # noqa: PLW3201
+        if guarded() is not None:
+            return None
+        return super()._connect__(*args, **kwargs)
+
+    def send_email(self, message, *args, **kwargs):
+        recorder = guarded()
+        if recorder is None:
+            return super().send_email(message, *args, **kwargs)
+        recorder.emails.append({
+            'to': message['To'] or '',
+            'subject': message['Subject'] or '',
+        })
+        return message['Message-Id']
