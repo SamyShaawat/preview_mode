@@ -6,6 +6,8 @@
     'author': 'Samy Mostafa Shaawat',
     'license': 'OPL-1',
     'depends': ['base', 'web'],
+    # PORT: Odoo 20 ACL file; on 16 to 19 use security/ir.model.access.csv (ir.model.access).
+    'data': ['security/ir.access.csv'],
     'assets': {
         'web.assets_backend': [
             'preview_mode/static/src/**/*',
