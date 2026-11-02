@@ -1,3 +1,4 @@
+from odoo.exceptions import AccessError
 from odoo.tests.common import HttpCase, new_test_user, tagged
 
 
@@ -39,3 +40,38 @@ class TestController(HttpCase):
         result = self.make_jsonrpc_request('/preview_mode/created', {'token': 't3'})
         self.assertEqual([r['name'] for r in result], ['Mine'])
         self.assertFalse(self.env['preview.mode.created'].search([('token', '=', 't3')]))
+
+    def _two_users_with_rows(self, token):
+        user_a = new_test_user(self.env, 'preview_iso_a', password='preview_iso_a', groups='base.group_user')
+        user_b = new_test_user(self.env, 'preview_iso_b', password='preview_iso_b', groups='base.group_user')
+        self.env['preview.mode.created'].with_user(user_a).create({
+            'token': token, 'model': 'res.partner', 'res_id': user_a.partner_id.id, 'name': 'A made'})
+        # sudo only in the test, to see the rows regardless of ACL.
+        rows_a = self.env['preview.mode.created'].sudo().search([('token', '=', token)])
+        self.assertEqual(len(rows_a), 1)
+        return user_a, user_b, rows_a
+
+    def test_other_user_gets_nothing_and_deletes_nothing(self):
+        user_a, user_b, rows_a = self._two_users_with_rows('iso1')
+        self.authenticate('preview_iso_b', 'preview_iso_b')
+        self.assertEqual(self.make_jsonrpc_request('/preview_mode/created', {'token': 'iso1'}), [])
+        self.assertEqual(len(rows_a.exists()), 1)
+
+    def test_other_user_cannot_read_rows_via_orm(self):
+        user_a, user_b, rows_a = self._two_users_with_rows('iso2')
+        Created = self.env['preview.mode.created'].with_user(user_b)
+        self.assertFalse(Created.search([('token', '=', 'iso2')]))
+        with self.assertRaises(AccessError):
+            Created.browse(rows_a.ids).read(['name'])
+        with self.assertRaises(AccessError):
+            Created.browse(rows_a.ids).unlink()
+        with self.assertRaises(AccessError):
+            Created.browse(rows_a.ids).write({'name': 'hijacked'})
+        self.assertEqual(rows_a.name, 'A made')
+
+    def test_owner_gets_own_records_and_rows_removed(self):
+        user_a, user_b, rows_a = self._two_users_with_rows('iso3')
+        self.authenticate('preview_iso_a', 'preview_iso_a')
+        result = self.make_jsonrpc_request('/preview_mode/created', {'token': 'iso3'})
+        self.assertEqual([r['name'] for r in result], ['A made'])
+        self.assertFalse(rows_a.exists())
