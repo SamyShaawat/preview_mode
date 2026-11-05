@@ -75,6 +75,13 @@ class TestPayload(TransactionCase):
             payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Post')
         self.assertIn({'text': 'Confirming will fail: Period locked', 'blocking': True}, payload['warnings'])
 
+    def test_registry_changing_models_are_never_run(self):
+        for model in ('ir.module.module', 'res.config.settings', 'base.module.upgrade', 'ir.ui.view'):
+            with patch('odoo.addons.preview_mode.models.payload.call_kw') as call_kw:
+                payload = build_preview(self.env, model, 'execute', [1], [], {}, 'Go')
+            call_kw.assert_not_called()
+            self.assertFalse(payload['show'], model)
+
     def test_payload_caps_rows(self):
         partners = self.env['res.partner'].create([{'name': 'P%s' % i} for i in range(300)])
 
