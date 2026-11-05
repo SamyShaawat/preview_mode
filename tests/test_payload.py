@@ -68,6 +68,21 @@ class TestPayload(TransactionCase):
         self.assertEqual(payload['changes'], [])
         self.assertEqual(payload['emails'][0]['subject'], 'Hello')
 
+    def test_payload_lists_queued_mail_once(self):
+        if 'mail.mail' not in self.env:
+            self.skipTest('mail is not installed')
+
+        def button(self):
+            mail = self.env['mail.mail'].create({
+                'subject': 'Queued hello', 'email_to': 'b@example.com', 'body_html': '<p>Hi</p>'})
+            mail.send()  # an immediate send reaches send_email too: still one entry
+        with self._patch(button):
+            payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Send')
+        self.assertTrue(payload['show'])
+        self.assertEqual([(e['subject'], e['to']) for e in payload['emails']], [('Queued hello', 'b@example.com')])
+        self.assertEqual(payload['changes'], [])
+        self.assertIn('queue 1 email', payload['summary'])
+
     def test_payload_failing_button_is_blocking_warning(self):
         def button(self):
             raise UserError('Period locked')
