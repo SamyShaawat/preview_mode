@@ -149,8 +149,9 @@ class IrMailServer(models.Model):
         recorder = guarded()
         if recorder is None:
             return super().send_email(message, *args, **kwargs)
-        recorder.emails.append({
-            'to': message['To'] or '',
-            'subject': message['Subject'] or '',
-        })
+        if (message['Subject'] or '') not in recorder.queued_subjects:  # already counted as a mail.mail row
+            recorder.emails.append({
+                'to': message['To'] or '',
+                'subject': message['Subject'] or '',
+            })
         return message['Message-Id']

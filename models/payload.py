@@ -11,6 +11,13 @@ from .guards import PreviewBlocked, PreviewIncomplete, safe_run
 from .where import locate
 
 MAX_ROWS = 200
+# System parameters (all optional): preview_mode.timeout (seconds, default 10),
+# preview_mode.max_records (0 = no limit), preview_mode.skip_models (comma separated model names).
+DEFAULT_TIMEOUT = 10
+# Buttons on these models change the in-memory registry, caches or installed modules, which a
+# savepoint rollback cannot undo. They are never run as a preview: the real click runs as usual.
+UNSAFE_MODELS = ('ir.module.module', 'res.config.settings', 'ir.model', 'ir.model.fields', 'ir.ui.view')
+UNSAFE_PREFIXES = ('base.module.', 'base.language.')
 
 
 def _summary(env, changes, emails):
@@ -84,23 +91,57 @@ def _journal(env, changes):
     return result
 
 
+def _skip_notice(env, model, res_ids):
+    """Why this click is not previewed (shown to the user), or '' to preview it."""
+    # PORT: Odoo 20 has get_str/get_int/get_float; on 16 to 19 use get_param.
+    params = env['ir.config_parameter'].sudo()
+    if model in [m.strip() for m in params.get_str('preview_mode.skip_models').split(',')]:
+        return _('Preview is switched off for this kind of button.')
+    limit = params.get_int('preview_mode.max_records')
+    if limit and len(res_ids) > limit:
+        return _('Too many records to preview (%(count)s, limit %(limit)s).', count=len(res_ids), limit=limit)
+    return ''
+
+
 def build_preview(env, model, method, res_ids, args, kwargs, label):
     """Same contract as call_button (args after the ids); no allow-list: any model, any method."""
     cr, uid, context = env.cr, env.uid, env.context  # noqa: F841 - read by _() to pick the language
+    notice = _skip_notice(env, model, res_ids)
+    if notice:
+        return {'show': False, 'notice': notice, 'changes': [], 'emails': [], 'warnings': [],
+                'incomplete': False, 'summary': '', 'journal': []}
     if method.startswith('_') or method == 'init':
         # Same rule as RPC: never run a private method (call_kw adds @api.private on 20).
         raise AccessError(_('Private methods cannot be previewed.'))
+    if model in UNSAFE_MODELS or model.startswith(UNSAFE_PREFIXES):
+        return {'show': False, 'changes': [], 'emails': [], 'warnings': [], 'incomplete': False,
+                'summary': '', 'journal': []}
     warnings = []
+    seconds = env['ir.config_parameter'].sudo().get_float('preview_mode.timeout') or DEFAULT_TIMEOUT
+    timed_out = False
+    # Translated before the run: after a cancelled query the transaction is unusable until rollback.
+    timeout_text = _('The preview timed out after %s seconds. Confirming may still work.', seconds)
     with safe_run(env) as recorder:
+        # SET LOCAL ends with the savepoint's rollback, so the normal timeout is back afterwards.
+        env.cr.execute('SET LOCAL statement_timeout = %d' % int(seconds * 1000))
         try:
             # call_kw refuses private methods exactly like a real RPC would.
             call_kw(env[model], method, [list(res_ids), *args], kwargs)
+            # Delayed writes (recomputed totals, states) only reach the recorder when flushed, and the
+            # savepoint rollback drops them unflushed.
+            env.flush_all()
         except UserError as e:  # also AccessError, ValidationError
             warnings.append({'text': _('Confirming will fail: %s', e.args[0] if e.args else e), 'blocking': True})
         except (PreviewBlocked, PreviewIncomplete):
             pass  # already recorded as incomplete by the guard
+        except Exception as e:  # noqa: BLE001
+            if getattr(e, 'pgcode', None) != '57014':  # query_canceled: the statement timeout hit
+                raise
+            timed_out = True
+            recorder.incomplete = True
+            recorder.warnings.append(timeout_text)
         try:
-            journal = _journal(env, recorder.changes)
+            journal = [] if timed_out else _journal(env, recorder.changes)
         except Exception:  # noqa: BLE001 - the extra view must never break the preview
             journal = []
     # The savepoint is rolled back here; Change rows already hold plain text.

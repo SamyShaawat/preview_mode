@@ -90,3 +90,21 @@ class TestRecorder(TransactionCase):
         self.assertEqual(partner.name, 'B')
         self.assertTrue(rec.incomplete)
         self.assertTrue(rec.warnings)
+
+
+@tagged('post_install', '-at_install')
+class TestDisplayValue(TransactionCase):
+    def test_numbers_and_dates_are_formatted_for_the_user(self):
+        from datetime import date, datetime
+        from ..models.formatting import display_value
+        partner = self.env['res.partner'].create({'name': 'Fmt Co'})
+        latitude = partner._fields['partner_latitude']
+        self.assertEqual(display_value(partner, latitude, 1234.5), '1,234.5000000')
+        self.assertTrue(display_value(partner, partner._fields['create_date'], datetime(2026, 1, 31, 10, 0))
+                        .startswith('01/31/2026'))
+        cron = self.env['ir.cron'].search([], limit=1)
+        self.assertTrue(display_value(cron, cron._fields['nextcall'], datetime(2026, 1, 31, 10, 0))
+                        .startswith('01/31/2026'))
+        rate = self.env['res.currency.rate']
+        self.assertEqual(display_value(rate, rate._fields['name'], date(2026, 1, 31)), '01/31/2026')
+        self.assertIsNone(display_value(partner, partner._fields['name'], 'x'))
