@@ -75,7 +75,7 @@ export const previewService = {
                     method: params.name,
                     res_ids: ids,
                     args: extra,
-                    kwargs: { context: makeContext([params.context, params.buttonContext]) },
+                    kwargs: { context: makeContext([user.context, params.context, params.buttonContext]) },
                     label,
                 });
             } catch {
