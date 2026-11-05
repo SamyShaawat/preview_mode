@@ -92,6 +92,9 @@ export const previewService = {
                 });
             }
             if (!result.show) {
+                if (result.notice) {
+                    notification.add(result.notice, { type: "info" });
+                }
                 return original(params, options);
             }
             await new Promise((resolve) => {
