@@ -4,8 +4,15 @@
 <body>
 <h1>Preview Mode</h1>
 <p><strong>See what a button click will do before it does it.</strong></p>
-<p>Turn on a switch, click a button that changes data (Confirm, Validate, Post, and so on), and a popup lists what the click would create, change or delete, and where each change lands in Odoo's menus.</p>
-<p>Then you confirm for real or go back. Nothing from the click is saved during the preview.</p>
-<p>It works for every user of every app: sales, purchase, inventory, manufacturing, CRM, HR, project and third-party apps.</p>
+<p>Turn on the switch in the top bar, then click a button that changes data (Confirm, Validate, Post and so on). A popup lists what the click would create, change or delete, and where each change lands in Odoo's menus. You then confirm for real or go back.</p>
+<ul>
+<li>Works with any app and any internal user, with nothing to configure.</li>
+<li>Shows old and new values, queued emails, and journal entry lines when Accounting is installed.</li>
+<li>Runs with your own access rights, so it never shows or does more than the real click.</li>
+<li>Free and open source (LGPL-3). Depends only on <code>base</code> and <code>web</code>.</li>
+</ul>
+<h2>Good to know</h2>
+<p>The preview runs the real click inside a database savepoint and rolls it back. It is a careful estimate, not a guarantee: raw SQL, calls to outside services other than Python <code>requests</code>, filestore files and work in threads are not undone or seen. Numbers drawn from a sequence show as a placeholder, and other users' changes between the preview and your click can differ. It does not cover printing, imports, scheduled actions, status bar stage changes or list mass actions yet.</p>
+<p>Currently available for Odoo 20.0.</p>
 </body>
 </html>
