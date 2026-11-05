@@ -78,7 +78,11 @@ export const previewService = {
                     label,
                 });
             } catch {
-                // The preview itself failed: behave like stock Odoo, the real run decides.
+                // The preview itself failed: tell the user, then behave like stock Odoo (the real run decides).
+                notification.add(
+                    _t("Preview unavailable: %s runs now without a preview.", label),
+                    { type: "warning" }
+                );
                 return original(params, options);
             }
             if (!result.show) {
