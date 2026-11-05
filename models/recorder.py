@@ -95,6 +95,7 @@ class ChangeRecorder:
         except Exception:  # noqa: BLE001 - must not break the create
             self.incomplete = True
             self.warnings.append('Could not read the emails this click queues')
+
     def snapshot_columns(self, records, vals_list):
         """Old values (read format text) of the plain column fields a flush is about to write.
 
