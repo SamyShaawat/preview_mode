@@ -75,6 +75,7 @@ Nothing is required. An administrator can set these system parameters (Settings 
 
 | Key | Default | Meaning |
 |---|---|---|
+| `preview_mode.enabled` | on | Kill switch. Set to `False` to hide the toggle and stop previews for every user; buttons then run as in stock Odoo. |
 | `preview_mode.timeout` | 10 | Seconds a preview may spend in database statements before it stops with "timed out". |
 | `preview_mode.max_records` | 0 | Skip the preview when a click acts on more records than this (0 = no limit). The click then runs as usual. |
 
