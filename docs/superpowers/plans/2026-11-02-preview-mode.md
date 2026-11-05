@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Manifest `depends` is `['base', 'web']` only. Must install on Community. `license` is `OPL-1`. Version string `<series>.1.0.0` (for example `20.0.1.0.0`).
+- Manifest `depends` is `['base', 'web']` only. Must install on Community. `license` is `LGPL-3`. Version string `<series>.1.0.0` (for example `20.0.1.0.0`).
 - Must work on Odoo.sh (owner requirement, 2026-11-02): no external Python packages and no `requirements.txt`, no system or `subprocess` calls, no writes to the file system outside Odoo's own storage, all state in the database (several workers share no memory), no route marked `readonly`, no dependence on `odoo.conf` options or server flags, no Enterprise-only code. Odoo.sh users add the repo as a git submodule named `preview_mode`. Every task review checks this.
 - Must work when installed next to Odoo Enterprise (owner requirement, 2026-11-02): it stays a Community module with no Enterprise dependency, but it must install and run with the Enterprise addons present. Enterprise's `web_enterprise` replaces parts of the web client (navbar, control panel), so UI hooks use stable, documented entry points and the Preview mode toggle must render in both layouts. Every task review checks this.
 - No allow-list or deny-list of any kind: once the module is installed and the Preview mode toggle is on, it works on every button that changes data, in every app (core, Enterprise, third-party or custom), for every internal user. No per-app, per-model, per-button or per-user configuration. Every task review checks this.
@@ -65,7 +65,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 **Interfaces:**
 - Produces: an installable module `preview_mode` on 20.0 that later tasks fill.
 
-- [x] **Step 1:** Write `__manifest__.py` with name `Preview Mode`, summary `See what a button click will do before it does it`, category `Productivity`, `depends: ['base','web']`, `license: 'OPL-1'`, `installable: True`, `application: False`, assets bundle `web.assets_backend` with the glob `preview_mode/static/src/**/*` (an empty glob is harmless before Task 6), and `post_load: 'post_load'`.
+- [x] **Step 1:** Write `__manifest__.py` with name `Preview Mode`, summary `See what a button click will do before it does it`, category `Productivity`, `depends: ['base','web']`, `license: 'LGPL-3'`, `installable: True`, `application: False`, assets bundle `web.assets_backend` with the glob `preview_mode/static/src/**/*` (an empty glob is harmless before Task 6), and `post_load: 'post_load'`.
 - [x] **Step 2:** Create the empty package `__init__.py` files and an empty `post_load()` function in `__init__.py`. Add `preview_mode` to `odoo-20.0/.git/info/exclude`.
 - [x] **Step 3:** Install on a fresh database. Run (from `odoo-20.0`): `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm20 -i preview_mode --stop-after-init`. Expected: exits 0, log shows `Module preview_mode loaded`, no warnings naming `preview_mode`.
 - [x] **Step 4:** Open the first PR against `20.0` (see `CONTRIBUTING.md`).
