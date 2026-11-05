@@ -68,12 +68,69 @@ class TestPayload(TransactionCase):
         self.assertEqual(payload['changes'], [])
         self.assertEqual(payload['emails'][0]['subject'], 'Hello')
 
+    def test_payload_lists_queued_mail_once(self):
+        if 'mail.mail' not in self.env:
+            self.skipTest('mail is not installed')
+
+        def button(self):
+            mail = self.env['mail.mail'].create({
+                'subject': 'Queued hello', 'email_to': 'b@example.com', 'body_html': '<p>Hi</p>'})
+            mail.send()  # an immediate send reaches send_email too: still one entry
+        with self._patch(button):
+            payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Send')
+        self.assertTrue(payload['show'])
+        self.assertEqual([(e['subject'], e['to']) for e in payload['emails']], [('Queued hello', 'b@example.com')])
+        self.assertEqual(payload['changes'], [])
+        self.assertIn('queue 1 email', payload['summary'])
+
     def test_payload_failing_button_is_blocking_warning(self):
         def button(self):
             raise UserError('Period locked')
         with self._patch(button):
             payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Post')
         self.assertIn({'text': 'Confirming will fail: Period locked', 'blocking': True}, payload['warnings'])
+
+    def test_payload_times_out(self):
+        self.env['ir.config_parameter'].set_str('preview_mode.timeout', '0.3')
+
+        def button(self):
+            self.env.cr.execute('SELECT pg_sleep(3)')
+        with self._patch(button):
+            payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Slow')
+        self.assertTrue(payload['incomplete'])
+        self.assertTrue(payload['show'])
+        self.assertIn('timed out', payload['warnings'][0]['text'])
+        # the normal timeout is back and the cursor works again
+        self.env.cr.execute('SELECT pg_sleep(0.6)')
+        self.assertEqual(self.partner.name, 'Preview Co')
+
+    def test_payload_skips_too_many_records_and_listed_models(self):
+        ICP = self.env['ir.config_parameter']
+        ICP.set_str('preview_mode.max_records', '1')
+        payload = build_preview(self.env, 'res.partner', 'copy', [1, 2], [], {}, 'Copy')
+        self.assertFalse(payload['show'])
+        self.assertIn('Too many records', payload['notice'])
+        ICP.set_str('preview_mode.max_records', '0')
+        ICP.set_str('preview_mode.skip_models', 'sale.order, res.partner')
+        payload = build_preview(self.env, 'res.partner', 'copy', [self.partner.id], [], {}, 'Copy')
+        self.assertFalse(payload['show'])
+        self.assertTrue(payload['notice'])
+        self.assertFalse(self.env['res.partner'].search([('name', '=', 'Preview Co (copy)')]))
+    def test_registry_changing_models_are_never_run(self):
+        for model in ('ir.module.module', 'res.config.settings', 'base.module.upgrade', 'ir.ui.view'):
+            with patch('odoo.addons.preview_mode.models.payload.call_kw') as call_kw:
+                payload = build_preview(self.env, model, 'execute', [1], [], {}, 'Go')
+            call_kw.assert_not_called()
+            self.assertFalse(payload['show'], model)
+    def test_payload_shows_recomputed_stored_field(self):
+        # complete_name is a stored computed field: it is flushed through _write_multi, not write().
+        def button(self):
+            self.name = 'Renamed Co'
+        with self._patch(button):
+            payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Go')
+        fields = {f['label']: (f['old'], f['new']) for row in payload['changes'] for f in row['fields']}
+        self.assertEqual(fields.get('Complete Name'), ('Preview Co', 'Renamed Co'), payload)
+        self.assertEqual(self.partner.complete_name, 'Preview Co')
 
     def test_payload_caps_rows(self):
         partners = self.env['res.partner'].create([{'name': 'P%s' % i} for i in range(300)])
