@@ -4,7 +4,7 @@
     'version': '20.0.1.0.0',
     'category': 'Productivity',
     'author': 'Samy Mostafa Shaawat',
-    'license': 'OPL-1',
+    'license': 'LGPL-3',
     'depends': ['base', 'web'],
     # PORT: Odoo 20 ACL file; on 16 to 19 use security/ir.model.access.csv (ir.model.access).
     'data': ['security/ir.access.csv'],
