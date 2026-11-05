@@ -47,6 +47,7 @@ The popup uses Odoo's own dialog. Long names wrap, numbers stay on one line, onl
 ## Limits, stated plainly
 
 - **Preview incomplete.** If a click opens a separate database connection or calls an outside service, the preview cannot be sure of the result. It says "Preview incomplete" instead of an all-clear.
+- **An estimate, not a promise.** The real run happens later, so sequence numbers (shown as `(new)`), random values, the time and changes made by other users can differ. The popup says so.
 - **Unsaved edits are saved first.** If you edited the form and then click a button, Odoo saves your edit as it normally does, then the preview shows only what the button does. The popup text says "Nothing from this click has been saved yet" for that reason.
 - **Button types.** Version 1 covers buttons that call a method on a model (the usual Confirm, Validate and Post buttons, including those inside wizards).
 - **Not covered:** printing and reports, imports, scheduled actions, server automations, and any undo after a real run.
