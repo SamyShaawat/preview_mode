@@ -75,6 +75,33 @@ class TestPayload(TransactionCase):
             payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Post')
         self.assertIn({'text': 'Confirming will fail: Period locked', 'blocking': True}, payload['warnings'])
 
+    def test_payload_times_out(self):
+        self.env['ir.config_parameter'].set_str('preview_mode.timeout', '0.3')
+
+        def button(self):
+            self.env.cr.execute('SELECT pg_sleep(3)')
+        with self._patch(button):
+            payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Slow')
+        self.assertTrue(payload['incomplete'])
+        self.assertTrue(payload['show'])
+        self.assertIn('timed out', payload['warnings'][0]['text'])
+        # the normal timeout is back and the cursor works again
+        self.env.cr.execute('SELECT pg_sleep(0.6)')
+        self.assertEqual(self.partner.name, 'Preview Co')
+
+    def test_payload_skips_too_many_records_and_listed_models(self):
+        ICP = self.env['ir.config_parameter']
+        ICP.set_str('preview_mode.max_records', '1')
+        payload = build_preview(self.env, 'res.partner', 'copy', [1, 2], [], {}, 'Copy')
+        self.assertFalse(payload['show'])
+        self.assertIn('Too many records', payload['notice'])
+        ICP.set_str('preview_mode.max_records', '0')
+        ICP.set_str('preview_mode.skip_models', 'sale.order, res.partner')
+        payload = build_preview(self.env, 'res.partner', 'copy', [self.partner.id], [], {}, 'Copy')
+        self.assertFalse(payload['show'])
+        self.assertTrue(payload['notice'])
+        self.assertFalse(self.env['res.partner'].search([('name', '=', 'Preview Co (copy)')]))
+
     def test_payload_caps_rows(self):
         partners = self.env['res.partner'].create([{'name': 'P%s' % i} for i in range(300)])
 
