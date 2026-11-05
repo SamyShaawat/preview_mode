@@ -1,7 +1,7 @@
 import threading
 from typing import NamedTuple
 
-IGNORED_MODELS = ('mail.tracking.value', 'mail.followers', 'mail.message', 'ir.attachment')
+IGNORED_MODELS = ('mail.tracking.value', 'mail.followers', 'mail.message', 'ir.attachment', 'mail.mail')
 IGNORED_FIELDS = (
     'write_date', 'write_uid', 'create_date', 'create_uid',
     # Internal bookkeeping flags of Accounting, never meaningful to a person.
@@ -31,6 +31,7 @@ class ChangeRecorder:
         self.changes = []
         self.warnings = []
         self.emails = []
+        self.queued_subjects = set()  # subjects of mail.mail records, so send_email does not count them twice
         self.incomplete = False
         self._previous = None
 
@@ -78,7 +79,20 @@ class ChangeRecorder:
             self.warnings.append('Could not read the previous values of %s' % records._name)
             return None
 
+    def _note_mail(self, records):
+        """A mail.mail row is an email the click queues; Odoo sends it after the commit, never in the preview."""
+        try:
+            for mail in records.sudo():  # sudo: only reads the addresses of the email the user is about to send
+                to = mail.email_to or ', '.join(p.email for p in mail.recipient_ids if p.email)
+                self.emails.append({'to': to, 'subject': mail.subject or ''})
+                self.queued_subjects.add(mail.subject or '')
+        except Exception:  # noqa: BLE001 - must not break the create
+            self.incomplete = True
+            self.warnings.append('Could not read the emails this click queues')
+
     def note_create(self, records):
+        if records._name == 'mail.mail':
+            return self._note_mail(records)
         if self._ignored(records):
             return
         for rec in records:
