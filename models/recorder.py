@@ -1,13 +1,21 @@
 import threading
 from typing import NamedTuple
 
-IGNORED_MODELS = ('mail.tracking.value', 'mail.followers', 'mail.message', 'ir.attachment')
+# PORT: odoo.tools.SQL exists on Odoo 17 to 20; on 16 use a plain query with %s params.
+from odoo.tools import SQL
+
+IGNORED_MODELS = ('mail.tracking.value', 'mail.followers', 'mail.message', 'ir.attachment', 'mail.mail')
 IGNORED_FIELDS = (
     'write_date', 'write_uid', 'create_date', 'create_uid',
     # Internal bookkeeping flags of Accounting, never meaningful to a person.
     'made_sequence_gap', 'is_manually_modified',
 )
 IGNORED_FIELD_SUFFIXES = ('_dirty',)
+# Column fields whose old value can be read straight from the table (no translation, no JSON).
+COLUMN_TYPES = ('boolean', 'integer', 'float', 'monetary', 'char', 'text', 'selection',
+                'many2one', 'date', 'datetime')
+
+from .formatting import display_value  # noqa: E402
 
 _local = threading.local()
 
@@ -31,6 +39,7 @@ class ChangeRecorder:
         self.changes = []
         self.warnings = []
         self.emails = []
+        self.queued_subjects = set()  # subjects of mail.mail records, so send_email does not count them twice
         self.incomplete = False
         self._previous = None
 
@@ -56,7 +65,9 @@ class ChangeRecorder:
             return dict(field._description_selection(record.env)).get(value, '') if value else ''
         if field.type in ('one2many', 'many2many'):
             return ', '.join(record.env[field.comodel_name].browse(value).mapped('display_name'))
-        return '' if value is False or value is None else str(value)
+        if value is False or value is None:
+            return ''
+        return display_value(record, field, value) or str(value)
 
     def _names(self, records, vals):
         return [n for n in vals
@@ -78,7 +89,52 @@ class ChangeRecorder:
             self.warnings.append('Could not read the previous values of %s' % records._name)
             return None
 
+    def _note_mail(self, records):
+        """A mail.mail row is an email the click queues; Odoo sends it after the commit, never in the preview."""
+        try:
+            for mail in records.sudo():  # sudo: only reads the addresses of the email the user is about to send
+                to = mail.email_to or ', '.join(p.email for p in mail.recipient_ids if p.email)
+                self.emails.append({'to': to, 'subject': mail.subject or ''})
+                self.queued_subjects.add(mail.subject or '')
+        except Exception:  # noqa: BLE001 - must not break the create
+            self.incomplete = True
+            self.warnings.append('Could not read the emails this click queues')
+
+    def snapshot_columns(self, records, vals_list):
+        """Old values (read format text) of the plain column fields a flush is about to write.
+
+        Odoo delays writes: recomputed stored fields (totals, states) reach the database through
+        ``_write_multi``, not ``write``, and the cache already holds the new value, so the old one is
+        read from the table. Returns ``(names, old)``; ``names`` is what ``note_write`` should compare.
+        """
+        if self._ignored(records):
+            return [], None
+        try:
+            fields = [records._fields[n] for n in self._names(records, {k: 1 for v in vals_list for k in v})
+                      if records._fields[n].store and not records._fields[n].translate
+                      and not records._fields[n].company_dependent
+                      and records._fields[n].type in COLUMN_TYPES]
+            if not fields:
+                return [], None
+            query = SQL('SELECT %s FROM %s WHERE id IN %s',
+                        SQL(', ').join([SQL.identifier('id')] + [SQL.identifier(f.name) for f in fields]),
+                        SQL.identifier(records._table), tuple(records.ids))
+            records.env.cr.execute(query)
+            old = {}
+            for row in records.env.cr.fetchall():
+                rec = records.browse(row[0])
+                old[rec.id] = {
+                    f.name: self._text(rec, f.name, f.convert_to_read(f.convert_to_cache(value, rec), rec))
+                    for f, value in zip(fields, row[1:])}
+            return [f.name for f in fields], old
+        except Exception:  # noqa: BLE001 - must not break the flush
+            self.incomplete = True
+            self.warnings.append('Could not read the previous values of %s' % records._name)
+            return [], None
+
     def note_create(self, records):
+        if records._name == 'mail.mail':
+            return self._note_mail(records)
         if self._ignored(records):
             return
         for rec in records:

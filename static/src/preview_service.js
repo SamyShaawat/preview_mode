@@ -5,6 +5,7 @@ import { session } from "@web/session";
 import { user } from "@web/core/user";
 import { makeContext } from "@web/core/context";
 import { _t } from "@web/core/l10n/translation";
+import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { PreviewDialog } from "./preview_dialog";
 
 // PORT: on Odoo 16 to 19 the button click is `action.doActionButton` in action_service.js;
@@ -74,14 +75,26 @@ export const previewService = {
                     method: params.name,
                     res_ids: ids,
                     args: extra,
-                    kwargs: { context: makeContext([params.context, params.buttonContext]) },
+                    kwargs: { context: makeContext([user.context, params.context, params.buttonContext]) },
                     label,
                 });
             } catch {
-                // The preview itself failed: behave like stock Odoo, the real run decides.
-                return original(params, options);
+                // The preview itself failed: say so and let the user decide; the real run is never silent.
+                return new Promise((resolve) => {
+                    dialog.add(ConfirmationDialog, {
+                        title: _t("Preview unavailable"),
+                        body: _t("The preview could not be built, so nothing is known about what %s will do.", label),
+                        confirmLabel: _t("Run without preview"),
+                        confirm: () => resolve(original(params, options)),
+                        cancelLabel: _t("Go back"),
+                        cancel: () => resolve(),
+                    });
+                });
             }
             if (!result.show) {
+                if (result.notice) {
+                    notification.add(result.notice, { type: "info" });
+                }
                 return original(params, options);
             }
             await new Promise((resolve) => {
