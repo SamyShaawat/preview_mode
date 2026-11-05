@@ -35,3 +35,14 @@ class Base(models.AbstractModel):
         if recorder is not None:
             recorder.note_unlink(self)
         return super().unlink()
+
+    def _write_multi(self, vals_list):
+        # Odoo flushes delayed writes (recomputed stored fields, cascades) here, not through write().
+        recorder = active_recorder()
+        if recorder is None:
+            return super()._write_multi(vals_list)
+        names, old = recorder.snapshot_columns(self, vals_list)
+        result = super()._write_multi(vals_list)
+        if names:
+            recorder.note_write(self, old, dict.fromkeys(names))
+        return result
