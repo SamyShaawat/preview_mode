@@ -11,6 +11,10 @@ from .guards import PreviewBlocked, PreviewIncomplete, safe_run
 from .where import locate
 
 MAX_ROWS = 200
+# Buttons on these models change the in-memory registry, caches or installed modules, which a
+# savepoint rollback cannot undo. They are never run as a preview: the real click runs as usual.
+UNSAFE_MODELS = ('ir.module.module', 'res.config.settings', 'ir.model', 'ir.model.fields', 'ir.ui.view')
+UNSAFE_PREFIXES = ('base.module.', 'base.language.')
 
 
 def _summary(env, changes, emails):
@@ -90,6 +94,9 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
     if method.startswith('_') or method == 'init':
         # Same rule as RPC: never run a private method (call_kw adds @api.private on 20).
         raise AccessError(_('Private methods cannot be previewed.'))
+    if model in UNSAFE_MODELS or model.startswith(UNSAFE_PREFIXES):
+        return {'show': False, 'changes': [], 'emails': [], 'warnings': [], 'incomplete': False,
+                'summary': '', 'journal': []}
     warnings = []
     with safe_run(env) as recorder:
         try:
