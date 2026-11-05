@@ -3,6 +3,7 @@
     <t t-name="preview_mode.Dialog">
         <Dialog size="'lg'" title="this.props.title" contentClass="'o_preview_mode_dialog'">
             <div class="alert alert-warning mb-3" role="status">This is a preview. Nothing from this click has been saved yet.</div>
+            <p class="o_preview_estimate text-muted small mb-3">This is an estimate. Numbers shown as (new), random values, the time, and changes by other users can differ when you confirm.</p>
             <p t-if="this.props.summary" class="o_preview_summary" t-out="this.props.summary"/>
             <div t-foreach="this.props.warnings" t-as="warning" t-key="warning_index"
                  t-att-class="warning.blocking ? 'alert alert-danger' : 'text-muted'">
