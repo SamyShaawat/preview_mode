@@ -11,8 +11,8 @@ from .guards import PreviewBlocked, PreviewIncomplete, safe_run
 from .where import locate
 
 MAX_ROWS = 200
-# System parameters (all optional): preview_mode.timeout (seconds, default 10),
-# preview_mode.max_records (0 = no limit), preview_mode.skip_models (comma separated model names).
+# System parameters (all optional): preview_mode.enabled (kill switch, default on),
+# preview_mode.timeout (seconds, default 10), preview_mode.max_records (0 = no limit).
 DEFAULT_TIMEOUT = 10
 # Buttons on these models change the in-memory registry, caches or installed modules, which a
 # savepoint rollback cannot undo. They are never run as a preview: the real click runs as usual.
@@ -91,12 +91,18 @@ def _journal(env, changes):
     return result
 
 
+def switched_on(env):
+    """The administrator's kill switch: system parameter preview_mode.enabled, on unless set to false."""
+    # PORT: Odoo 20 has get_bool; on 16 to 19 read get_param and compare with 'False'.
+    return env['ir.config_parameter'].sudo().get_bool('preview_mode.enabled', True)
+
+
 def _skip_notice(env, model, res_ids):
     """Why this click is not previewed (shown to the user), or '' to preview it."""
     # PORT: Odoo 20 has get_str/get_int/get_float; on 16 to 19 use get_param.
     params = env['ir.config_parameter'].sudo()
-    if model in [m.strip() for m in params.get_str('preview_mode.skip_models').split(',')]:
-        return _('Preview is switched off for this kind of button.')
+    if not switched_on(env):
+        return _('Preview Mode is switched off by your administrator.')
     limit = params.get_int('preview_mode.max_records')
     if limit and len(res_ids) > limit:
         return _('Too many records to preview (%(count)s, limit %(limit)s).', count=len(res_ids), limit=limit)
