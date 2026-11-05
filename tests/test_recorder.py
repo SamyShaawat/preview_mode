@@ -22,9 +22,10 @@ class TestRecorder(TransactionCase):
         partner = self.env['res.partner'].create({'name': 'A'})
         with ChangeRecorder() as rec:
             partner.write({'name': 'B'})
-        self.assertEqual(len(rec.changes), 1)
-        self.assertEqual(rec.changes[0].kind, 'changed')
-        self.assertEqual(rec.changes[0].fields, [('Name', 'A', 'B')])
+        # Two entries for one record: the write itself, and the recomputed stored field (complete_name)
+        # seen at flush. The payload merges them into one row.
+        self.assertEqual({(c.kind, c.res_id) for c in rec.changes}, {('changed', partner.id)})
+        self.assertIn([('Name', 'A', 'B')], [c.fields for c in rec.changes])
 
     def test_unlink_is_recorded(self):
         partner = self.env['res.partner'].create({'name': 'A'})
@@ -108,3 +109,16 @@ class TestDisplayValue(TransactionCase):
         rate = self.env['res.currency.rate']
         self.assertEqual(display_value(rate, rate._fields['name'], date(2026, 1, 31)), '01/31/2026')
         self.assertIsNone(display_value(partner, partner._fields['name'], 'x'))
+
+
+@tagged('post_install', '-at_install')
+class TestSnapshotColumns(TransactionCase):
+    def test_empty_many2one_column_is_read_without_marking_incomplete(self):
+        # Stock moves, pickings and most real records have empty many2one columns.
+        partner = self.env['res.partner'].create({'name': 'No Parent Co'})
+        recorder = ChangeRecorder()
+        names, old = recorder.snapshot_columns(partner, [{'parent_id': False, 'name': 'x'}])
+        self.assertIn('parent_id', names)
+        self.assertEqual(old[partner.id]['parent_id'], '')
+        self.assertEqual(old[partner.id]['name'], 'No Parent Co')
+        self.assertFalse(recorder.incomplete, recorder.warnings)

@@ -124,7 +124,7 @@ class ChangeRecorder:
             for row in records.env.cr.fetchall():
                 rec = records.browse(row[0])
                 old[rec.id] = {
-                    f.name: self._text(rec, f.name, f.convert_to_read(f.convert_to_cache(value, rec), rec))
+                    f.name: self._text(rec, f.name, f.convert_to_read(f.convert_to_record(f.convert_to_cache(value, rec), rec), rec))
                     for f, value in zip(fields, row[1:])}
             return [f.name for f in fields], old
         except Exception:  # noqa: BLE001 - must not break the flush
