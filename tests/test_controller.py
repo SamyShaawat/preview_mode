@@ -84,3 +84,10 @@ class TestController(HttpCase):
         result = self.make_jsonrpc_request('/preview_mode/created', {'token': 'iso3'})
         self.assertEqual([r['name'] for r in result], ['A made'])
         self.assertFalse(rows_a.exists())
+
+    def test_kill_switch_hides_the_toggle_in_session_info(self):
+        self.env.ref('base.user_admin').preview_mode_enabled = True
+        self.authenticate('admin', 'admin')
+        self.assertTrue(self.make_jsonrpc_request('/web/session/get_session_info', {})['preview_mode_enabled'])
+        self.env['ir.config_parameter'].set_bool('preview_mode.enabled', False)
+        self.assertFalse(self.make_jsonrpc_request('/web/session/get_session_info', {})['preview_mode_enabled'])

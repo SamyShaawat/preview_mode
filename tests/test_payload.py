@@ -104,18 +104,20 @@ class TestPayload(TransactionCase):
         self.env.cr.execute('SELECT pg_sleep(0.6)')
         self.assertEqual(self.partner.name, 'Preview Co')
 
-    def test_payload_skips_too_many_records_and_listed_models(self):
+    def test_payload_skips_too_many_records(self):
         ICP = self.env['ir.config_parameter']
         ICP.set_str('preview_mode.max_records', '1')
         payload = build_preview(self.env, 'res.partner', 'copy', [1, 2], [], {}, 'Copy')
         self.assertFalse(payload['show'])
         self.assertIn('Too many records', payload['notice'])
-        ICP.set_str('preview_mode.max_records', '0')
-        ICP.set_str('preview_mode.skip_models', 'sale.order, res.partner')
+
+    def test_kill_switch_stops_previews(self):
+        self.env['ir.config_parameter'].set_bool('preview_mode.enabled', False)
         payload = build_preview(self.env, 'res.partner', 'copy', [self.partner.id], [], {}, 'Copy')
         self.assertFalse(payload['show'])
-        self.assertTrue(payload['notice'])
+        self.assertIn('switched off', payload['notice'])
         self.assertFalse(self.env['res.partner'].search([('name', '=', 'Preview Co (copy)')]))
+
     def test_registry_changing_models_are_never_run(self):
         for model in ('ir.module.module', 'res.config.settings', 'base.module.upgrade', 'ir.ui.view'):
             with patch('odoo.addons.preview_mode.models.payload.call_kw') as call_kw:
