@@ -102,6 +102,9 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
         try:
             # call_kw refuses private methods exactly like a real RPC would.
             call_kw(env[model], method, [list(res_ids), *args], kwargs)
+            # Delayed writes (recomputed totals, states) only reach the recorder when flushed, and the
+            # savepoint rollback drops them unflushed.
+            env.flush_all()
         except UserError as e:  # also AccessError, ValidationError
             warnings.append({'text': _('Confirming will fail: %s', e.args[0] if e.args else e), 'blocking': True})
         except (PreviewBlocked, PreviewIncomplete):
