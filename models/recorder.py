@@ -9,6 +9,8 @@ IGNORED_FIELDS = (
 )
 IGNORED_FIELD_SUFFIXES = ('_dirty',)
 
+from .formatting import display_value  # noqa: E402
+
 _local = threading.local()
 
 
@@ -56,7 +58,9 @@ class ChangeRecorder:
             return dict(field._description_selection(record.env)).get(value, '') if value else ''
         if field.type in ('one2many', 'many2many'):
             return ', '.join(record.env[field.comodel_name].browse(value).mapped('display_name'))
-        return '' if value is False or value is None else str(value)
+        if value is False or value is None:
+            return ''
+        return display_value(record, field, value) or str(value)
 
     def _names(self, records, vals):
         return [n for n in vals
