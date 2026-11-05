@@ -14,6 +14,10 @@ MAX_ROWS = 200
 # System parameters (all optional): preview_mode.timeout (seconds, default 10),
 # preview_mode.max_records (0 = no limit), preview_mode.skip_models (comma separated model names).
 DEFAULT_TIMEOUT = 10
+# Buttons on these models change the in-memory registry, caches or installed modules, which a
+# savepoint rollback cannot undo. They are never run as a preview: the real click runs as usual.
+UNSAFE_MODELS = ('ir.module.module', 'res.config.settings', 'ir.model', 'ir.model.fields', 'ir.ui.view')
+UNSAFE_PREFIXES = ('base.module.', 'base.language.')
 
 
 def _summary(env, changes, emails):
@@ -109,6 +113,9 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
     if method.startswith('_') or method == 'init':
         # Same rule as RPC: never run a private method (call_kw adds @api.private on 20).
         raise AccessError(_('Private methods cannot be previewed.'))
+    if model in UNSAFE_MODELS or model.startswith(UNSAFE_PREFIXES):
+        return {'show': False, 'changes': [], 'emails': [], 'warnings': [], 'incomplete': False,
+                'summary': '', 'journal': []}
     warnings = []
     seconds = env['ir.config_parameter'].sudo().get_float('preview_mode.timeout') or DEFAULT_TIMEOUT
     timed_out = False
@@ -120,6 +127,9 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
         try:
             # call_kw refuses private methods exactly like a real RPC would.
             call_kw(env[model], method, [list(res_ids), *args], kwargs)
+            # Delayed writes (recomputed totals, states) only reach the recorder when flushed, and the
+            # savepoint rollback drops them unflushed.
+            env.flush_all()
         except UserError as e:  # also AccessError, ValidationError
             warnings.append({'text': _('Confirming will fail: %s', e.args[0] if e.args else e), 'blocking': True})
         except (PreviewBlocked, PreviewIncomplete):
