@@ -8,6 +8,7 @@ except ImportError:  # Odoo 16
     from odoo.api import call_kw
 
 from .guards import PreviewBlocked, PreviewIncomplete, safe_run
+from .rawwrites import snapshot, unexplained
 from .where import locate
 
 MAX_ROWS = 200
@@ -109,6 +110,21 @@ def _skip_notice(env, model, res_ids):
     return ''
 
 
+def _flag_raw_writes(env, recorder, before):
+    """Mark the preview incomplete when the click wrote to the database behind the ORM."""
+    cr, uid, context = env.cr, env.uid, env.context  # noqa: F841 - read by _() to pick the language
+    try:
+        tables = unexplained(env, before, recorder.changes)
+    except Exception:  # noqa: BLE001 - the safety check must not break the preview
+        recorder.incomplete = True
+        recorder.warnings.append(_('Could not check whether the click wrote to the database directly.'))
+        return
+    if tables:
+        recorder.incomplete = True
+        recorder.warnings.append(
+            _('The click wrote directly to the database (%s). The preview cannot show those changes.', ', '.join(tables)))
+
+
 def build_preview(env, model, method, res_ids, args, kwargs, label):
     """Same contract as call_button (args after the ids); no allow-list: any model, any method."""
     cr, uid, context = env.cr, env.uid, env.context  # noqa: F841 - read by _() to pick the language
@@ -131,11 +147,13 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
         # SET LOCAL ends with the savepoint's rollback, so the normal timeout is back afterwards.
         env.cr.execute('SET LOCAL statement_timeout = %d' % int(seconds * 1000))
         try:
+            before = snapshot(env)
             # call_kw refuses private methods exactly like a real RPC would.
             call_kw(env[model], method, [list(res_ids), *args], kwargs)
             # Delayed writes (recomputed totals, states) only reach the recorder when flushed, and the
             # savepoint rollback drops them unflushed.
             env.flush_all()
+            _flag_raw_writes(env, recorder, before)
         except UserError as e:  # also AccessError, ValidationError
             warnings.append({'text': _('Confirming will fail: %s', e.args[0] if e.args else e), 'blocking': True})
         except (PreviewBlocked, PreviewIncomplete):
