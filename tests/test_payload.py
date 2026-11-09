@@ -162,13 +162,26 @@ class TestPayload(TransactionCase):
         self.assertFalse(self.env['res.partner'].search([('name', '=', 'Preview ghost')]))
 
     def test_payload_private_method_refused(self):
-        with self.assertRaises(Exception):
+        with self.assertRaises(AccessError):
             build_preview(self.env, 'res.partner', '_compute_display_name', [self.partner.id], [], {}, 'x')
 
     def test_payload_invalid_model_refused(self):
         for model in ('no.such.model', 'mail.thread'):  # unknown, abstract
             with self.assertRaisesRegex(AccessError, 'Invalid model'):
                 build_preview(self.env, model, 'write', [], [], {}, 'x')
+
+    def test_payload_for_wizard_button(self):
+        # A wizard (transient model) button that changes a real record previews like any other.
+        def button(wizard, partner_id):
+            self.env['res.partner'].browse(partner_id).name = 'Wizard changed'
+        Wizard = type(self.env['base.enable.profiling.wizard'])
+        wizard = self.env['base.enable.profiling.wizard'].create({})
+        with patch.object(Wizard, 'preview_mode_test_button', button, create=True):
+            payload = build_preview(self.env, 'base.enable.profiling.wizard', 'preview_mode_test_button',
+                                    [wizard.id], [self.partner.id], {}, 'Apply')
+        self.assertTrue(payload['show'], payload)
+        self.assertEqual(payload['changes'][0]['kind'], 'changed')
+        self.assertEqual(self.partner.name, 'Preview Co')
 
     def test_user_flag_is_self_writable(self):
         user = new_test_user(self.env, 'preview_flag', groups='base.group_user')
