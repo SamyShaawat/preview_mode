@@ -15,10 +15,16 @@ MAX_ROWS = 200
 # System parameters (all optional): preview_mode.enabled (kill switch, default on),
 # preview_mode.timeout (seconds, default 10), preview_mode.max_records (0 = no limit).
 DEFAULT_TIMEOUT = 10
+MIN_TIMEOUT, MAX_TIMEOUT = 1, 120  # the parameter is clamped to this range (seconds)
 # Buttons on these models change the in-memory registry, caches or installed modules, which a
 # savepoint rollback cannot undo. They are never run as a preview: the real click runs as usual.
 UNSAFE_MODELS = ('ir.module.module', 'res.config.settings', 'ir.model', 'ir.model.fields', 'ir.ui.view')
 UNSAFE_PREFIXES = ('base.module.', 'base.language.')
+
+
+def _timeout(env):
+    seconds = env['ir.config_parameter'].sudo().get_float('preview_mode.timeout') or DEFAULT_TIMEOUT
+    return max(MIN_TIMEOUT, min(MAX_TIMEOUT, seconds))
 
 
 def _summary(env, changes, emails):
@@ -139,13 +145,13 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
         return {'show': False, 'changes': [], 'emails': [], 'warnings': [], 'incomplete': False,
                 'summary': '', 'journal': []}
     warnings = []
-    seconds = env['ir.config_parameter'].sudo().get_float('preview_mode.timeout') or DEFAULT_TIMEOUT
+    seconds = _timeout(env)
     timed_out = False
     # Translated before the run: after a cancelled query the transaction is unusable until rollback.
     timeout_text = _('The preview timed out after %s seconds. Confirming may still work.', seconds)
     with safe_run(env) as recorder:
         # SET LOCAL ends with the savepoint's rollback, so the normal timeout is back afterwards.
-        env.cr.execute('SET LOCAL statement_timeout = %d' % int(seconds * 1000))
+        env.cr.execute('SET LOCAL statement_timeout = %s', [int(seconds * 1000)])
         try:
             before = snapshot(env)
             # call_kw refuses private methods exactly like a real RPC would.
