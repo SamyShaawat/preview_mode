@@ -152,3 +152,14 @@ class TestX2manyNames(TransactionCase):
             rec.snapshot(partners[:2], {'category_id': 1})
         few = cr.sql_log_count - before
         self.assertEqual(many, few)
+
+    def test_repeated_values_are_formatted_once(self):
+        """The same float or date on many lines is formatted once per preview, not once per line."""
+        partners = self.env['res.partner'].create([{'name': 'F%s' % i} for i in range(5)])
+        field = partners._fields['partner_latitude']
+        with ChangeRecorder() as rec, patch('odoo.addons.preview_mode.models.recorder.display_value',
+                                            return_value='1.5') as fmt:
+            texts = [rec._text(p, 'partner_latitude', 1.5) for p in partners]
+        self.assertEqual(field.type, 'float')
+        self.assertEqual(texts, ['1.5'] * 5)
+        self.assertEqual(fmt.call_count, 1)
