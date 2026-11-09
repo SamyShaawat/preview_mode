@@ -4,7 +4,7 @@ from unittest.mock import patch
 from odoo.exceptions import AccessError, UserError
 from odoo.tests.common import TransactionCase, new_test_user, tagged
 
-from ..models.payload import build_preview
+from ..models.payload import _timeout, build_preview
 
 
 @tagged('post_install', '-at_install')
@@ -90,18 +90,24 @@ class TestPayload(TransactionCase):
             payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Post')
         self.assertIn({'text': 'Confirming will fail: Period locked', 'blocking': True}, payload['warnings'])
 
+    def test_timeout_is_clamped(self):
+        ICP = self.env['ir.config_parameter']
+        for value, expected in (('0.01', 1), ('-5', 1), ('9999', 120), ('30', 30), ('0', 10)):
+            ICP.set_str('preview_mode.timeout', value)
+            self.assertEqual(_timeout(self.env), expected, value)
+
     def test_payload_times_out(self):
-        self.env['ir.config_parameter'].set_str('preview_mode.timeout', '0.3')
+        self.env['ir.config_parameter'].set_str('preview_mode.timeout', '1')
 
         def button(self):
-            self.env.cr.execute('SELECT pg_sleep(3)')
+            self.env.cr.execute('SELECT pg_sleep(4)')
         with self._patch(button):
             payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Slow')
         self.assertTrue(payload['incomplete'])
         self.assertTrue(payload['show'])
         self.assertIn('timed out', payload['warnings'][0]['text'])
         # the normal timeout is back and the cursor works again
-        self.env.cr.execute('SELECT pg_sleep(0.6)')
+        self.env.cr.execute('SELECT pg_sleep(1.2)')
         self.assertEqual(self.partner.name, 'Preview Co')
 
     def test_payload_skips_too_many_records(self):
