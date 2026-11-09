@@ -58,32 +58,18 @@ export const previewService = {
             });
         }
 
-        action.doActionButton = async function (params, options) {
-            if (!state.enabled || params.type !== "object" || params.special || !params.name) {
-                return original(params, options);
-            }
-            const ids = params.resId ? [params.resId] : params.resIds || [];
-            let extra = [];
-            if (params.args) {
-                try {
-                    extra = JSON.parse(params.args.replace(/'/g, '"'));
-                } catch {
-                    extra = [];
-                }
-            }
-            // The clicked button's own text; falls back to the method name.
-            const label =
-                params.string ||
-                (lastButton?.name === params.name && buttonText(lastButton)) ||
-                params.name;
+        // Preview one click: `req` = {model, method, ids, args, context, label}; `run(token)` is the real run.
+        // Resolves after the user confirms (and run finished) or goes back.
+        async function guard(req, run) {
+            const { label } = req;
             let result;
             try {
                 result = await rpc("/preview_mode/run", {
-                    model: params.resModel,
-                    method: params.name,
-                    res_ids: ids,
-                    args: extra,
-                    kwargs: { context: makeContext([user.context, params.context, params.buttonContext]) },
+                    model: req.model,
+                    method: req.method,
+                    res_ids: req.ids,
+                    args: req.args || [],
+                    kwargs: { context: makeContext([user.context, ...req.context]) },
                     label,
                 });
             } catch {
@@ -93,7 +79,7 @@ export const previewService = {
                         title: _t("Preview unavailable"),
                         body: _t("The preview could not be built, so nothing is known about what %s will do.", label),
                         confirmLabel: _t("Run without preview"),
-                        confirm: () => resolve(original(params, options)),
+                        confirm: () => resolve(run()),
                         cancelLabel: _t("Go back"),
                         cancel: () => resolve(),
                     });
@@ -103,7 +89,7 @@ export const previewService = {
                 if (result.notice) {
                     notification.add(result.notice, { type: "info" });
                 }
-                return original(params, options);
+                return run();
             }
             await new Promise((resolve) => {
                 let settled = false;
@@ -123,18 +109,8 @@ export const previewService = {
                         journal: result.journal,
                         incomplete: result.incomplete,
                         onConfirm: async () => {
-                            const token = newToken();
                             try {
-                                await original(
-                                    // No token: the click still runs, only the "Created" toast is skipped.
-                                    token
-                                        ? { ...params, context: { ...(params.context || {}), preview_mode_token: token } }
-                                        : params,
-                                    options
-                                );
-                                if (token) {
-                                    await showCreated(token);
-                                }
+                                await run(newToken());
                             } finally {
                                 done();
                             }
@@ -143,10 +119,49 @@ export const previewService = {
                     { onClose: () => !settled && done() }
                 );
             });
+        }
+
+        action.doActionButton = async function (params, options) {
+            if (!state.enabled || params.type !== "object" || params.special || !params.name) {
+                return original(params, options);
+            }
+            let extra = [];
+            if (params.args) {
+                try {
+                    extra = JSON.parse(params.args.replace(/'/g, '"'));
+                } catch {
+                    extra = [];
+                }
+            }
+            // The clicked button's own text; falls back to the method name.
+            const label =
+                params.string ||
+                (lastButton?.name === params.name && buttonText(lastButton)) ||
+                params.name;
+            return guard(
+                {
+                    model: params.resModel,
+                    method: params.name,
+                    ids: params.resId ? [params.resId] : params.resIds || [],
+                    args: extra,
+                    context: [params.context, params.buttonContext],
+                    label,
+                },
+                async (token) => {
+                    await original(
+                        token ? { ...params, context: { ...(params.context || {}), preview_mode_token: token } } : params,
+                        options
+                    );
+                    if (token) {
+                        await showCreated(token);
+                    }
+                }
+            );
         };
 
         return {
             state,
+            guard,
             async toggle() {
                 const enabled = !state.enabled;
                 await orm.write("res.users", [user.userId], { preview_mode_enabled: enabled });
