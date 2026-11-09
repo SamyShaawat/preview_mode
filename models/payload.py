@@ -38,16 +38,18 @@ def _summary(env, changes, emails):
         parts.append(_('create %(count)s %(what)s', count=count, what=env[model]._description.lower()))
     updated = sum(1 for c in changes if c['kind'] == 'changed')
     deleted = sum(1 for c in changes if c['kind'] == 'deleted')
-    # ponytail: "record(s)" not real pluralisation; translators can phrase it per language.
+    # Odoo has no ngettext: singular and plural are two separate translatable strings.
     if updated:
-        parts.append(_('update %s record(s)', updated))
+        parts.append(_('update %s record', updated) if updated == 1 else _('update %s records', updated))
     if deleted:
-        parts.append(_('delete %s record(s)', deleted))
+        parts.append(_('delete %s record', deleted) if deleted == 1 else _('delete %s records', deleted))
     if emails:
-        parts.append(_('queue %s email(s) (not sent during the preview)', len(emails)))
+        n = len(emails)
+        parts.append(_('queue %s email (not sent during the preview)', n) if n == 1
+                     else _('queue %s emails (not sent during the preview)', n))
     if not parts:
         return ''
-    listed = parts[0] if len(parts) == 1 else _('%(first)s, and %(last)s', first=', '.join(parts[:-1]), last=parts[-1])
+    listed = parts[0] if len(parts) == 1 else _('%(first)s and %(last)s', first=', '.join(parts[:-1]), last=parts[-1])
     return _('Confirming will %s.', listed)
 
 
