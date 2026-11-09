@@ -1,4 +1,6 @@
 """Run a button inside safe_run and describe what it would do."""
+import re
+
 from odoo import _
 from odoo.exceptions import AccessError, UserError
 
@@ -9,7 +11,7 @@ except ImportError:  # Odoo 16
 
 from .guards import PreviewBlocked, PreviewIncomplete, safe_run
 from .rawwrites import snapshot, unexplained
-from .where import locate
+from .where import candidates, locate
 
 MAX_ROWS = 200
 # System parameters (all optional): preview_mode.enabled (kill switch, default on),
@@ -27,22 +29,30 @@ def _timeout(env):
     return max(MIN_TIMEOUT, min(MAX_TIMEOUT, seconds))
 
 
+def _noun(env, model, count):
+    """Model description in lower case, plural when ``count`` > 1 (English only, other languages keep the label)."""
+    word = re.sub(r'\s*\(.*\)$', '', env[model]._description.lower())  # 'Product Moves (Stock Move Line)'
+    if count == 1 or not (env.lang or 'en_US').startswith('en') or word.endswith('s'):
+        return word
+    # ponytail: plain English rules; add a per-model override if a description ever pluralises badly.
+    if word.endswith('y') and word[-2:-1] not in 'aeiou':
+        return word[:-1] + 'ies'
+    return word + ('es' if word.endswith(('x', 'ch', 'sh')) else 's')
+
+
 def _summary(env, changes, emails):
     cr, uid, context = env.cr, env.uid, env.context  # noqa: F841 - read by _() to pick the language
     parts = []
-    created = {}
-    for change in changes:
-        if change['kind'] == 'new':
-            created[change['model']] = created.get(change['model'], 0) + 1
-    for model, count in created.items():
-        parts.append(_('create %(count)s %(what)s', count=count, what=env[model]._description.lower()))
-    updated = sum(1 for c in changes if c['kind'] == 'changed')
-    deleted = sum(1 for c in changes if c['kind'] == 'deleted')
+    for kind, text in (('new', _('create %(count)s %(what)s')),
+                       ('changed', _('update %(count)s %(what)s')),
+                       ('deleted', _('delete %(count)s %(what)s'))):
+        counts = {}
+        for change in changes:
+            if change['kind'] == kind:
+                counts[change['model']] = counts.get(change['model'], 0) + 1
+        for model, count in counts.items():
+            parts.append(text % {'count': count, 'what': _noun(env, model, count)})
     # Odoo has no ngettext: singular and plural are two separate translatable strings.
-    if updated:
-        parts.append(_('update %s record', updated) if updated == 1 else _('update %s records', updated))
-    if deleted:
-        parts.append(_('delete %s record', deleted) if deleted == 1 else _('delete %s records', deleted))
     if emails:
         n = len(emails)
         parts.append(_('queue %s email (not sent during the preview)', n) if n == 1
@@ -201,6 +211,12 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
         except Exception:  # noqa: BLE001 - the extra view must never break the preview
             journal = []
         merged = _merge(recorder.changes)
+        # Needs the records, so it runs before the rollback; menus are looked up once per model.
+        menus, wheres = {}, []
+        for change in merged[:MAX_ROWS]:
+            if change['model'] not in menus:
+                menus[change['model']] = candidates(env, change['model'])
+            wheres.append(locate(env, change['model'], change['res_id'], menus[change['model']]))
         try:
             sections = [] if timed_out else _sections(env, model, method, res_ids, merged)
         except Exception:  # noqa: BLE001 - a third-party section must never break the preview
@@ -208,24 +224,19 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
     # The savepoint is rolled back here; Change rows already hold plain text.
     warnings += [{'text': text, 'blocking': False} for text in recorder.warnings]
     changes = recorder.changes
-    where = {}
     rows = []
-    for change in merged[:MAX_ROWS]:
-        if change['model'] not in where:
-            where[change['model']] = locate(env, change['model'])
+    for change, where in zip(merged, wheres):
         rows.append({
             'kind': change['kind'],
             # Records without a real name show as "model,id"; say what they are instead.
             'what': env[change['model']]._description if change['what'] == '%s,%s' % (change['model'], change['res_id']) else change['what'],
-            'where': where[change['model']],
+            'where': where,
             'fields': [{'label': lbl, 'old': old, 'new': new} for lbl, (old, new) in change['fields'].items()],
         })
     if len(merged) > MAX_ROWS:
         rows.append({'kind': 'more', 'what': _('and %s more', len(merged) - MAX_ROWS), 'where': '', 'fields': []})
     blocking = [w for w in warnings if w['blocking']]
-    summary = _summary(env, merged, recorder.emails)
-    if blocking and not summary:
-        summary = blocking[0]['text']
+    summary = _summary(env, merged, recorder.emails)  # a blocking error is shown once, as a warning
     return {
         # The client decides on `show`, never on `changes == []`.
         'show': bool(rows or blocking or recorder.incomplete or recorder.emails or sections),
