@@ -13,6 +13,7 @@
             'preview_mode/static/src/**/*',
         ],
     },
+    'images': ['static/description/popup-confirm.png', 'static/description/popup-create.png'],
     'post_load': 'post_load',
     'installable': True,
     'application': False,
