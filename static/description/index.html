@@ -14,6 +14,22 @@
     and a popup lists what the click would create, change or delete, and where each change lands in Odoo's menus.
     Then you confirm for real or go back. Nothing from the click is saved during the preview.</p>
 
+  <h2 style="color:#714b67;">Why Preview Mode</h2>
+  <p>Other tools tell you what happened, or ask you to be sure. Preview Mode shows the result of the click, so you can
+    preview a button click before you confirm it. The same idea exists in some ERPs for accounting postings; here it covers every
+    app. That makes risky operations safer without a second step to undo them.</p>
+  <div style="overflow-x:auto;margin-bottom:24px;">
+    <table style="border-collapse:collapse;width:100%;min-width:640px;font-size:0.95em;">
+      <tr><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #714b67;vertical-align:bottom;">Approach</th><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #714b67;vertical-align:bottom;">Shows the result before the click is saved</th><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #714b67;vertical-align:bottom;">Works in</th><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #714b67;vertical-align:bottom;">Setup</th><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #714b67;vertical-align:bottom;">Cost</th></tr>
+      <tr><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Audit trail modules (for example OCA auditlog, AuditGuard)</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">No. Records the change after it happened.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Only the models you set up.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Rules per model (auditlog).</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Auditlog is free. AuditGuard has a free and a Pro version.</td></tr>
+      <tr><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Confirmation dialog modules for server actions</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">No. Shows fixed text such as "Are you sure?".</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Server actions only.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Enable per server action.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Varies by module.</td></tr>
+      <tr><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Undo or reversal modules (for example OCA account_reversal)</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">No. Fixes the mistake after it was saved.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Accounting documents.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Install the module.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Varies by module.</td></tr>
+      <tr><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Accounting preview in other ERPs (SAP Simulate Posting, Dynamics 365 Preview Posting)</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Yes, for ledger entries.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Accounting postings only.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Built into those products.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Part of those products.</td></tr>
+      <tr><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;"><strong>Preview Mode</strong></td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;"><strong>Yes. Runs the real click, shows the result, rolls it back.</strong></td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;"><strong>Every button that changes data, in every app.</strong></td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;"><strong>None. Install and turn the switch on.</strong></td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;"><strong>Free, LGPL-3.</strong></td></tr>
+    </table>
+  </div>
+  <p style="color:#6c757d;font-size:0.9em;">Audit trails still have a job: they keep a record for compliance. Preview Mode does not replace them, it comes before them.</p>
+
   <h2 style="color:#714b67;">One switch in the top bar</h2>
   <p>The switch sits in the top bar on every page, in the same place on Community and Enterprise. It lights up while
     preview is on, and your choice is remembered for your user.</p>
@@ -65,6 +81,9 @@
   <p>Not covered yet: printing, imports, scheduled actions, status bar stage changes and list-view mass actions such as Archive and Delete.</p>
 
   <h2 style="color:#714b67;">Version and licence</h2>
-  <p>Currently available for Odoo 20.0. Licence: LGPL-3. Author: Samy Mostafa Shaawat.</p>
+  <p>Available for Odoo 20.0 now. Versions 16.0 to 19.0 are planned, with no date yet.</p>
+  <p>It depends only on <code>base</code> and <code>web</code>, so it is built for Community and Enterprise. It was checked
+    with Enterprise on 19.0 (the switch and the popup). Enterprise 20 has not been verified yet.</p>
+  <p>Licence: LGPL-3. Author: Samy Mostafa Shaawat.</p>
 
 </section>
