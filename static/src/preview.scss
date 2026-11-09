@@ -36,7 +36,9 @@
     .modal-body { overflow-y: auto; }
     .o_preview_table {
         td, th { vertical-align: top; }
-        .o_preview_what, .o_preview_where { overflow-wrap: anywhere; }
+        .o_preview_what { overflow-wrap: anywhere; }
+        // Where keeps whole words on a phone; only a single over-long word breaks.
+        .o_preview_where { overflow-wrap: break-word; min-width: 7rem; }
         .o_preview_value { white-space: nowrap; }
     }
 }
