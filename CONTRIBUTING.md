@@ -13,6 +13,18 @@ Every task, however small, is one pull request.
 5. Title starts with the series in brackets, for example `[20.0] Add change recorder`.
 6. Fill in the PR template. The first section names the base branch and says the topic branch is deleted after merge.
 
+## Outside contributions: DCO sign-off
+
+Pull requests from people outside the project are accepted only if every commit carries a Developer Certificate of Origin sign-off (https://developercertificate.org/). It says you wrote the change or have the right to submit it under the project's LGPL-3 license. Add it with `git commit -s`, which appends:
+
+    Signed-off-by: Your Name <you@example.com>
+
+Use your real name and the email on your commits. A PR with unsigned commits is not merged; fix it with `git rebase --signoff <series>` and a force push to your topic branch.
+
+## Code style
+
+The repo follows OCA conventions with a minimal rule set: `.pre-commit-config.yaml` (isort, flake8, pylint-odoo, whitespace checks) with `.flake8`, `.isort.cfg` and `.pylintrc`. Run `pre-commit run --all-files` before opening the PR.
+
 ## Porting to other versions
 
 A change made on `20.0` (the reference and default branch) is ported with one PR per version, never one PR for several. Cherry-pick the merged commit onto `port/<series>-<topic>` cut from that version's branch, fix the version differences, and open the PR with base `<series>`. Link the original PR in the body.

@@ -3,6 +3,7 @@
 # Preview Mode
 
 [![tests](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml/badge.svg?branch=20.0)](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml)
+![License: LGPL-3](https://img.shields.io/badge/license-LGPL--3-blue.svg) ![Odoo 20.0](https://img.shields.io/badge/odoo-20.0-875a7b.svg)
 
 **See what a button click will do before it does it.**
 
