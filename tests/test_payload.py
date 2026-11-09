@@ -1,7 +1,7 @@
 from email.message import EmailMessage
 from unittest.mock import patch
 
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 from odoo.tests.common import TransactionCase, new_test_user, tagged
 
 from ..models.payload import build_preview
@@ -156,6 +156,11 @@ class TestPayload(TransactionCase):
     def test_payload_private_method_refused(self):
         with self.assertRaises(Exception):
             build_preview(self.env, 'res.partner', '_compute_display_name', [self.partner.id], [], {}, 'x')
+
+    def test_payload_invalid_model_refused(self):
+        for model in ('no.such.model', 'mail.thread'):  # unknown, abstract
+            with self.assertRaisesRegex(AccessError, 'Invalid model'):
+                build_preview(self.env, model, 'write', [], [], {}, 'x')
 
     def test_user_flag_is_self_writable(self):
         user = new_test_user(self.env, 'preview_flag', groups='base.group_user')

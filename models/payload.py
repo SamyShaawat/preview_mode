@@ -128,6 +128,9 @@ def _flag_raw_writes(env, recorder, before):
 def build_preview(env, model, method, res_ids, args, kwargs, label):
     """Same contract as call_button (args after the ids); no allow-list: any model, any method."""
     cr, uid, context = env.cr, env.uid, env.context  # noqa: F841 - read by _() to pick the language
+    if model not in env or env[model]._abstract:
+        # One error for unknown and abstract models, so the response cannot be used to list models.
+        raise AccessError(_('Invalid model.'))
     notice = _skip_notice(env, model, res_ids)
     if notice:
         return {'show': False, 'notice': notice, 'changes': [], 'emails': [], 'warnings': [],
