@@ -107,6 +107,7 @@ export const previewService = {
                         changes: result.changes,
                         emails: result.emails,
                         journal: result.journal,
+                        sections: result.sections || [],
                         incomplete: result.incomplete,
                         onConfirm: async () => {
                             try {

@@ -15,6 +15,7 @@ export class PreviewDialog extends Component {
         changes: t.any(),
         emails: t.any(),
         journal: t.any(),
+        sections: t.any(),
         incomplete: t.any(),
         onConfirm: t.function(),
     });
@@ -39,6 +40,10 @@ export class PreviewDialog extends Component {
             for (const l of move.lines) {
                 lines.push(`    ${l.account}  ${l.debit ? l.debit.toFixed(2) : ""}  ${l.credit ? l.credit.toFixed(2) : ""}`);
             }
+        }
+        for (const section of p.sections) {
+            lines.push(section.title);
+            lines.push(...section.rows.map((row) => `    ${row.join("  ")}`));
         }
         for (const mail of p.emails) {
             lines.push(_t("Email (not sent): %(subject)s -> %(to)s", { subject: mail.subject, to: mail.to }));

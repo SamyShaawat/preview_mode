@@ -103,6 +103,37 @@ git clone --branch 20.0 https://github.com/SamyShaawat/preview_mode.git /path/to
 - Odoo.sh: built to work there. No external Python packages, no system changes, no files written outside Odoo's own storage, and safe with several workers. On Odoo.sh, add this repo as a git submodule named `preview_mode` in your project repository.
 - License: LGPL-3 (GNU Lesser General Public License v3). See [LICENSE](LICENSE). Free to use; the module follows OCA conventions in its own repository.
 
+## Extending the popup (for developers)
+
+Another module can add its own table below the standard ones (for example "Inventory impact"). Preview Mode stays generic; your module owns the domain knowledge. Put this in a small glue module that depends on `preview_mode` (set `auto_install: True` with `depends: ['preview_mode', 'your_module']` so it only loads when both are installed; without Preview Mode nothing happens):
+
+```python
+from odoo import api, models
+
+
+class PreviewModeSection(models.AbstractModel):
+    _inherit = 'preview.mode.section'
+
+    @api.model
+    def _preview_sections(self, model, method, res_ids, changes):
+        sections = super()._preview_sections(model, method, res_ids, changes)
+        if model == 'stock.picking' and method == 'button_validate':
+            moves = self.env['stock.move'].browse(
+                c['res_id'] for c in changes if c['model'] == 'stock.move')
+            sections.append({
+                'title': 'Inventory impact',
+                'columns': ['Product', 'Location', 'Quantity'],
+                'rows': [[m.product_id.display_name, m.location_dest_id.display_name, str(m.quantity)] for m in moves],
+            })
+        return sections
+```
+
+- Arguments: `model`, `method`, `res_ids` of the clicked button, and `changes`, the list the popup shows (dicts with `kind` of `new`, `changed` or `deleted`, `model`, `res_id`, `what`, `fields`).
+- Return `title`, `columns` (optional) and `rows` (lists of text). A section without rows is not shown; sections appear below the "What will happen" table.
+- It runs inside the preview, before the rollback, so the records the click created or changed can still be read. Read only: do not write.
+- Always call `super()` and append. An exception in your code is swallowed: the preview still opens without your section.
+- The same sections are in the popup's Copy text.
+
 ## Docs
 
 - Design: [`docs/superpowers/specs/2026-11-02-preview-mode-design.md`](docs/superpowers/specs/2026-11-02-preview-mode-design.md)

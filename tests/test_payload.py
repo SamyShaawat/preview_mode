@@ -280,3 +280,35 @@ class TestQueuedMailScope(TransactionCase):
         # the user can read the partner but not the mail row: partner address shown, raw address hidden
         self.assertEqual(rec.emails[0]['to'], 'secret@example.com, 1 hidden')
         self.assertEqual(rec.emails[0]['subject'], 'S')
+
+
+@tagged('post_install', '-at_install')
+class TestSections(TransactionCase):
+    """The extension point: a module overrides preview.mode.section._preview_sections."""
+
+    def _preview(self, func):
+        Section = type(self.env['preview.mode.section'])
+        partner = self.env['res.partner'].create({'name': 'Section Co'})
+        with patch.object(Section, '_preview_sections', func):
+            return build_preview(self.env, 'res.partner', 'copy', [partner.id], [], {}, 'Copy')
+
+    def test_section_is_returned_and_sees_the_changes(self):
+        def sections(self, model, method, res_ids, changes):
+            names = [c['what'] for c in changes if c['kind'] == 'new']
+            return [{'title': 'Extra', 'columns': ['Name'], 'rows': [[n] for n in names]}]
+        payload = self._preview(sections)
+        self.assertEqual(len(payload['sections']), 1, payload)
+        self.assertEqual(payload['sections'][0]['title'], 'Extra')
+        self.assertEqual(len(payload['sections'][0]['rows']), 1)
+
+    def test_default_has_no_sections(self):
+        payload = build_preview(self.env, 'res.partner', 'copy', [self.env['res.partner'].create({'name': 'P'}).id],
+                                [], {}, 'Copy')
+        self.assertEqual(payload['sections'], [])
+
+    def test_broken_section_does_not_break_the_preview(self):
+        def sections(self, model, method, res_ids, changes):
+            raise ValueError('boom')
+        payload = self._preview(sections)
+        self.assertEqual(payload['sections'], [])
+        self.assertTrue(payload['changes'])

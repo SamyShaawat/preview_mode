@@ -100,6 +100,17 @@ def _journal(env, changes):
     return result
 
 
+def _sections(env, model, method, res_ids, merged):
+    """Extra tables from other modules (preview.mode.section); a broken extension is skipped."""
+    result = []
+    for section in env['preview.mode.section']._preview_sections(model, method, list(res_ids), merged):
+        columns = [str(c) for c in section.get('columns', [])]
+        rows = [[str(c) for c in row] for row in section.get('rows', [])]
+        if rows:
+            result.append({'title': str(section.get('title', '')), 'columns': columns, 'rows': rows})
+    return result
+
+
 def switched_on(env):
     """The administrator's kill switch: system parameter preview_mode.enabled, on unless set to false."""
     # PORT: Odoo 20 has get_bool; on 16 to 19 read get_param and compare with 'False'.
@@ -146,19 +157,19 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
     notice = _skip_notice(env, model, res_ids)
     if notice:
         return {'show': False, 'notice': notice, 'changes': [], 'emails': [], 'warnings': [],
-                'incomplete': False, 'summary': '', 'journal': []}
+                'incomplete': False, 'summary': '', 'journal': [], 'sections': []}
     if method.startswith('_') or method == 'init':
         # Same rule as RPC: never run a private method (call_kw adds @api.private on 20).
         raise AccessError(_('Private methods cannot be previewed.'))
     if model in UNSAFE_MODELS or model.startswith(UNSAFE_PREFIXES):
         return {'show': False, 'changes': [], 'emails': [], 'warnings': [], 'incomplete': False,
-                'summary': '', 'journal': []}
+                'summary': '', 'journal': [], 'sections': []}
     # One preview at a time per user (CWE-770). The lock lasts until the request's transaction ends; the
     # client then runs the click normally, exactly as when the preview is switched off.
     env.cr.execute('SELECT pg_try_advisory_xact_lock(%s, %s)', (LOCK_NAMESPACE, env.uid))
     if not env.cr.fetchone()[0]:
         return {'show': False, 'notice': _('A preview is already running. This click ran without a preview.'),
-                'changes': [], 'emails': [], 'warnings': [], 'incomplete': False, 'summary': '', 'journal': []}
+                'changes': [], 'emails': [], 'warnings': [], 'incomplete': False, 'summary': '', 'journal': [], 'sections': []}
     warnings = []
     seconds = _timeout(env)
     timed_out = False
@@ -189,12 +200,16 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
             journal = [] if timed_out else _journal(env, recorder.changes)
         except Exception:  # noqa: BLE001 - the extra view must never break the preview
             journal = []
+        merged = _merge(recorder.changes)
+        try:
+            sections = [] if timed_out else _sections(env, model, method, res_ids, merged)
+        except Exception:  # noqa: BLE001 - a third-party section must never break the preview
+            sections = []
     # The savepoint is rolled back here; Change rows already hold plain text.
     warnings += [{'text': text, 'blocking': False} for text in recorder.warnings]
     changes = recorder.changes
     where = {}
     rows = []
-    merged = _merge(changes)
     for change in merged[:MAX_ROWS]:
         if change['model'] not in where:
             where[change['model']] = locate(env, change['model'])
@@ -213,11 +228,12 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
         summary = blocking[0]['text']
     return {
         # The client decides on `show`, never on `changes == []`.
-        'show': bool(rows or blocking or recorder.incomplete or recorder.emails),
+        'show': bool(rows or blocking or recorder.incomplete or recorder.emails or sections),
         'changes': rows,
         'emails': recorder.emails,
         'warnings': warnings,
         'incomplete': recorder.incomplete,
         'summary': summary,
         'journal': journal,
+        'sections': sections,
     }
