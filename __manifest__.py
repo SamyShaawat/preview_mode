@@ -14,6 +14,9 @@
         'web.assets_backend': [
             'preview_mode/static/src/**/*',
         ],
+        'web.assets_tests': [
+            'preview_mode/static/tests/tours/**/*',
+        ],
     },
     'images': ['static/description/popup-confirm.png', 'static/description/popup-create.png'],
     'post_load': 'post_load',
