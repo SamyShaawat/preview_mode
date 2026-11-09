@@ -162,6 +162,16 @@ export const previewService = {
         return {
             state,
             guard,
+            // A status bar click saves the record with the new stage: preview that write, then run `run`.
+            previewWrite(record, values, label, run) {
+                if (!state.enabled || !record.resId) {
+                    return run();
+                }
+                return guard(
+                    { model: record.resModel, method: "write", ids: [record.resId], args: [values], context: [], label },
+                    () => run()
+                );
+            },
             async toggle() {
                 const enabled = !state.enabled;
                 await orm.write("res.users", [user.userId], { preview_mode_enabled: enabled });

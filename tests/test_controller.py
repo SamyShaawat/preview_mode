@@ -34,6 +34,18 @@ class TestController(HttpCase):
         self.assertEqual(payload['changes'][0]['kind'], 'new')
         self.assertEqual(self.env['res.partner'].search_count([('name', 'like', 'Route Co')]), 1)
 
+    def test_run_route_previews_field_write(self):
+        # A status bar click is previewed as a plain `write` of the field.
+        partner = self.env['res.partner'].create({'name': 'Before Co'})
+        self.authenticate('admin', 'admin')
+        payload = self.make_jsonrpc_request('/preview_mode/run', {
+            'model': 'res.partner', 'method': 'write', 'res_ids': [partner.id],
+            'args': [{'name': 'After Co'}], 'kwargs': {}, 'label': 'After'})
+        self.assertTrue(payload['show'], payload)
+        fields = payload['changes'][0]['fields']
+        self.assertEqual((fields[0]['old'], fields[0]['new']), ('Before Co', 'After Co'))
+        self.assertEqual(partner.name, 'Before Co')
+
     def test_sudo_create_not_recorded(self):
         admin = self.env.ref('base.user_admin')
         self.env['res.partner'].with_user(admin).with_context(preview_mode_token='t2').sudo().create({'name': 'Hidden'})
