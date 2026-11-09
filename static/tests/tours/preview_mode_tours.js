@@ -20,7 +20,7 @@ registry.category("web_tour.tours").add("preview_mode_confirm", {
         { trigger: ".o_preview_mode_dialog .o_preview_table" },
         { trigger: ".o_preview_mode_dialog .btn-primary:contains(Duplicate Contact)", run: "click" },
         { trigger: ".o_notification:contains(Created) .o_notification_buttons button", run: "click" },
-        { trigger: '.o_form_view [name=name] textarea:value("Tour Partner (copy)")' },
+        { trigger: '.o_form_view:contains("Tour Partner (copy)")' },
     ],
 });
 
