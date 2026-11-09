@@ -4,6 +4,7 @@ Every guard keys on the per-thread ``_guard.recorder`` that only ``safe_run`` se
 so other threads and requests that are not a preview are untouched.
 """
 import functools
+import http.client
 import threading
 from contextlib import contextmanager
 from urllib.parse import urlsplit
@@ -90,6 +91,18 @@ def _guarded_send(send):
     return guarded_send
 
 
+def _guarded_connect(connect):
+    @functools.wraps(connect)
+    def guarded_connect(self, *args, **kwargs):
+        recorder = guarded()
+        if recorder is not None:
+            recorder.warnings.append('Blocked a call to %s' % self.host)
+            raise PreviewBlocked(self.host)
+        return connect(self, *args, **kwargs)
+    guarded_connect._preview_guard = True
+    return guarded_connect
+
+
 def _guarded_cursor(cursor):
     @functools.wraps(cursor)
     def guarded_cursor(self, *args, **kwargs):
@@ -102,15 +115,21 @@ def _guarded_cursor(cursor):
 
 
 guarded_send = None
+guarded_http_connect = None
 
 
 def install_patches():
-    """Called once from post_load. Both patches are inert unless this thread runs a preview."""
-    global guarded_send
+    """Called once from post_load. All patches are inert unless this thread runs a preview."""
+    global guarded_send, guarded_http_connect
     # WHY: outgoing HTTP is not transactional; Session.send is the single chokepoint of requests.
     if not getattr(requests.Session.send, '_preview_guard', False):
         requests.Session.send = _guarded_send(requests.Session.send)
     guarded_send = requests.Session.send
+    # WHY: urllib.request.urlopen and raw http.client both open the socket in HTTPConnection.connect
+    # (HTTPSConnection.connect calls it too), so one patch covers both; requests is blocked above.
+    if not getattr(http.client.HTTPConnection.connect, '_preview_guard', False):
+        http.client.HTTPConnection.connect = _guarded_connect(http.client.HTTPConnection.connect)
+    guarded_http_connect = http.client.HTTPConnection.connect
     # WHY: a new cursor commits independently of the preview savepoint. Connection.cursor is
     # where Registry.cursor, db_connect(...).cursor() (cron, bus) all meet, before a pool borrow.
     if not getattr(sql_db.Connection.cursor, '_preview_guard', False):

@@ -41,7 +41,7 @@ The popup uses Odoo's own dialog. Long names wrap, numbers stay on one line, onl
 
 - It does not save database changes: the click runs inside a database savepoint that is always rolled back.
 - It does not send email. Emails the click would send, directly or as queued mail records, are listed as "not sent during the preview".
-- It blocks outgoing web requests made with the Python `requests` library and reports them as a warning.
+- It blocks outgoing web requests made with the Python `requests` library, `urllib` or `http.client` and reports them as a warning.
 - It does not use up a real sequence number. Numbers show as a placeholder until the real run.
 
 These guards cover what Odoo's own code does. See the limits below for what they cannot cover.
@@ -49,7 +49,7 @@ These guards cover what Odoo's own code does. See the limits below for what they
 ## Limits, stated plainly
 
 - **Preview incomplete.** If a click opens a separate database connection, calls an outside service through `requests`, or rolls back by itself, the preview says "Preview incomplete" instead of an all-clear.
-- **What a preview can still miss.** A savepoint only undoes database rows. Writes made with raw SQL (`cr.execute`) are detected by comparing PostgreSQL's per-transaction row counters before and after the click; the preview then says "Preview incomplete" and names the table. The one case it cannot see is a raw `UPDATE` on a table the click also changed through the ORM. Not covered today: outgoing calls made with anything other than `requests` (for example `urllib`, `http.client`, plain sockets), files written to the filestore, work done in threads a button starts, and long Python loops (the timeout stops slow database statements only). A preview that looks complete can still miss these. Treat it as a careful estimate.
+- **What a preview can still miss.** A savepoint only undoes database rows. Writes made with raw SQL (`cr.execute`) are detected by comparing PostgreSQL's per-transaction row counters before and after the click; the preview then says "Preview incomplete" and names the table. The one case it cannot see is a raw `UPDATE` on a table the click also changed through the ORM. Not covered today: outgoing calls made with anything other than `requests`, `urllib` or `http.client` (for example plain sockets), files written to the filestore, work done in threads a button starts, and long Python loops (the timeout stops slow database statements only). A preview that looks complete can still miss these. Treat it as a careful estimate.
 - **Cost.** The click runs twice, once as a preview and once for real, and the preview holds database locks until it finishes. Heavy buttons (posting thousands of invoices) take about twice as long.
 - **An estimate, not a promise.** The real run happens later, so sequence numbers (shown as `(new)`), random values, the time and changes made by other users can differ. The popup says so.
 - **Unsaved edits are saved first.** If you edited the form and then click a button, Odoo saves your edit as it normally does, then the preview shows only what the button does. The popup text says "Nothing from this click has been saved yet" for that reason.
