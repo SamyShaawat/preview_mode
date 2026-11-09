@@ -59,7 +59,7 @@ def safe_run(env):
     previous = guarded()  # nested run: the outer preview's guards must stay on
     savepoint = cr.savepoint()
     try:
-        with ChangeRecorder() as recorder:
+        with ChangeRecorder(env.uid) as recorder:
             # Instance attributes: shadow Cursor.commit/rollback for this cursor only, no class patch.
             cr.commit = _no_commit
             cr.rollback = _no_rollback

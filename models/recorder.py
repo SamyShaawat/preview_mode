@@ -2,6 +2,7 @@ import threading
 from typing import NamedTuple
 
 # PORT: odoo.tools.SQL exists on Odoo 17 to 20; on 16 use a plain query with %s params.
+from odoo import _
 from odoo.tools import SQL
 
 IGNORED_MODELS = ('mail.tracking.value', 'mail.followers', 'mail.message', 'ir.attachment', 'mail.mail')
@@ -35,7 +36,8 @@ class Change(NamedTuple):
 class ChangeRecorder:
     """Collects ORM changes made inside the ``with`` block."""
 
-    def __init__(self):
+    def __init__(self, uid=None):
+        self.uid = uid  # the user who clicked; the mail addresses shown are limited to what they may read
         self.changes = []
         self.warnings = []
         self.emails = []
@@ -104,9 +106,17 @@ class ChangeRecorder:
     def _note_mail(self, records):
         """A mail.mail row is an email the click queues; Odoo sends it after the commit, never in the preview."""
         try:
-            for mail in records.sudo():  # sudo: only reads the addresses of the email the user is about to send
-                to = mail.email_to or ', '.join(p.email for p in mail.recipient_ids if p.email)
-                self.emails.append({'to': to, 'subject': mail.subject or ''})
+            user_env = records.env(su=False, user=self.uid or records.env.uid)
+            for mail in records.sudo():  # sudo only to find the rows; addresses are filtered for the user below
+                readable = user_env['mail.mail'].browse(mail.id).has_access('read')
+                partners = user_env['res.partner'].browse(mail.recipient_ids.ids).filtered(
+                    lambda p: p.has_access('read'))
+                names = [mail.email_to] if readable and mail.email_to else []
+                names += [p.email for p in partners if p.email]
+                hidden = len(mail.recipient_ids) - len(partners) + (1 if mail.email_to and not readable else 0)
+                if hidden:
+                    names.append(_('%s hidden', hidden))
+                self.emails.append({'to': ', '.join(names), 'subject': mail.subject or ''})
                 self.queued_subjects.add(mail.subject or '')
         except Exception:  # noqa: BLE001 - must not break the create
             self.incomplete = True
