@@ -69,6 +69,16 @@ class ChangeRecorder:
             return ''
         return display_value(record, field, value) or str(value)
 
+    @staticmethod
+    def _warm_names(records, names, rows):
+        """Compute the display names of every x2many target of all rows in one batch per comodel,
+        so the per-record text lookups below are cache hits instead of one query per record."""
+        for name in names:
+            field = records._fields[name]
+            if field.type in ('one2many', 'many2many'):
+                ids = {i for row in rows for i in row[name]}
+                records.env[field.comodel_name].browse(ids).mapped('display_name')
+
     def _names(self, records, vals):
         return [n for n in vals
                 if n not in IGNORED_FIELDS and not n.endswith(IGNORED_FIELD_SUFFIXES) and n in records._fields]
@@ -82,8 +92,10 @@ class ChangeRecorder:
             names = [n for n in self._names(records, vals) if records._fields[n].type != 'binary']
             if not names:
                 return {}
+            rows = records.read(names)
+            self._warm_names(records, names, rows)
             return {row['id']: {n: self._text(records.browse(row['id']), n, row[n]) for n in names}
-                    for row in records.read(names)}
+                    for row in rows}
         except Exception:  # noqa: BLE001 - must not break the write
             self.incomplete = True
             self.warnings.append('Could not read the previous values of %s' % records._name)
@@ -148,6 +160,7 @@ class ChangeRecorder:
             binary = [n for n in names if records._fields[n].type == 'binary']
             names = [n for n in names if n not in binary]
             new = {row['id']: row for row in records.read(names)} if names else {}
+            self._warm_names(records, names, new.values())
             for rec in records:
                 diffs = []
                 for name in names:

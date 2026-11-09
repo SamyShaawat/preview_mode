@@ -123,3 +123,31 @@ class TestSnapshotColumns(TransactionCase):
         self.assertEqual(old[partner.id]['parent_id'], '')
         self.assertEqual(old[partner.id]['name'], 'No Parent Co')
         self.assertFalse(recorder.incomplete, recorder.warnings)
+
+
+@tagged('post_install', '-at_install')
+class TestX2manyNames(TransactionCase):
+
+    def test_names_batched_and_accurate(self):
+        partners = self.env['res.partner'].create([{'name': 'P%d' % i} for i in range(20)])
+        tags = [self.env['res.partner.category'].create([{'name': 't%d_%d' % (i, j)} for j in range(5)])
+                for i in range(20)]
+        for partner, tag in zip(partners, tags):
+            partner.category_id = tag[:2]
+        self.env.invalidate_all()
+        with ChangeRecorder() as rec:
+            old = rec.snapshot(partners, {'category_id': 1})
+        self.assertEqual(old[partners[0].id]['category_id'], ', '.join(tags[0][:2].mapped('display_name')))
+        # Query count of the snapshot must not grow with the number of records (one batch per comodel).
+        self.env.invalidate_all()
+        cr = self.env.cr
+        before = cr.sql_log_count
+        with ChangeRecorder() as rec:
+            rec.snapshot(partners, {'category_id': 1})
+        many = cr.sql_log_count - before
+        self.env.invalidate_all()
+        before = cr.sql_log_count
+        with ChangeRecorder() as rec:
+            rec.snapshot(partners[:2], {'category_id': 1})
+        few = cr.sql_log_count - before
+        self.assertEqual(many, few)
