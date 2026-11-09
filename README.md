@@ -5,136 +5,99 @@
 [![tests](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml/badge.svg?branch=20.0)](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml)
 ![License: LGPL-3](https://img.shields.io/badge/license-LGPL--3-blue.svg) ![Odoo 20.0](https://img.shields.io/badge/odoo-20.0-875a7b.svg)
 
-**See what a button click will do before it does it.**
+Preview Mode shows what a button click would create, change or delete, and where, before you commit to it. With the switch in the top bar on, a button that changes data opens a popup instead of acting; nothing is saved until you press Confirm.
 
-Preview Mode is an Odoo app for every user of every app. Turn on the Preview toggle in the top bar, click a button that changes data (Confirm, Validate, Post, and so on), and a popup lists what the click would create, change or delete, and where each change lands in Odoo's menus. Then you confirm for real or go back. Nothing from the click is saved during the preview.
-
-> **Status: working on 20.0, not yet ported.** On Odoo 20.0 the top-bar switch, the popup, the journal-entry view and the toast after a real run all work. Branches 16.0 to 19.0 are older and do not have these yet; they will be ported one by one once 20.0 is frozen. The design and plan are in [Docs](#docs).
-
-## Why
-
-Confirming a vendor bill posts journal entries. Confirming a sales order creates deliveries. Validating a transfer moves stock. These clicks are hard to undo, and Odoo does not show you the result first. Preview Mode does.
-
-It works on any button that changes data, in any app, for any user. There is no list of supported apps, models, buttons or users, and nothing to configure per app: install it, turn the Preview toggle on, and it applies everywhere.
-
-It is not an accounting module. Sales, purchase, inventory, manufacturing, CRM, HR, project and third-party apps all get the same preview.
-
-## How it works for the user
-
-1. Click the **Preview mode** toggle button in the top bar. It is on every page, and it lights up while preview is on. Click it again to turn it off. Your choice is remembered for your user.
-2. Click a button that changes data, for example **Confirm** on a vendor bill.
-3. A popup titled **Preview: Confirm** opens with the message "This is a preview. Nothing from this click has been saved yet."
-4. Read it, then press **Confirm** to run the real action, or **Go back** to leave everything as it was.
-5. After a real run, a message lists the records that were created. Each one is a link that opens the record.
-
-Buttons that only open something (smart buttons, Print, filters, buttons that just open a wizard) do not show a popup. They run as usual.
-
-## What the popup shows
-
-- **Warnings first.** If the click would fail, for example because the period is locked, you see "Confirming will fail: ..." in a yellow banner. The Confirm button stays clickable. The real run decides, and a failed run changes nothing.
-- **A one-sentence summary**, such as "Confirming will create 1 journal entry, update this bill, and queue 1 email (not sent during the preview)."
-- **What will happen**, one row per change, in two columns:
-  - **What:** New, Changed or Deleted, with changed values shown as old value (struck through) then new value.
-  - **Where:** the place in Odoo in plain menu words, such as `Accounting > Accounting > Journal Entries`, or "Here, on this bill" for the record you are on.
-- **Journal entry lines** (account, debit, credit, balanced total) when the click would create a journal entry and the accounting app is installed.
-
-The popup uses Odoo's own dialog. Long names wrap, numbers stay on one line, only the middle part scrolls so the buttons are always visible, and the layout mirrors for right-to-left languages such as Arabic.
-
-## What a preview never does
-
-- It does not save database changes: the click runs inside a database savepoint that is always rolled back.
-- It does not send email. Emails the click would send, directly or as queued mail records, are listed as "not sent during the preview".
-- It blocks outgoing web requests made with the Python `requests` library, `urllib` or `http.client` and reports them as a warning.
-- It does not use up a real sequence number. Numbers show as a placeholder until the real run.
-
-These guards cover what Odoo's own code does. See the limits below for what they cannot cover.
-
-## Limits, stated plainly
-
-- **Preview incomplete.** If a click opens a separate database connection, calls an outside service through `requests`, or rolls back by itself, the preview says "Preview incomplete" instead of an all-clear.
-- **What a preview can still miss.** A savepoint only undoes database rows. Writes made with raw SQL (`cr.execute`) are detected by comparing PostgreSQL's per-transaction row counters before and after the click; the preview then says "Preview incomplete" and names the table. The one case it cannot see is a raw `UPDATE` on a table the click also changed through the ORM. Not covered today: outgoing calls made with anything other than `requests`, `urllib` or `http.client` (for example plain sockets), files written to the filestore, work done in threads a button starts, and long Python loops (the timeout stops slow database statements only). A preview that looks complete can still miss these. Treat it as a careful estimate.
-- **Cost.** The click runs twice, once as a preview and once for real, and the preview holds database locks until it finishes. Heavy buttons (posting thousands of invoices) take about twice as long.
-- **An estimate, not a promise.** The real run happens later, so sequence numbers (shown as `(new)`), random values, the time and changes made by other users can differ. The popup says so.
-- **Unsaved edits are saved first.** If you edited the form and then click a button, Odoo saves your edit as it normally does, then the preview shows only what the button does. The popup text says "Nothing from this click has been saved yet" for that reason.
-- **Button types.** Version 1 covers buttons that call a method on a model (the usual Confirm, Validate and Post buttons). Wizard buttons use the same type but are not yet tested one by one. List-view mass actions Archive, Unarchive and Delete are previewed for all selected records (Odoo's own "Are you sure?" question comes first, then the preview). Not covered: stage changes in the status bar, server actions in the list Actions menu, and buttons that open another action.
-- **Not covered:** printing and reports, imports, scheduled actions, server automations, and any undo after a real run.
-- **What counts as a change.** Audit fields, tracking values, followers, chatter notes, attachments and wizard records are ignored, so the popup lists real business changes only.
-
-## Compatibility
-
-| Branch | Odoo version | Status |
-|---|---|---|
-| `16.0` | Odoo 16.0 | not ported, older skeleton only |
-| `17.0` | Odoo 17.0 | not ported, older skeleton only |
-| `18.0` | Odoo 18.0 | not ported, older skeleton only |
-| `19.0` | Odoo 19.0 | not ported, older skeleton only (first port planned) |
-| `20.0` | Odoo 20.0 | reference version and default branch: working, tested on Community |
-
-Works on Community, and it works when Enterprise is installed. Depends only on `base` and `web`.
-
-## Configure (optional)
-
-Nothing is required. An administrator can set these system parameters (Settings > Technical > System Parameters):
-
-| Key | Default | Meaning |
-|---|---|---|
-| `preview_mode.enabled` | on | Kill switch. Set to `False` to hide the toggle and stop previews for every user; buttons then run as in stock Odoo. |
-| `preview_mode.timeout` | 10 | Seconds a preview may spend in database statements before it stops with "timed out". |
-| `preview_mode.max_records` | 0 | Skip the preview when a click acts on more records than this (0 = no limit). The click then runs as usual. |
-
-Each user can run one preview at a time (a database advisory lock). If a second preview starts while one is still running, it is skipped: the user sees "A preview is already running" and the click runs as usual.
+It works on every such button in every app, for every internal user. There is no per-app or per-user setup.
 
 ## Install
 
-Clone the branch that matches your Odoo version into your addons path under the folder name `preview_mode`, then update the apps list and install **Preview Mode**:
+Put the `20.0` branch in your addons path under the folder name `preview_mode`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
 
 ```bash
 git clone --branch 20.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode
 ```
 
+On Odoo.sh, add the repository as a git submodule named `preview_mode`.
 
-## Technical facts
+## Use
 
-- Technical name: `preview_mode`. Display name: Preview Mode.
-- Repo root is the Odoo module itself (the manifest sits at the root). One branch per Odoo version.
-- Security: available to internal users. A preview runs with the user's own access rights, so it can never show or do more than the real click.
-- Menu paths shown in the "Where" column only include menus the user can open.
-- Enterprise: it stays a Community module with no Enterprise dependency. Working next to Enterprise is a requirement, checked per version.
-- Odoo.sh: built to work there. No external Python packages, no system changes, no files written outside Odoo's own storage, and safe with several workers. On Odoo.sh, add this repo as a git submodule named `preview_mode` in your project repository.
-- License: LGPL-3 (GNU Lesser General Public License v3). See [LICENSE](LICENSE). Free to use; the module follows OCA conventions in its own repository.
+1. Click the eye switch in the top bar. It stays on until you click it again, and Odoo remembers it per user.
+2. Click a button that changes data, for example Confirm on a quotation or Post on an invoice.
+3. A popup titled `Preview: <button name>` lists the changes. **What** is New, Changed (old value struck through, then the new one) or Deleted. **Where** is the Odoo menu path, for example `Sales › Orders › Quotations`. A click that creates a journal entry also gets a Debit/Credit table.
+4. Press the primary button (it has the same label as the button you clicked) to run it for real, or **Go back** to leave everything untouched. **Copy** puts the preview on the clipboard as text.
+5. After a real run, a notification links to the records that were created.
 
-## Extending the popup (for developers)
+Buttons that change nothing (smart buttons, report printing, buttons that only open a wizard) run normally without a popup. If the click would fail, the popup says `Confirming will fail: <message>`; Confirm stays available because the real run decides.
 
-Another module can add its own table below the standard ones (for example "Inventory impact"). Preview Mode stays generic; your module owns the domain knowledge. Put this in a small glue module that depends on `preview_mode` (set `auto_install: True` with `depends: ['preview_mode', 'your_module']` so it only loads when both are installed; without Preview Mode nothing happens):
+More detail, with screenshots, is in the [user guide](docs/user-guide.md).
 
-```python
-from odoo import api, models
+## What is covered
 
+| Click | Previewed |
+|---|---|
+| Buttons that call a model method (Confirm, Validate, Post, wizard buttons) | Yes |
+| List view Archive, Unarchive, Delete on the selected records | Yes (Odoo's own "Are you sure?" comes first) |
+| Status bar stage click | Yes, as the write of the stage field at click time |
+| Server actions in the list Actions menu | No |
+| Kanban drag and drop | No |
+| Delete from a form's Actions menu | No (tested: the record is deleted after Odoo's own question) |
+| Buttons on module install/upgrade, Settings, `ir.model`, `ir.model.fields`, `ir.ui.view` | No, they run as usual: a savepoint cannot undo registry changes |
+| Reports and printing, imports, scheduled actions, automations | No |
 
-class PreviewModeSection(models.AbstractModel):
-    _inherit = 'preview.mode.section'
+Audit fields, tracking values, followers, chatter messages and attachments are left out of the list.
 
-    @api.model
-    def _preview_sections(self, model, method, res_ids, changes):
-        sections = super()._preview_sections(model, method, res_ids, changes)
-        if model == 'stock.picking' and method == 'button_validate':
-            moves = self.env['stock.move'].browse(
-                c['res_id'] for c in changes if c['model'] == 'stock.move')
-            sections.append({
-                'title': 'Inventory impact',
-                'columns': ['Product', 'Location', 'Quantity'],
-                'rows': [[m.product_id.display_name, m.location_dest_id.display_name, str(m.quantity)] for m in moves],
-            })
-        return sections
-```
+## Settings
 
-- Arguments: `model`, `method`, `res_ids` of the clicked button, and `changes`, the list the popup shows (dicts with `kind` of `new`, `changed` or `deleted`, `model`, `res_id`, `what`, `fields`).
-- Return `title`, `columns` (optional) and `rows` (lists of text). A section without rows is not shown; sections appear below the "What will happen" table.
-- It runs inside the preview, before the rollback, so the records the click created or changed can still be read. Read only: do not write.
-- Always call `super()` and append. An exception in your code is swallowed: the preview still opens without your section.
-- The same sections are in the popup's Copy text.
+All optional. An administrator sets them in Settings > Technical > System Parameters.
 
-## Docs
+| Key | Default | Effect |
+|---|---|---|
+| `preview_mode.enabled` | on | Set to `False` to stop previews for everyone. The click then runs as in stock Odoo and says "Preview Mode is switched off by your administrator." |
+| `preview_mode.timeout` | 10 | Seconds a preview may spend in database statements (clamped to 1-120). Past that the popup says it timed out. |
+| `preview_mode.max_records` | 0 | Skip the preview when a click acts on more records than this. 0 means no limit. |
 
-- Design: [`docs/superpowers/specs/2026-11-02-preview-mode-design.md`](docs/superpowers/specs/2026-11-02-preview-mode-design.md)
-- Implementation plan: [`docs/superpowers/plans/2026-11-02-preview-mode.md`](docs/superpowers/plans/2026-11-02-preview-mode.md)
+## How it works
+
+1. The browser asks `POST /preview_mode/run` before the click.
+2. The server runs the clicked method with the user's own rights inside a database savepoint.
+3. A recorder on `create`, `write`, `unlink` and `_write_multi` collects the changes. `flush_all()` runs before the end so delayed writes (recomputed totals, states) are seen.
+4. The savepoint is rolled back, always.
+5. Raw SQL writes are caught by comparing PostgreSQL's per-transaction row counters before and after.
+6. The client shows the popup. On Confirm the real click runs, and the ids it creates are stored for the notification.
+
+## Safety guards during a preview
+
+- `commit` is a no-op on the preview's cursor, and `rollback` marks the preview incomplete.
+- Sequences return `(new)`, so no real number is used.
+- Emails are recorded, not sent. Queued `mail.mail` rows are listed too.
+- Outgoing calls through `requests`, `urllib` and `http.client` are blocked and reported.
+- Opening any other database connection (cron, bus) marks the preview incomplete. Post-commit callbacks are dropped.
+- One preview per user at a time (advisory lock). A second one is skipped with a notice.
+
+## What it cannot promise
+
+A preview is an estimate. Sequence numbers, random values, the time and other users' changes can differ at the real run. It can miss plain sockets, files written to the filestore, work in threads, and Python loops that never touch the database (the timeout only bounds SQL statements). A raw `UPDATE` on a table the ORM also wrote in the same click is not detected. When the module sees something it cannot cover, the popup says "Preview incomplete" instead of an all-clear.
+
+The click runs twice, so a heavy button takes about twice as long.
+
+## Extending the popup
+
+Another module can add its own table to the popup by overriding `preview.mode.section._preview_sections`. See the [developer guide](docs/developer-guide.md#extension-point) for a working example.
+
+## Compatibility
+
+Odoo 20.0 only, Community; it installs and runs with Enterprise but Enterprise 20 has not been tested here. Other versions are planned and not ready. The `16.0` to `19.0` branches hold older, incomplete code and should not be used.
+
+## Documentation
+
+- [User guide](docs/user-guide.md)
+- [Developer guide](docs/developer-guide.md)
+- [Changelog](CHANGELOG.md)
+
+## Contributing
+
+Every change is a pull request against the version branch. Outside contributions need a DCO sign-off. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+LGPL-3, see [LICENSE](LICENSE). Author: Samy Mostafa Shaawat.
