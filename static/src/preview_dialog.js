@@ -24,10 +24,16 @@ export class PreviewDialog extends Component {
         this.notification = useService("notification");
     }
 
+    // A failing click puts the same message in the summary and in a blocking warning: show it once.
+    get showSummary() {
+        const { summary, warnings } = this.props;
+        return summary && !warnings.some((w) => w.blocking && summary.includes(w.text));
+    }
+
     // The popup as plain text, for a chat message, a ticket or an approval mail.
     get asText() {
         const p = this.props;
-        const lines = [p.title, p.summary, ...p.warnings.map((w) => w.text)];
+        const lines = [p.title, this.showSummary && p.summary, ...p.warnings.map((w) => w.text)];
         for (const row of p.changes) {
             const kind = { new: _t("New"), changed: _t("Changed"), deleted: _t("Deleted") }[row.kind] || "";
             lines.push(`${["-", kind, row.what].filter(Boolean).join(" ")}${row.where ? ` (${row.where})` : ""}`);

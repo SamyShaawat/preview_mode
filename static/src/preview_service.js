@@ -46,6 +46,7 @@ export const previewService = {
             }
             notification.add(_t("Created:"), {
                 type: "success",
+                sticky: true,
                 buttons: created.map((rec) => ({
                     name: rec.name,
                     onClick: () => action.doAction({
