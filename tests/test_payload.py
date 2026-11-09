@@ -4,7 +4,9 @@ from unittest.mock import patch
 from odoo.exceptions import AccessError, UserError
 from odoo.tests.common import TransactionCase, new_test_user, tagged
 
-from ..models.payload import _timeout, build_preview
+from odoo.sql_db import db_connect
+
+from ..models.payload import LOCK_NAMESPACE, _timeout, build_preview
 
 
 @tagged('post_install', '-at_install')
@@ -172,6 +174,23 @@ class TestPayload(TransactionCase):
         user = new_test_user(self.env, 'preview_flag', groups='base.group_user')
         user.with_user(user).write({'preview_mode_enabled': True})
         self.assertTrue(user.preview_mode_enabled)
+
+    def _hold_lock(self, uid):
+        cr = db_connect(self.env.cr.dbname).cursor()
+        self.addCleanup(cr.close)  # closing rolls back, which releases the lock
+        cr.execute('SELECT pg_advisory_xact_lock(%s, %s)', (LOCK_NAMESPACE, uid))
+
+    def test_second_preview_of_same_user_is_not_previewed(self):
+        self._hold_lock(self.env.uid)
+        payload = build_preview(self.env, 'res.partner', 'copy', [self.partner.id], [], {}, 'Copy')
+        self.assertFalse(payload['show'])
+        self.assertIn('already running', payload['notice'])
+        self.assertFalse(payload['changes'])
+
+    def test_other_users_preview_is_not_blocked(self):
+        self._hold_lock(new_test_user(self.env, 'preview_lock_other', groups='base.group_user').id)
+        payload = build_preview(self.env, 'res.partner', 'copy', [self.partner.id], [], {}, 'Copy')
+        self.assertTrue(payload['show'], payload)
 
 
 @tagged('post_install', '-at_install')
