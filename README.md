@@ -79,6 +79,8 @@ Nothing is required. An administrator can set these system parameters (Settings 
 | `preview_mode.timeout` | 10 | Seconds a preview may spend in database statements before it stops with "timed out". |
 | `preview_mode.max_records` | 0 | Skip the preview when a click acts on more records than this (0 = no limit). The click then runs as usual. |
 
+Each user can run one preview at a time (a database advisory lock). If a second preview starts while one is still running, it is skipped: the user sees "A preview is already running" and the click runs as usual.
+
 ## Install
 
 Clone the branch that matches your Odoo version into your addons path under the folder name `preview_mode`, then update the apps list and install **Preview Mode**:

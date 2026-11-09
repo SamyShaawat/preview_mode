@@ -104,6 +104,10 @@ def switched_on(env):
     return env['ir.config_parameter'].sudo().get_bool('preview_mode.enabled', True)
 
 
+# First key of the per-user advisory lock (second key is the user id).
+LOCK_NAMESPACE = 0x70726576
+
+
 def _skip_notice(env, model, res_ids):
     """Why this click is not previewed (shown to the user), or '' to preview it."""
     # PORT: Odoo 20 has get_str/get_int/get_float; on 16 to 19 use get_param.
@@ -147,6 +151,12 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
     if model in UNSAFE_MODELS or model.startswith(UNSAFE_PREFIXES):
         return {'show': False, 'changes': [], 'emails': [], 'warnings': [], 'incomplete': False,
                 'summary': '', 'journal': []}
+    # One preview at a time per user (CWE-770). The lock lasts until the request's transaction ends; the
+    # client then runs the click normally, exactly as when the preview is switched off.
+    env.cr.execute('SELECT pg_try_advisory_xact_lock(%s, %s)', (LOCK_NAMESPACE, env.uid))
+    if not env.cr.fetchone()[0]:
+        return {'show': False, 'notice': _('A preview is already running. This click ran without a preview.'),
+                'changes': [], 'emails': [], 'warnings': [], 'incomplete': False, 'summary': '', 'journal': []}
     warnings = []
     seconds = _timeout(env)
     timed_out = False
