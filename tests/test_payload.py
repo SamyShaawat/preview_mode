@@ -6,7 +6,7 @@ from odoo.tests.common import TransactionCase, new_test_user, tagged
 
 from odoo.sql_db import db_connect
 
-from ..models.payload import LOCK_NAMESPACE, _summary, _timeout, build_preview
+from ..models.payload import LOCK_NAMESPACE, MAX_ROWS, _summary, _timeout, build_preview
 from ..models.recorder import ChangeRecorder
 
 
@@ -221,6 +221,19 @@ class TestPayloadMerge(TransactionCase):
         ])
         self.assertEqual([(r['kind'], r['what']) for r in rows], [('changed', 'A'), ('new', 'N')])
         self.assertEqual(rows[0]['fields'], {'Name': ('A', 'C')})
+
+    def test_payload_mass_archive_and_delete_cover_all_ids(self):
+        # List-view mass actions send every selected id; rows are capped at MAX_ROWS.
+        partners = self.env['res.partner'].create([{'name': 'Mass %s' % i} for i in range(MAX_ROWS + 5)])
+        archive = build_preview(self.env, 'res.partner', 'action_archive', partners.ids, [], {}, 'Archive')
+        self.assertTrue(archive['show'])
+        self.assertEqual(len(archive['changes']), MAX_ROWS + 1)
+        self.assertEqual(archive['changes'][-1]['kind'], 'more')
+        self.assertEqual(archive['changes'][-1]['what'], 'and 5 more')
+        self.assertTrue(all(partners.mapped('active')), 'the preview must roll back')
+        deleted = build_preview(self.env, 'res.partner', 'unlink', partners.ids[:3], [], {}, 'Delete')
+        self.assertEqual([c['kind'] for c in deleted['changes']], ['deleted'] * 3)
+        self.assertEqual(len(partners[:3].exists()), 3)
 
 
 @tagged('post_install', '-at_install')
