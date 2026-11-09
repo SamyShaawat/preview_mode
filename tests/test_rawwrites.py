@@ -80,6 +80,19 @@ class TestRawWrites(TransactionCase):
         self.assertFalse(payload['incomplete'], payload['warnings'])
         self.assertTrue(self.partner.exists())
 
+    def test_cascade_deleted_lines_take_their_link_rows_along(self):
+        """Unlinking an order deletes its lines by cascade; the lines' many2many tax link rows are not raw writes."""
+        env = self.env
+        if 'sale.order' not in env or 'account.tax' not in env:
+            self.skipTest('needs sale and account')
+        tax = env['account.tax'].create({'name': 'Raw Tax', 'amount': 5, 'type_tax_use': 'sale'})
+        order = env['sale.order'].create({
+            'partner_id': self.partner.id,
+            'order_line': [(0, 0, {'name': 'Line', 'product_uom_qty': 1, 'price_unit': 10, 'tax_ids': [(6, 0, tax.ids)]})]})
+        with patch.object(type(order), 'preview_mode_test_button', lambda self: self.unlink(), create=True):
+            payload = build_preview(env, 'sale.order', 'preview_mode_test_button', order.ids, [], {}, 'Go')
+        self.assertFalse(payload['incomplete'], payload['warnings'])
+
     def test_core_flows_are_complete(self):
         """Vendor bill post, sale confirm and picking validate: no false alarm (needs those apps)."""
         env = self.env
