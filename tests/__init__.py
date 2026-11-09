@@ -6,4 +6,5 @@ from . import (
     test_rawwrites,
     test_recorder,
     test_where,
+    test_wizard,
 )
