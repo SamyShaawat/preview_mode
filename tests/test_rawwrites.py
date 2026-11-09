@@ -1,8 +1,11 @@
+import threading
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from odoo.tests.common import TransactionCase, tagged
 
 from ..models.payload import build_preview
+from ..models.rawwrites import _cascaded
 
 
 @tagged('post_install', '-at_install')
@@ -107,3 +110,17 @@ class TestRawWrites(TransactionCase):
                 ('stock.picking', 'button_validate', picking)):
             payload = build_preview(env, model, method, record.ids, [], {}, method)
             self.assertFalse(payload['incomplete'], (method, payload['warnings']))
+
+    def test_mutual_cascade_terminates(self):
+        """Two models that cascade into each other must not loop forever."""
+        def field(comodel):
+            return SimpleNamespace(type='many2one', store=True, comodel_name=comodel, ondelete='cascade')
+        models = {n: SimpleNamespace(_auto=True, _abstract=False, _table=n, _fields={'x': field(o)})
+                  for n, o in (('a', 'b'), ('b', 'a'))}
+        env = type('Env', (), {'registry': list(models), '__getitem__': lambda self, n: models[n]})()
+        out = []
+        thread = threading.Thread(target=lambda: out.append(_cascaded(env, {'a'})), daemon=True)
+        thread.start()
+        thread.join(5)
+        self.assertFalse(thread.is_alive(), '_cascaded does not terminate on mutual cascades')
+        self.assertEqual(out[0][0], {'a', 'b'})
