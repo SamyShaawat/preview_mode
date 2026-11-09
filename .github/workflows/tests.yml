@@ -25,7 +25,7 @@ jobs:
         odoo: ${{ fromJSON(format('["{0}"]', github.base_ref || github.ref_name)) }}
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16
         env:
           POSTGRES_USER: odoo
           POSTGRES_PASSWORD: odoo
