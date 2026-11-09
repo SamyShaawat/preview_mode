@@ -133,6 +133,7 @@ class TestPayload(TransactionCase):
                 payload = build_preview(self.env, model, 'execute', [1], [], {}, 'Go')
             call_kw.assert_not_called()
             self.assertFalse(payload['show'], model)
+
     def test_payload_shows_recomputed_stored_field(self):
         # complete_name is a stored computed field: it is flushed through _write_multi, not write().
         def button(self):
@@ -235,8 +236,8 @@ class TestJournal(TransactionCase):
         result = build_preview(self.env, 'account.move', 'action_post', [bill.id], [], {}, 'Confirm')
         self.assertEqual(len(result['journal']), 1)
         self.assertTrue(result['journal'][0]['balanced'])
-        self.assertEqual(sum(l['debit'] for l in result['journal'][0]['lines']),
-                         sum(l['credit'] for l in result['journal'][0]['lines']))
+        self.assertEqual(sum(line['debit'] for line in result['journal'][0]['lines']),
+                         sum(line['credit'] for line in result['journal'][0]['lines']))
         self.assertEqual(bill.state, 'draft')
 
     def test_summary_plurals_and_join(self):

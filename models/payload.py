@@ -95,7 +95,7 @@ def _journal(env, changes):
             result.append({
                 'move': move.name or move.display_name,
                 'lines': lines,
-                'balanced': round(sum(l['debit'] for l in lines) - sum(l['credit'] for l in lines), 6) == 0,
+                'balanced': round(sum(line['debit'] for line in lines) - sum(line['credit'] for line in lines), 6) == 0,
             })
     return result
 

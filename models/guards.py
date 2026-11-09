@@ -12,8 +12,9 @@ from urllib.parse import urlsplit
 import requests
 
 from odoo import models, sql_db
-from odoo.addons.base.models import ir_mail_server
 from odoo.tools.misc import Callbacks
+
+from odoo.addons.base.models import ir_mail_server
 
 from .recorder import ChangeRecorder
 

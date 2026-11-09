@@ -98,6 +98,7 @@ class TestRecorder(TransactionCase):
 class TestDisplayValue(TransactionCase):
     def test_numbers_and_dates_are_formatted_for_the_user(self):
         from datetime import date, datetime
+
         from ..models.formatting import display_value
         partner = self.env['res.partner'].create({'name': 'Fmt Co'})
         latitude = partner._fields['partner_latitude']

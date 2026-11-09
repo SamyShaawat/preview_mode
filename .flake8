@@ -1,0 +1,11 @@
+[flake8]
+max-line-length = 88
+max-complexity = 16
+# B950 is line length +10%; E501 is replaced by it (OCA style)
+# Tests: B017/B908 are known deferred minors (assertRaises style).
+select = C,E,F,W,B,B9
+ignore = E203,E501,W503,B950,B905
+per-file-ignores =
+    __init__.py:F401
+    __manifest__.py:B018
+    tests/*:B017,B908,F401

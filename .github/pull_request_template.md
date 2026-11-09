@@ -4,8 +4,8 @@ Base: `<series>` (the version branch this PR merges into). The topic branch is d
 
 ## Task
 
-Plan task: 
-Ported from (PR link, port PRs only): 
+Plan task:
+Ported from (PR link, port PRs only):
 
 ## What changed
 
@@ -16,4 +16,3 @@ Ported from (PR link, port PRs only):
 - [ ] Manual steps from the plan (results):
 
 ## Notes for review
-
