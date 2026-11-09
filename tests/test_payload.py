@@ -6,7 +6,7 @@ from odoo.tests.common import TransactionCase, new_test_user, tagged
 
 from odoo.sql_db import db_connect
 
-from ..models.payload import LOCK_NAMESPACE, MAX_ROWS, _summary, _timeout, build_preview
+from ..models.payload import LOCK_NAMESPACE, MAX_ROWS, _noun, _summary, _timeout, build_preview
 from ..models.recorder import ChangeRecorder
 
 
@@ -50,7 +50,7 @@ class TestPayload(TransactionCase):
         self.assertTrue(payload['show'])
         self.assertEqual(payload['changes'], [])
         self.assertIn({'text': 'Confirming will fail: Period locked', 'blocking': True}, payload['warnings'])
-        self.assertTrue(payload['summary'])
+        self.assertEqual(payload['summary'], '')  # the error is shown once, as the warning
 
     def test_payload_incomplete_is_shown(self):
         def button(self):
@@ -254,16 +254,19 @@ class TestJournal(TransactionCase):
         self.assertEqual(bill.state, 'draft')
 
     def test_summary_plurals_and_join(self):
-        new, upd, dele = {'kind': 'new', 'model': 'res.partner'}, {'kind': 'changed'}, {'kind': 'deleted'}
+        new, upd, dele = (dict(kind=k, model='res.partner') for k in ('new', 'changed', 'deleted'))
         summary = lambda changes, emails=(): _summary(self.env, changes, emails)  # noqa: E731
         self.assertEqual(summary([]), '')  # zero: nothing to say
-        self.assertEqual(summary([upd]), 'Confirming will update 1 record.')  # singular
-        self.assertEqual(summary([upd, upd]), 'Confirming will update 2 records.')  # plural
-        self.assertEqual(summary([dele], [1]), 'Confirming will delete 1 record and queue 1 email (not sent during the preview).')
+        self.assertEqual(summary([upd]), 'Confirming will update 1 contact.')  # singular
+        self.assertEqual(summary([upd, upd]), 'Confirming will update 2 contacts.')  # plural
+        self.assertEqual(summary([dele], [1]), 'Confirming will delete 1 contact and queue 1 email (not sent during the preview).')
         # zero items omitted, three items joined "A, B and C"
+        self.assertEqual(_noun(self.env, 'res.partner.category', 2), 'partner tags')
+        self.assertEqual(_noun(self.env, 'res.country', 2), 'countries')
+        self.assertEqual(_noun(self.env, 'res.partner', 1), 'contact')
         self.assertEqual(
             summary([new, upd, upd, dele, dele], [1, 2]),
-            'Confirming will create 1 contact, update 2 records, delete 2 records and queue 2 emails (not sent during the preview).')
+            'Confirming will create 1 contact, update 2 contacts, delete 2 contacts and queue 2 emails (not sent during the preview).')
 
 @tagged('post_install', '-at_install')
 class TestQueuedMailScope(TransactionCase):
