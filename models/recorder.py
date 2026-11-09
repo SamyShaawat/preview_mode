@@ -44,6 +44,7 @@ class ChangeRecorder:
         self.queued_subjects = set()  # subjects of mail.mail records, so send_email does not count them twice
         self.incomplete = False
         self._previous = None
+        self._formatted = {}  # (model, field, value) -> text, see _text
 
     def __enter__(self):
         self._previous = active_recorder()
@@ -58,8 +59,7 @@ class ChangeRecorder:
     def _ignored(records):
         return records._transient or records._name in IGNORED_MODELS
 
-    @staticmethod
-    def _text(record, name, value):
+    def _text(self, record, name, value):
         field = record._fields[name]
         if field.type == 'many2one':
             return value[1] if value else ''
@@ -69,6 +69,12 @@ class ChangeRecorder:
             return ', '.join(record.env[field.comodel_name].browse(value).mapped('display_name'))
         if value is False or value is None:
             return ''
+        if field.type in ('float', 'date', 'datetime'):
+            # The same quantity, price or date repeats across the lines of one click: format it once.
+            key = (record._name, name, value)
+            if key not in self._formatted:
+                self._formatted[key] = display_value(record, field, value) or str(value)
+            return self._formatted[key]
         return display_value(record, field, value) or str(value)
 
     @staticmethod
