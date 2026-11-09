@@ -7,6 +7,7 @@ from odoo.tests.common import TransactionCase, new_test_user, tagged
 from odoo.sql_db import db_connect
 
 from ..models.payload import LOCK_NAMESPACE, _timeout, build_preview
+from ..models.recorder import ChangeRecorder
 
 
 @tagged('post_install', '-at_install')
@@ -237,3 +238,20 @@ class TestJournal(TransactionCase):
         self.assertEqual(sum(l['debit'] for l in result['journal'][0]['lines']),
                          sum(l['credit'] for l in result['journal'][0]['lines']))
         self.assertEqual(bill.state, 'draft')
+
+
+@tagged('post_install', '-at_install')
+class TestQueuedMailScope(TransactionCase):
+    def test_hidden_recipients_not_shown(self):
+        if 'mail.mail' not in self.env:
+            self.skipTest('mail is not installed')
+        user = self.env['res.users'].create({
+            'name': 'PM plain', 'login': 'pm_plain', 'group_ids': [(6, 0, [self.env.ref('base.group_user').id])]})
+        secret = self.env['res.partner'].create({'name': 'Secret', 'email': 'secret@example.com'})
+        mail = self.env['mail.mail'].sudo().create({
+            'subject': 'S', 'email_to': 'raw@example.com', 'recipient_ids': [(4, secret.id)]})
+        rec = ChangeRecorder(user.id)
+        rec.note_create(mail)
+        # the user can read the partner but not the mail row: partner address shown, raw address hidden
+        self.assertEqual(rec.emails[0]['to'], 'secret@example.com, 1 hidden')
+        self.assertEqual(rec.emails[0]['subject'], 'S')
