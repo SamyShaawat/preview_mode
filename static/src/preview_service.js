@@ -11,8 +11,16 @@ import { PreviewDialog } from "./preview_dialog";
 // PORT: on Odoo 16 to 19 the button click is `action.doActionButton` in action_service.js;
 // on 20.0 it lives in webclient/actions/action_plugin.js and is still reached as `action.doActionButton`.
 
+// Unpredictable token, or null when no secure random source exists (never a guessable one).
 function newToken() {
-    return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const c = globalThis.crypto;
+    if (c?.randomUUID) {
+        return c.randomUUID();
+    }
+    if (c?.getRandomValues) {
+        return Array.from(c.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+    }
+    return null;
 }
 
 // The button's text without Odoo's keyboard-hint overlay (shown while Alt is held).
@@ -118,10 +126,15 @@ export const previewService = {
                             const token = newToken();
                             try {
                                 await original(
-                                    { ...params, context: { ...(params.context || {}), preview_mode_token: token } },
+                                    // No token: the click still runs, only the "Created" toast is skipped.
+                                    token
+                                        ? { ...params, context: { ...(params.context || {}), preview_mode_token: token } }
+                                        : params,
                                     options
                                 );
-                                await showCreated(token);
+                                if (token) {
+                                    await showCreated(token);
+                                }
                             } finally {
                                 done();
                             }
