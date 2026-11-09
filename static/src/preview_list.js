@@ -24,6 +24,15 @@ patch(DynamicList.prototype, {
         );
     },
 
+    // With Preview on, the popup is the confirmation: skip Odoo's own "Are you sure?" for Archive.
+    // Delete keeps Odoo's dialog (it is asked in a view hook, and a delete cannot be undone).
+    toggleArchiveWithConfirmation(archive, dialogProps) {
+        if (archive && this.model.env.services.preview_mode?.state.enabled) {
+            return this.archive(this.isDomainSelected || this.selection.length > 0);
+        }
+        return super.toggleArchiveWithConfirmation(archive, dialogProps);
+    },
+
     async _deleteRecords(records) {
         const preview = this.model.env.services.preview_mode;
         const resIds = preview?.state.enabled
