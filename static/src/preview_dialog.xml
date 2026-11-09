@@ -50,6 +50,17 @@
                     </tbody>
                 </table>
             </t>
+            <table t-foreach="this.props.sections" t-as="section" t-key="section_index" class="table table-sm o_preview_table o_preview_section caption-top">
+                <caption class="fw-bold text-start" t-out="section.title"/>
+                <thead t-if="section.columns.length">
+                    <tr><th t-foreach="section.columns" t-as="column" t-key="column_index" t-out="column"/></tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="section.rows" t-as="row" t-key="row_index">
+                        <td t-foreach="row" t-as="cell" t-key="cell_index" t-out="cell"/>
+                    </tr>
+                </tbody>
+            </table>
             <table t-if="this.props.emails.length" class="table table-sm o_preview_table caption-top">
                 <caption class="fw-bold text-start">Emails (not sent during the preview)</caption>
                 <tbody>
