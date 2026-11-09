@@ -27,12 +27,13 @@ def _cascaded(env, deleted_models):
     Returns (tables whose rows are deleted by a foreign key cascade, tables updated by a set null).
     """
     cascade, set_null = set(), set()
+    visited = set()  # model names already followed; mutual cascades would loop forever without it
     frontier = set(deleted_models)
     while frontier:
         found = set()
         for name in env.registry:
             model = env[name]
-            if not model._auto or model._abstract or name in cascade:
+            if not model._auto or model._abstract or name in visited:
                 continue
             for field in model._fields.values():
                 if field.type == 'many2many' or not (field.type == 'many2one' and field.store):
@@ -41,6 +42,7 @@ def _cascaded(env, deleted_models):
                     (cascade if field.ondelete == 'cascade' else set_null).add(model._table)
                     if field.ondelete == 'cascade':
                         found.add(name)
+        visited |= found
         frontier = found
     return cascade, set_null
 
