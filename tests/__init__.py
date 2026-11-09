@@ -5,6 +5,7 @@ from . import (
     test_payload,
     test_rawwrites,
     test_recorder,
+    test_tours,
     test_where,
     test_wizard,
 )
