@@ -6,7 +6,7 @@ Report it privately: go to the repository's **Security** tab, then **Report a vu
 
 ## Supported versions
 
-Security fixes are made on `20.0` and ported to `19.0`, `18.0`, `17.0` and `16.0` as each port is merged. A branch whose port is not merged gets no fixes. See [SUPPORT.md](SUPPORT.md).
+Security fixes are made on `20.0` first and ported to `19.0`, `18.0`, `17.0` and `16.0` as separate pull requests. See [SUPPORT.md](SUPPORT.md).
 
 ## In scope
 

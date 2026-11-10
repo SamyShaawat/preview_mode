@@ -15,12 +15,12 @@ One branch per Odoo version. A fix lands on `20.0` first and is ported to the ot
 | Odoo | Branch | Fixes |
 |---|---|---|
 | 20.0 | `20.0` | Yes, reference branch |
-| 19.0 | `19.0` | Yes, once its port is merged |
-| 18.0 | `18.0` | Yes, once its port is merged |
-| 17.0 | `17.0` | Yes, once its port is merged |
-| 16.0 | `16.0` | Yes, once its port is merged |
+| 19.0 | `19.0` | Yes |
+| 18.0 | `18.0` | Yes |
+| 17.0 | `17.0` | Yes |
+| 16.0 | `16.0` | Yes |
 
-Community and Enterprise are both supported; Odoo.sh works with the repo added as a submodule. A branch whose port is not merged yet gets no fixes.
+Community and Enterprise are both supported; Odoo.sh works with the repo added as a submodule.
 
 ## What to include
 
