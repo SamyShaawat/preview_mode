@@ -56,7 +56,7 @@ All optional. An administrator sets them in Settings > Technical > System Parame
 
 | Key | Default | Effect |
 |---|---|---|
-| `preview_mode.enabled` | on | Set to `False` to stop previews for everyone. The click then runs as in stock Odoo and says "Preview Mode is switched off by your administrator." |
+| `preview_mode.enabled` | on | Set to `False` to hide the switch and stop previews for everyone. Reload the page after changing it. A click then runs as in stock Odoo; if the page was opened before the change, it says "Preview Mode is switched off by your administrator." |
 | `preview_mode.timeout` | 10 | Seconds a preview may spend in database statements (clamped to 1-120). Past that the popup says it timed out. |
 | `preview_mode.max_records` | 0 | Skip the preview when a click acts on more records than this. 0 means no limit. |
 
