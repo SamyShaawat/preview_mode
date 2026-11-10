@@ -115,7 +115,7 @@ This is the 16.0 branch, ported from 20.0. Every version difference sits in a pl
 | `controllers/main.py` | Route type `json`. |
 | `__manifest__.py` | ACL and rule files in `data`. |
 | `static/src/preview_service.js` | Owl 2 `reactive`, `rpc` and `user` services, `sprintf(_t(...))` because `_t` takes one argument. |
-| `static/src/preview_toggle.js`, `preview_toggle.xml` | `useState`, Font Awesome eye, `owl="1"` templates without `this.`. |
+| `static/src/preview_toggle.js`, `preview_toggle.xml` | `useState`, Font Awesome eye, `owl="1"` templates without `this.`; the systray registry has no `isDisplayed` on 16, so the template hides the switch with `t-if="available"` when `preview_mode.enabled` is `False`. |
 | `static/src/preview_dialog.js`, `preview_dialog.xml` | `static props`, templates without `this.`. |
 | `static/src/preview_list.js` | Archive, Unarchive and Delete are patched on `ListController` (`toggleArchiveState`, `getActionMenuItems`, `deleteConfirmationDialogProps`), not on `DynamicList`. |
 | `static/src/preview_statusbar.js` | Items are `{id, name}`; `patch(obj, name, ...)` with `this._super`. |
