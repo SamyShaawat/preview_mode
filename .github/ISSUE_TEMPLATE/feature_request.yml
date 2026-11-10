@@ -1,0 +1,23 @@
+name: Feature request
+description: Something the preview should cover or show.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you wanted to preview
+      description: The app, the button and what you could not see before clicking.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What the popup should show
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Odoo version you need it on
+      multiple: true
+      options: ["20.0", "19.0", "18.0", "17.0", "16.0"]

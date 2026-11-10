@@ -3,7 +3,7 @@
 # Preview Mode
 
 [![tests](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml/badge.svg?branch=19.0)](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml)
-![License: LGPL-3](https://img.shields.io/badge/license-LGPL--3-blue.svg) ![Odoo 19.0](https://img.shields.io/badge/odoo-19.0-875a7b.svg)
+![License: LGPL-3](https://img.shields.io/badge/license-LGPL--3-blue.svg) ![Odoo 19.0](https://img.shields.io/badge/odoo-19.0-875a7b.svg) [![Support](https://img.shields.io/badge/support-discussions-blue.svg)](SUPPORT.md) [![Security](https://img.shields.io/badge/security-policy-green.svg)](SECURITY.md) [![Contributing](https://img.shields.io/badge/contributing-guide-lightgrey.svg)](CONTRIBUTING.md)
 
 Preview Mode shows what a button click would create, change or delete, and where, before you commit to it. With the switch in the top bar on, a button that changes data opens a popup instead of acting; nothing is saved until you press Confirm.
 
@@ -99,6 +99,12 @@ Differences from 20.0: none in what the module does. Internally the switch uses 
 ## Contributing
 
 Every change is a pull request against the version branch. Outside contributions need a DCO sign-off. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Support, security, contributing
+
+- Questions and bugs: [SUPPORT.md](SUPPORT.md)
+- Reporting a vulnerability: [SECURITY.md](SECURITY.md)
+- Pull requests and branches: [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## License
 

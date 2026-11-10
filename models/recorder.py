@@ -43,6 +43,7 @@ class ChangeRecorder:
         self.emails = []
         self.queued_subjects = set()  # subjects of mail.mail records, so send_email does not count them twice
         self.incomplete = False
+        self.deleted_values = {}  # (model, id) -> simple field values before the delete, to find the record's menu
         self._previous = None
         self._formatted = {}  # (model, field, value) -> text, see _text
 
@@ -194,5 +195,12 @@ class ChangeRecorder:
     def note_unlink(self, records):
         if self._ignored(records):
             return
+        simple = [f.name for f in records._fields.values()
+                  if f.store and not f.compute and f.type not in ('binary', 'one2many', 'many2many', 'properties')]
         for rec in records:
+            try:
+                self.deleted_values[(rec._name, rec.id)] = {
+                    n: rec[n].id if rec._fields[n].type == 'many2one' else rec[n] for n in simple}
+            except Exception:  # noqa: BLE001 - only used to pick the menu; a failure falls back to the model name
+                pass
             self.changes.append(Change('deleted', rec._name, rec.id, rec.display_name, []))

@@ -2,7 +2,7 @@
 
 All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This is the 19.0 branch, ported from 20.0.
 
-## [Unreleased] - 19.0
+## [1.0.0] - 2026-11-10 - 19.0
 
 ### Added
 - Switch in the top bar that turns previews on and off per user.
