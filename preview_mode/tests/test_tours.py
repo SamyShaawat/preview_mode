@@ -35,7 +35,7 @@ class TestPreviewTours(HttpCase):
         self.assertEqual(self.env['res.partner'].search_count([('name', '=', 'Tour Partner (copy)')]), 1)
 
     def test_kill_switch_removes_the_toggle(self):
-        self.env['ir.config_parameter'].set_bool('preview_mode.enabled', False)
+        self.env['ir.config_parameter'].set_param('preview_mode.enabled', 'False')
         self._tour('preview_mode_switched_off')
         self.assertEqual(self.env['res.partner'].search_count([('name', '=', 'Tour Partner (copy)')]), 1)
 
