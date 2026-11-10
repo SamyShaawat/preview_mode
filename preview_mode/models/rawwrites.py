@@ -8,6 +8,11 @@ Known limit: a raw UPDATE on a table the ORM also wrote in the same click is not
 """
 from .recorder import IGNORED_MODELS
 
+# PORT: Odoo 16 to 18 Accounting raises customer_rank / supplier_rank with a raw UPDATE on res_partner
+# when an invoice or bill is posted (19+ uses the ORM). It is bookkeeping, not a change the user
+# would want listed, so a raw UPDATE on these tables is not reported.
+RAW_UPDATE_OK = ('res_partner',)
+
 QUERY = "SELECT relname, n_tup_ins, n_tup_upd, n_tup_del FROM pg_stat_xact_user_tables"
 
 
@@ -80,6 +85,6 @@ def unexplained(env, before, changes):
             bad.append(table)
         elif dele and table not in cascade_tables and dele != seen.get((table, 'deleted'), 0):
             bad.append(table)
-        elif upd and table not in recorded and table not in null_tables:
+        elif upd and table not in recorded and table not in null_tables and table not in RAW_UPDATE_OK:
             bad.append(table)
     return sorted(bad)

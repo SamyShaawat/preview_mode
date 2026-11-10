@@ -27,11 +27,17 @@ class TestRawWrites(TransactionCase):
 
     def test_raw_update_is_flagged(self):
         def button(self):
-            self.env.cr.execute("UPDATE res_partner SET comment = 'raw' WHERE id = %s", [self.id])
+            self.env.cr.execute("UPDATE res_country SET phone_code = 1 WHERE id = (SELECT min(id) FROM res_country)")
         payload = self._preview(button)
         self.assertTrue(payload['incomplete'])
-        self.assertIn('res_partner', self._warning(payload))
+        self.assertIn('res_country', self._warning(payload))
         self.assertTrue(payload['show'])
+
+    def test_raw_partner_update_is_tolerated(self):
+        # PORT: Odoo 16 to 18 Accounting bumps the partner rank with a raw UPDATE (see RAW_UPDATE_OK).
+        def button(self):
+            self.env.cr.execute("UPDATE res_partner SET comment = 'raw' WHERE id = %s", [self.id])
+        self.assertFalse(self._preview(button)['incomplete'])
 
     def test_raw_insert_into_unrelated_table_is_flagged(self):
         def button(self):
@@ -72,7 +78,7 @@ class TestRawWrites(TransactionCase):
 
     def test_cascade_delete_is_not_a_raw_write(self):
         # Deleting a partner removes its bank accounts through a database foreign key cascade.
-        self.env['res.partner.bank'].create({'partner_id': self.partner.id, 'acc_number': 'RAW-1'})
+        self.env['res.partner.bank'].create({'partner_id': self.partner.id, 'acc_number': 'RAW-1'})  # PORT: account_number on 19 and later
 
         def button(self):
             self.unlink()
@@ -86,9 +92,11 @@ class TestRawWrites(TransactionCase):
         if 'sale.order' not in env or 'account.tax' not in env:
             self.skipTest('needs sale and account')
         tax = env['account.tax'].create({'name': 'Raw Tax', 'amount': 5, 'type_tax_use': 'sale'})
+        product = env['product.product'].create({'name': 'Raw Line Product'})
         order = env['sale.order'].create({
             'partner_id': self.partner.id,
-            'order_line': [(0, 0, {'name': 'Line', 'product_uom_qty': 1, 'price_unit': 10, 'tax_ids': [(6, 0, tax.ids)]})]})
+            # PORT: 16 and 17 require a product on a sale line (check constraint)
+            'order_line': [(0, 0, {'product_id': product.id, 'name': 'Line', 'product_uom_qty': 1, 'price_unit': 10, 'tax_id': [(6, 0, tax.ids)]})]})  # PORT: tax_ids on 19 and later
         with patch.object(type(order), 'preview_mode_test_button', lambda self: self.unlink(), create=True):
             payload = build_preview(env, 'sale.order', 'preview_mode_test_button', order.ids, [], {}, 'Go')
         self.assertFalse(payload['incomplete'], payload['warnings'])
@@ -113,6 +121,7 @@ class TestRawWrites(TransactionCase):
             'partner_id': self.partner.id, 'picking_type_id': warehouse.in_type_id.id,
             'location_id': supplier.id, 'location_dest_id': warehouse.lot_stock_id.id,
             'move_ids': [(0, 0, {
+                'name': 'Item',  # PORT: stock.move.name is required on 16 to 18
                 'product_id': product.id, 'product_uom_qty': 5,
                 'location_id': supplier.id, 'location_dest_id': warehouse.lot_stock_id.id})]})
         picking.action_confirm()
