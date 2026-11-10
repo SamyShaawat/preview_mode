@@ -67,7 +67,7 @@ class ChangeRecorder:
             return dict(field._description_selection(record.env)).get(value, '') if value else ''
         if field.type in ('one2many', 'many2many'):
             return ', '.join(record.env[field.comodel_name].browse(value).mapped('display_name'))
-        if value is False or value is None:
+        if field.type != 'boolean' and (value is False or value is None):
             return ''
         if field.type in ('float', 'date', 'datetime'):
             # The same quantity, price or date repeats across the lines of one click: format it once.
