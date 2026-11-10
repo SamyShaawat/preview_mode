@@ -13,13 +13,13 @@ It works on every such button in every app, for every internal user. There is no
 
 The repository holds one module, the folder `preview_mode/`. Clone the branch for your Odoo version, add the clone (the repository root, not the module folder) to `addons_path`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
 
-| Odoo | Branch |
-|---|---|
-| 20.0 | `20.0` (reference) |
-| 19.0 | `19.0` |
-| 18.0 | `18.0` |
-| 17.0 | `17.0` |
-| 16.0 | `16.0` |
+| Odoo | Branch | Status | With Odoo Enterprise |
+|---|---|---|---|
+| 20.0 | `20.0` (reference) | Released | Not tested (no Enterprise 20 source) |
+| 19.0 | `19.0` | Released | Tested |
+| 18.0 | `18.0` | Released | Tested |
+| 17.0 | `17.0` | Released | Tested |
+| 16.0 | `16.0` (this branch) | Released | Not tested (no Enterprise 16 source) |
 
 ```bash
 git clone --branch 16.0 https://github.com/SamyShaawat/preview_mode.git /path/to/extra-addons/preview_mode
