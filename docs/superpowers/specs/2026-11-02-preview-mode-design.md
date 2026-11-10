@@ -107,7 +107,7 @@ Security
 - One private GitHub repo, `SamyShaawat/preview_mode` (same as the module's technical name, so a plain clone lands in the right folder), with branches `16.0`, `17.0`, `18.0`, `19.0`, `20.0`. The repo root is the Odoo module itself (the manifest is at the root), so a clone loads straight from an addons folder. (Owner approved on 2026-11-02, replacing the earlier nested-folder layout.)
 - Each `odoo-X.0/addons/preview_mode` is a clone of that repo with branch `X.0` checked out, so the module shows up in all five without hand-edited copies. Add `preview_mode` to each Odoo checkout's `.git/info/exclude` so Odoo's own repo stays clean.
 - Build order: 20.0 as the reference and default branch, then 19.0, 18.0, 17.0 and 16.0. Shared Python is ported by cherry-pick; frontend ported by hand.
-- Checkouts: all five exist at `/media/samy/Home/My-Github/Odoo/odoo-X.0/`, each with `odoo-venv/` (Python 3.12) and `odoo.conf`. 16.0 and 20.0 were cloned from GitHub on 2026-11-02 like the other three.
+- Checkouts: all five exist at `odoo-X.0/`, each with `odoo-venv/` (Python 3.12) and `odoo.conf`. 16.0 and 20.0 were cloned from GitHub on 2026-11-02 like the other three.
 - Manifest version format follows Odoo: `20.0.1.0.0`, and so on per branch.
 - Done means: milestone 1 is 20.0 working end to end (toggle, popup, Where column, journal entry view, toast links, no commit, no email sent, no real sequence number burned). Each other version is done when its branch meets the same list. The Store release can go version by version. The `20.0` branch exists on GitHub (checked 2026-11-02), so no fallback is needed; if it later turns out unusable, drop 20.0 and say so.
 

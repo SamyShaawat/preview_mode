@@ -2,7 +2,7 @@
 
 ## Architecture
 
-The repo root is the module (`preview_mode`, depends on `base` and `web`).
+The repository root holds the community files (README, LICENSE, docs, CI, scripts). The module is the folder `preview_mode/` (depends on `base` and `web`); the paths below are relative to it. This is the layout the Odoo Apps Store expects: it registers a Git repository and finds modules as folders in it.
 
 | File | Role |
 |---|---|
@@ -10,19 +10,31 @@ The repo root is the module (`preview_mode`, depends on `base` and `web`).
 | `models/payload.py` | `build_preview()`: checks, runs the method in `safe_run`, merges changes, builds summary, journal view and sections. Holds `UNSAFE_MODELS`, the timeout, the per-user advisory lock. |
 | `models/guards.py` | `safe_run()` and the guards: no-op commit, rollback marks incomplete, `(new)` sequences, recorded not sent email, blocked `requests`/`urllib`/`http.client`, no second DB cursor. |
 | `models/recorder.py` | `ChangeRecorder`: collects creates, writes, unlinks and queued `mail.mail` rows. The ignore lists `IGNORED_MODELS` and `IGNORED_FIELDS` live here only. |
-| `models/base.py` | Hooks `create`, `write`, `unlink` and `_write` (`_write_multi` on 18+) on `base`; also stores created ids for the toast when the context carries a token. |
+| `models/base.py` | Hooks `create`, `write`, `unlink` and `_write_multi` on `base`; also stores created ids for the toast when the context carries a token. |
 | `models/rawwrites.py` | Compares `pg_stat_xact_user_tables` counters before and after the click to flag raw SQL writes. |
 | `models/where.py` | `locate()`: turns a model into the menu path the user can open. |
 | `models/formatting.py` | Formats values the way the form shows them. |
 | `models/section.py` | `preview.mode.section`, the extension point. |
 | `models/created.py` | Transient `preview.mode.created`: created ids per token and user. |
-| `models/res_users.py`, `models/ir_http.py` | The per-user flag `preview_mode_enabled` and its session value. |
+| `models/res_users.py`, `models/ir_http.py` | The per-user flag `preview_mode_enabled` and its session values (`preview_mode_enabled`, and `preview_mode_available`, which is false when the kill switch is off and hides the systray item). |
 | `static/src/preview_service.js` | Wraps `doActionButton`, calls `/preview_mode/run`, opens the popup or the "Preview unavailable" dialog, shows the toast. |
 | `static/src/preview_list.js`, `preview_statusbar.js` | Previews for list Archive/Unarchive/Delete and status bar clicks. |
 | `static/src/preview_dialog.*`, `preview_toggle.*`, `preview.scss` | Popup, top-bar switch, styles. |
 | `tests/`, `static/tests/tours/` | Python tests and browser tours. |
 
 Flow: the client sends model, method, ids and context to `/preview_mode/run`. The server runs the method under the user's rights inside a savepoint, flushes, reads the recorder, rolls back and returns JSON. The client decides on the flag `show`, never on an empty change list.
+
+## Local development
+
+A clone of this repo sits at `odoo-<V>/addons/preview_mode`, so the module is at `odoo-<V>/addons/preview_mode/preview_mode`. Odoo only finds a module in a folder listed in `addons_path`, so add the clone itself to `odoo.conf`:
+
+```
+addons_path = <...>/odoo-<V>/addons/preview_mode,<existing entries>
+```
+
+Or pass it on the command line: `--addons-path=<...>/odoo-<V>/addons/preview_mode,<odoo addons>`. After pulling this layout change, restart the server and press Update Apps List. Test command from the Odoo checkout:
+
+    ./odoo-bin -c odoo.conf --addons-path=<repo root>,<odoo addons> -d <db> -u preview_mode --test-tags /preview_mode --stop-after-init
 
 ## Extension point
 
@@ -85,7 +97,7 @@ From the `odoo-17.0` checkout, with the module in the addons path:
 
 Expect `0 failed, 0 error(s) of N tests`. Use a free HTTP port that is not your running server's. The mail test needs the `mail` app, so run it on a scratch database created with `-i mail,preview_mode --without-demo=all`. Browser tours need headless Chrome and skip without it.
 
-If your venv's `python` lacks `babel` (this happened with a Python 3.14 venv), run the same command with Python 3.12: `PYTHONPATH=<venv>/lib/python3.12/site-packages /usr/bin/python3.12 odoo-bin ...`. On 17.0 it gives `0 failed, 0 error(s) of 95 tests` on a database with `mail`.
+If your venv's `python` lacks `babel` (this happened with a Python 3.14 venv), run the same command with Python 3.12: `PYTHONPATH=<venv>/lib/python3.12/site-packages /usr/bin/python3.12 odoo-bin ...`. On 17.0 it gives `0 failed, 0 error(s) of TESTCOUNT tests` on a database with `mail`.
 
 Lint: `pre-commit run --all-files` (see `CONTRIBUTING.md`).
 

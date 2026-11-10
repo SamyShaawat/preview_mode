@@ -8,13 +8,13 @@ The eye switch is in the top bar, on every page. Click it to turn previews on, c
 
 | Off | On |
 |---|---|
-| ![Switch off](../static/description/toggle-off.png) | ![Switch on](../static/description/toggle-on.png) |
+| ![Switch off](../preview_mode/static/description/toggle-off.png) | ![Switch on](../preview_mode/static/description/toggle-on.png) |
 
 ## Preview a click
 
 Open a quotation with the switch on and click **Confirm**. Instead of confirming, Odoo opens this popup:
 
-![Preview popup for Confirm](../static/description/popup-confirm.png)
+![Preview popup for Confirm](../preview_mode/static/description/main_screenshot.png)
 
 From top to bottom:
 
@@ -34,7 +34,7 @@ After a real run, a notification lists the records that were created, each as a 
 
 Creating an invoice from an order looks the same, with the new invoice and its lines in the list:
 
-![Preview popup for Create Invoice](../static/description/popup-create.png)
+![Preview popup for Create Invoice](../preview_mode/static/description/popup-create.png)
 
 ## Which clicks open a popup
 
@@ -66,6 +66,6 @@ The popup says `Confirming will fail: <reason>` in a red banner, for example whe
 
 **"A preview is already running."** You can run one preview at a time. The second click ran normally, with no popup.
 
-**"Too many records to preview" or "Preview Mode is switched off by your administrator."** An administrator set `preview_mode.max_records`, or turned Preview Mode off with `preview_mode.enabled`. The click ran normally.
+**"Too many records to preview" or "Preview Mode is switched off by your administrator."** An administrator set `preview_mode.max_records`, or turned Preview Mode off with `preview_mode.enabled` (the switch is then hidden after a page reload). The click ran normally.
 
 **It feels slow.** The click runs once as a preview and once for real, so heavy buttons take about twice as long. Turn the switch off for bulk work.

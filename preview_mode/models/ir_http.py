@@ -9,5 +9,7 @@ class IrHttp(models.AbstractModel):
     # session_info lives on ir.http (web) from 16 to 20; only the field read is ours.
     def session_info(self):
         info = super().session_info()
-        info['preview_mode_enabled'] = self.env.user.preview_mode_enabled and switched_on(self.env)
+        available = switched_on(self.env)
+        info['preview_mode_available'] = available
+        info['preview_mode_enabled'] = available and self.env.user.preview_mode_enabled
         return info
