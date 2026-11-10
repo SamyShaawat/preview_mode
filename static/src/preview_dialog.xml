@@ -3,7 +3,8 @@
     <t t-name="preview_mode.Dialog">
         <Dialog size="'lg'" title="this.props.title" contentClass="'o_preview_mode_dialog'">
             <div class="alert alert-warning mb-3" role="status">This is a preview. Nothing from this click has been saved yet.</div>
-            <p t-if="this.props.summary" class="o_preview_summary" t-out="this.props.summary"/>
+            <p class="o_preview_estimate text-muted small mb-3">This is an estimate. Numbers shown as (new), random values, the time, and changes by other users can differ when you confirm.</p>
+            <p t-if="this.showSummary" class="o_preview_summary" t-out="this.props.summary"/>
             <div t-foreach="this.props.warnings" t-as="warning" t-key="warning_index"
                  t-att-class="warning.blocking ? 'alert alert-danger' : 'text-muted'">
                 <t t-out="warning.text"/>
@@ -18,15 +19,15 @@
                     <tr t-foreach="this.props.changes" t-as="row" t-key="row_index">
                         <td class="o_preview_what">
                             <div>
-                                <span t-if="row.kind === 'new'" class="fw-bold me-2">New</span>
-                                <span t-elif="row.kind === 'changed'" class="fw-bold me-2">Changed</span>
-                                <span t-elif="row.kind === 'deleted'" class="fw-bold me-2">Deleted</span>
+                                <span t-if="row.kind === 'new'" class="fw-bold d-inline-block me-2">New</span>
+                                <span t-elif="row.kind === 'changed'" class="fw-bold d-inline-block me-2">Changed</span>
+                                <span t-elif="row.kind === 'deleted'" class="fw-bold d-inline-block me-2">Deleted</span>
                                 <t t-out="row.what"/>
                             </div>
                             <div t-foreach="row.fields" t-as="field" t-key="field_index" class="o_preview_field">
                                 <span class="text-muted" t-out="field.label"/>:
                                 <s t-if="field.old" class="text-muted" t-out="field.old"/>
-                                <span t-if="field.old"> → </span>
+                                <span t-if="field.old" class="o_preview_arrow d-inline-block"> → </span>
                                 <span class="o_preview_value"><t t-out="field.new or '(empty)'"/></span>
                             </div>
                         </td>
@@ -49,6 +50,17 @@
                     </tbody>
                 </table>
             </t>
+            <table t-foreach="this.props.sections" t-as="section" t-key="section_index" class="table table-sm o_preview_table o_preview_section caption-top">
+                <caption class="fw-bold text-start" t-out="section.title"/>
+                <thead t-if="section.columns.length">
+                    <tr><th t-foreach="section.columns" t-as="column" t-key="column_index" t-out="column"/></tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="section.rows" t-as="row" t-key="row_index">
+                        <td t-foreach="row" t-as="cell" t-key="cell_index" t-out="cell"/>
+                    </tr>
+                </tbody>
+            </table>
             <table t-if="this.props.emails.length" class="table table-sm o_preview_table caption-top">
                 <caption class="fw-bold text-start">Emails (not sent during the preview)</caption>
                 <tbody>
@@ -60,6 +72,7 @@
             <t t-set-slot="footer">
                 <button class="btn btn-primary" t-on-click="this.confirm" t-out="this.props.confirmLabel"/>
                 <button class="btn btn-secondary" t-on-click="this.back">Go back</button>
+                <button class="btn btn-link" t-on-click="this.copy">Copy</button>
             </t>
         </Dialog>
     </t>

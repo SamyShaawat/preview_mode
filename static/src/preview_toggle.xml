@@ -2,11 +2,12 @@
 <templates xml:space="preserve">
     <t t-name="preview_mode.Toggle">
         <button type="button" role="switch" class="o_nav_entry o_preview_toggle"
-                t-att-class="{ o_preview_on: this.state.enabled }"
-                t-att-aria-checked="this.state.enabled ? 'true' : 'false'"
+                t-att-class="{ o_preview_on: this.preview.state.enabled }"
+                t-att-aria-checked="this.preview.state.enabled ? 'true' : 'false'"
                 title="Preview mode: see what a button will do before it does it"
                 aria-label="Preview mode" t-on-click="this.preview.toggle">
-            <i class="fa fa-eye o_preview_icon" role="presentation"/>
+            <!-- PORT: Odoo 16 to 19 use <i class="fa fa-eye"/>; 20 uses Odoo icons. -->
+            <i class="oi o_preview_icon" data-icon="visibility" role="presentation"/>
             <span class="o_preview_track" aria-hidden="true"><span class="o_preview_knob"/></span>
         </button>
     </t>
