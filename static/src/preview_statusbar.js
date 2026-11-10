@@ -13,8 +13,9 @@ patch(StatusBarField.prototype, "preview_mode.statusbar", {
     },
     selectItem(item) {
         const { name, record } = this.props;
+        const _super = this._super.bind(this);  // only valid during the synchronous call
         return this.previewMode.previewWrite(record, { [name]: item.id }, item.name, () =>
-            this._super(item)
+            _super(item)
         );
     },
 });

@@ -10,10 +10,12 @@ import { ListController } from "@web/views/list/list_controller";
 // getActionMenuItems); 20.0 patches DynamicList (_toggleArchive, _deleteRecords).
 patch(ListController.prototype, "preview_mode.list", {
     async toggleArchiveState(archive) {
+        // this._super only lives during the synchronous part of the call: bind it before any await.
+        const _super = this._super.bind(this);
         const preview = this.env.services.preview_mode;
         const resIds = preview && preview.state.enabled ? await this.model.root.getResIds(true) : [];
         if (!resIds.length) {
-            return this._super(archive);
+            return _super(archive);
         }
         return preview.guard(
             {
@@ -23,7 +25,7 @@ patch(ListController.prototype, "preview_mode.list", {
                 context: [this.model.root.context],
                 label: archive ? _t("Archive") : _t("Unarchive"),
             },
-            () => this._super(archive)
+            () => _super(archive)
         );
     },
 
@@ -33,8 +35,11 @@ patch(ListController.prototype, "preview_mode.list", {
         const menus = this._super(...arguments);
         const preview = this.env.services.preview_mode;
         const archive = menus.other.find((item) => item.key === "archive");
-        if (archive && preview && preview.state.enabled) {
-            archive.callback = () => this.toggleArchiveState(true);
+        if (archive && preview) {
+            // Checked at click time: the menu is built before the switch may have been turned on.
+            const original = archive.callback;
+            archive.callback = () =>
+                preview.state.enabled ? this.toggleArchiveState(true) : original();
         }
         return menus;
     },
