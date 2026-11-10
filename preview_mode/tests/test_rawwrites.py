@@ -85,7 +85,9 @@ class TestRawWrites(TransactionCase):
         env = self.env
         if 'sale.order' not in env or 'account.tax' not in env:
             self.skipTest('needs sale and account')
-        tax = env['account.tax'].create({'name': 'Raw Tax', 'amount': 5, 'type_tax_use': 'sale'})
+        tax = env['account.tax'].create({
+            'name': 'Raw Tax', 'amount': 5, 'type_tax_use': 'sale',
+            'country_id': env.ref('base.us').id})  # PORT: country_id is required on 16 without a chart
         # PORT: 16 needs a product and a unit on the line (accountable check); tax_id is tax_ids on 17 and later
         product = env['product.product'].create({'name': 'Cascade Product'})
         order = env['sale.order'].create({
