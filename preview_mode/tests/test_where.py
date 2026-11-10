@@ -35,9 +35,9 @@ class TestWhere(TransactionCase):
         self.assertEqual(locate(self.env, 'res.partner', person.id, cands), 'PM root › People')
 
     def test_where_prefers_menu_whose_filter_picks_the_state(self):
-        # The second menu's default filter tests a selection field the record matches, so it beats the first.
         if 'notification_type' not in self.env['res.users']._fields:
-            self.skipTest('needs the mail app (notification_type)')
+            self.skipTest('needs the mail app (res.users.notification_type)')
+        # The second menu's default filter tests a selection field the record matches, so it beats the first.
         root = self.env['ir.ui.menu'].create({'name': 'PM state root'})
         view = self.env['ir.ui.view'].create({
             'name': 'pm.users.search', 'model': 'res.users', 'type': 'search',

@@ -12,6 +12,10 @@ Preview Mode depends only on `base` and `web`. This page records what was checke
 | 19.0 | Yes (`odoo-19.0/enterprise`) | PASS, run on the 19.0 branch (this port) and earlier on the 20.0 code | See details. |
 | 20.0 | No | NOT RUN | No 20.0 Enterprise source. Static review only, see risks. |
 
+### 19.0 branch + `web_enterprise`, layout sync check (2026-11-10)
+
+After the module moved into `preview_mode/` (clone of `pm19e`, Enterprise on the addons path, `-u preview_mode`): the update ran with 0 ERROR lines; the toggle shows in the top bar and switches on; Scheduled Action > Run Manually opens the popup `Preview: Run Manually` with `Run Manually` / `Go back` / `Copy`, fully inside the window (dialog 316 to 635 px of 951 px); no browser console errors after load. Light scheme, Arabic and phone width on Enterprise: NOT RUN.
+
 ### 19.0 branch + `web_enterprise`, port check (clone of `pm19e`, dark scheme only)
 
 | Check | Result |
