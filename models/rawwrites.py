@@ -65,10 +65,11 @@ def unexplained(env, before, changes):
     free = {table_of[n] for n in IGNORED_MODELS if n in table_of}
     free |= {table_of[n] for n in table_of if env[n]._transient}
     links = set()
-    for name in table_of:
-        if name in IGNORED_MODELS or name in {c.model for c in changes} or env[name]._transient:
-            links |= _relation_tables(env[name])
     cascade_tables, null_tables = _cascaded(env, {c.model for c in changes if c.kind == 'deleted'})
+    for name in table_of:
+        # A model deleted by a foreign key cascade (order lines) is not recorded, its link rows go with it.
+        if name in IGNORED_MODELS or name in {c.model for c in changes} or env[name]._transient or table_of[name] in cascade_tables:
+            links |= _relation_tables(env[name])
     bad = []
     for table, (ins, upd, dele) in moved.items():
         if table in free or table in links:
