@@ -86,9 +86,13 @@ class TestRawWrites(TransactionCase):
         if 'sale.order' not in env or 'account.tax' not in env:
             self.skipTest('needs sale and account')
         tax = env['account.tax'].create({'name': 'Raw Tax', 'amount': 5, 'type_tax_use': 'sale'})
+        # PORT: 16 needs a product and a unit on the line (accountable check); tax_id is tax_ids on 17 and later
+        product = env['product.product'].create({'name': 'Cascade Product'})
         order = env['sale.order'].create({
             'partner_id': self.partner.id,
-            'order_line': [(0, 0, {'name': 'Line', 'product_uom_qty': 1, 'price_unit': 10, 'tax_id': [(6, 0, tax.ids)]})]})  # PORT: tax_ids on 17 and later
+            'order_line': [(0, 0, {
+                'name': 'Line', 'product_id': product.id, 'product_uom': product.uom_id.id,
+                'product_uom_qty': 1, 'price_unit': 10, 'tax_id': [(6, 0, tax.ids)]})]})
         with patch.object(type(order), 'preview_mode_test_button', lambda self: self.unlink(), create=True):
             payload = build_preview(env, 'sale.order', 'preview_mode_test_button', order.ids, [], {}, 'Go')
         self.assertFalse(payload['incomplete'], payload['warnings'])

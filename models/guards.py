@@ -147,6 +147,27 @@ class IrSequence(models.Model):
         return super()._next(sequence_date=sequence_date)
 
 
+class ResPartner(models.Model):
+    _inherit = 'res.partner'
+
+    # PORT: Odoo 16 Accounting bumps customer_rank/supplier_rank with a raw UPDATE, which the raw-write
+    # check would report as a false alarm on every invoice post. The counters mean nothing in a preview.
+    # 17 and later go through the ORM or the post-commit queue. Accounting loads after this module, so its
+    # method would win a plain override; wrap it once every module is loaded (_register_hook).
+    def _register_hook(self):
+        super()._register_hook()
+        cls = type(self)
+        original = getattr(cls, '_increase_rank', None)
+        if original is not None and not getattr(original, '_preview_guard', False):
+            @functools.wraps(original)
+            def _increase_rank(records, *args, **kwargs):
+                if guarded() is not None:
+                    return None
+                return original(records, *args, **kwargs)
+            _increase_rank._preview_guard = True
+            cls._increase_rank = _increase_rank
+
+
 # The SMTP connect method is `_connect__` on Odoo 19/20 and `connect` on 16 to 18. Class names
 # differ too, so find the base model class by _name and detect the name once, no rename per port.
 _base_mail = next(c for c in vars(ir_mail_server).values() if getattr(c, '_name', None) == 'ir.mail_server')

@@ -72,4 +72,4 @@ class TestWizardButtons(TransactionCase):
         payload = self._preview(wizard, 'reverse_moves', 'Reverse')  # PORT: refund_moves on 17 and later
         self.assertTrue(payload['show'], payload)
         self.assertTrue(any(r['kind'] == 'new' and r['where'] for r in payload['changes']), payload)
-        self.assertFalse(invoice.reversal_move_ids)
+        self.assertFalse(invoice.reversal_move_id)

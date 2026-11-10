@@ -97,6 +97,7 @@ This is the 16.0 branch, ported from 20.0. Every version difference sits in a pl
 |---|---|
 | `models/compat.py` | `has_access` (rights + rule pair), config parameters through `get_param`, a plain quoted SQL query instead of `odoo.tools.SQL`, `format_datetime(dt_format=False)`. |
 | `models/base.py` | Delayed writes are hooked in `_write(vals)`; 18 and later have `_write_multi(vals_list)`. A normal `write()` reaches `_write` too, so a record can be noted twice; `_merge` keeps the first old value and the last new one. |
+| `models/guards.py` | `res.partner._increase_rank` is skipped during a preview (16 Accounting uses a raw UPDATE there); installed in `_register_hook`. |
 | `models/res_users.py` | `SELF_READABLE_FIELDS` / `SELF_WRITEABLE_FIELDS` instead of `user_writeable=True`. |
 | `security/ir.model.access.csv`, `security/preview_mode_security.xml` | ACL file name and header; the own-rows domain is an `ir.rule`, not part of the ACL. |
 | `controllers/main.py` | Route type `json`. |
