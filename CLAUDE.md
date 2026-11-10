@@ -51,3 +51,7 @@ Known gaps: a raw UPDATE on a table the ORM also wrote in the same click is not 
 ## Open questions for the owner
 
 Whether the toggle may stay top right (systray); Enterprise source for 16.0 and 20.0 to verify there.
+
+## Status of this branch (16.0)
+
+Ported from 20.0 at e7db8bb, all tests pass on Odoo 16 (`0 failed, 0 error(s) of 95 tests`). Version differences are listed in `docs/developer-guide.md` (grep `PORT:`). Not run on Enterprise 16 (no source). Store page screenshots come from 20.0. Pitfall found on 16: in `patch(obj, name, ...)` `this._super` exists only during the synchronous part of the call, so bind it before any `await` or callback.
