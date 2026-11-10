@@ -2,6 +2,11 @@
 
 All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Only the 20.0 branch is released; other versions are not ready.
 
+## [Unreleased]
+
+### Added
+- Odoo Apps Store package: banner, screenshots, a new description page, Arabic, French and Spanish translations (`i18n/`), `scripts/build_store_zip.sh`, `scripts/check_store_ready.py` (also run in CI) and `docs/publishing-on-odoo-store.md`.
+
 ## [1.0.0] - 2026-11-10 - 20.0
 
 ### Added

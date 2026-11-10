@@ -46,6 +46,10 @@ More detail, with screenshots, is in the [user guide](docs/user-guide.md).
 
 Audit fields, tracking values, followers, chatter messages and attachments are left out of the list.
 
+## Languages
+
+Arabic (right-to-left), French and Spanish translations are in `i18n/`. The template is `i18n/preview_mode.pot`.
+
 ## Settings
 
 All optional. An administrator sets them in Settings > Technical > System Parameters.
@@ -90,6 +94,7 @@ Odoo 20.0 only, Community; it installs and runs with Enterprise but Enterprise 2
 
 ## Documentation
 
+- [Publishing on the Odoo Apps Store](docs/publishing-on-odoo-store.md)
 - [User guide](docs/user-guide.md)
 - [Developer guide](docs/developer-guide.md)
 - [Changelog](CHANGELOG.md)
