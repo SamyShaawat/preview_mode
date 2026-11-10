@@ -1,19 +1,27 @@
 # Changelog
 
-All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Only the 20.0 branch is released; other versions are not ready.
+All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This file is for the 20.0 branch.
 
 ## [Unreleased]
+
+## [1.0.1] - 2026-11-10
+
+Everything since 1.0.0.
 
 ### Added
 - Odoo Apps Store package: banner, screenshots, a new description page, Arabic, French and Spanish translations (`i18n/`), `scripts/build_store_zip.sh`, `scripts/check_store_ready.py` (also run in CI) and `docs/publishing-on-odoo-store.md`.
 
-## [Unreleased]
+### Changed
+- The module moved into the `preview_mode/` folder of the repository (Apps Store layout). Add the repository root, not the module folder, to `addons_path`.
 
 ### Fixed
 - `preview_mode.enabled` set to `False` now hides the switch in the top bar (after a page reload), as well as stopping previews.
-- The `test_where` filter test is skipped when the `mail` app is not installed.
+- Where no longer shows a wrong menu for deleted records: a deleted sales order is not placed under the customer list, and a deleted vendor bill is not placed under customer invoices.
+- A click that creates several records with a unique name (for example two transfers from one sales order) no longer ends in "Preview unavailable": the first placeholder number is `(new)`, later ones are `(new 2)`, `(new 3)`.
 
-## [1.0.0] - 2026-11-10 - 20.0
+## [1.0.0] - 2026-11-10
+
+First release.
 
 ### Added
 - Switch in the top bar that turns previews on and off per user.

@@ -13,13 +13,13 @@ It works on every such button in every app, for every internal user. There is no
 
 The repository holds one module, the folder `preview_mode/`. Clone the branch for your Odoo version, add the clone (the repository root, not the module folder) to `addons_path`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
 
-| Odoo | Branch |
-|---|---|
-| 20.0 | `20.0` (reference) |
-| 19.0 | `19.0` |
-| 18.0 | `18.0` |
-| 17.0 | `17.0` |
-| 16.0 | `16.0` |
+| Odoo | Branch | Status | With Odoo Enterprise |
+|---|---|---|---|
+| 20.0 | `20.0` (reference) (this branch) | Released | Not tested (no Enterprise 20 source) |
+| 19.0 | `19.0` | Released | Tested |
+| 18.0 | `18.0` | Released | Tested |
+| 17.0 | `17.0` | Released | Tested |
+| 16.0 | `16.0` | Released | Not tested (no Enterprise 16 source) |
 
 ```bash
 git clone --branch 20.0 https://github.com/SamyShaawat/preview_mode.git /path/to/extra-addons/preview_mode
@@ -101,7 +101,7 @@ Another module can add its own table to the popup by overriding `preview.mode.se
 
 ## Compatibility
 
-Odoo 20.0 only, Community; it installs and runs with Enterprise but Enterprise 20 has not been tested here. Other versions are planned and not ready. The `16.0` to `19.0` branches hold older, incomplete code and should not be used.
+Odoo 20.0, Community. It depends only on `base` and `web` and should run next to Enterprise, but Enterprise 20 has not been tested here (no Enterprise 20 source). 19.0, 18.0, 17.0 and 16.0 are released on their own branches; see the table above.
 
 ## Documentation
 
