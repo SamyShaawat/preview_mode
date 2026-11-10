@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- PORT: Odoo 20 puts this domain in ir.access.csv; 16 to 19 need a record rule. -->
+    <record id="preview_mode_created_own_rule" model="ir.rule">
+        <field name="name">Preview Mode: own created rows</field>
+        <field name="model_id" ref="model_preview_mode_created"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('create_uid', '=', user.id)]</field>
+    </record>
+</odoo>

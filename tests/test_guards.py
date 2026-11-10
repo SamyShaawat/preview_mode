@@ -1,4 +1,6 @@
+import http.client
 import threading
+import urllib.request
 from email.message import EmailMessage
 from unittest.mock import patch
 
@@ -65,6 +67,33 @@ class TestGuards(TransactionCase):
             with self.assertRaises(PreviewBlocked):
                 requests.get('http://example.invalid')
         self.assertTrue(any('example.invalid' in w for w in rec.warnings))
+
+    def test_urllib_and_http_client_blocked(self):
+        # Same as above: the framework may replace these, so restore the installed guard.
+        with patch.object(http.client.HTTPConnection, 'connect', guards.guarded_http_connect):
+            with safe_run(self.env) as rec:
+                with self.assertRaises(PreviewBlocked):
+                    urllib.request.urlopen('http://example.invalid/')
+                with self.assertRaises(PreviewBlocked):
+                    http.client.HTTPSConnection('example.invalid').request('GET', '/')
+            self.assertEqual(sum('example.invalid' in w for w in rec.warnings), 2)
+            # Inert outside a preview and in other threads: the real connect runs (and fails on DNS).
+            conn = http.client.HTTPConnection('example.invalid')
+            with self.assertRaises(OSError):
+                conn.connect()
+            errors = []
+
+            def work():
+                try:
+                    conn.connect()
+                except Exception as e:  # noqa: BLE001
+                    errors.append(e)
+
+            with safe_run(self.env):
+                thread = threading.Thread(target=work)
+                thread.start()
+                thread.join()
+            self.assertTrue(errors and isinstance(errors[0], OSError))
 
     def test_separate_cursor_marks_incomplete(self):
         with safe_run(self.env) as rec:
@@ -133,3 +162,17 @@ class TestGuards(TransactionCase):
             self.env.cr.rollback()
         self.assertTrue(rec.incomplete)
         self.assertEqual(self.env['res.partner'].search_count([('name', '=', name)]), 0)
+
+    def test_connect_guard_blocks_smtp_in_preview_only(self):
+        server = self.env['ir.mail_server']
+        name = '_connect__' if hasattr(server, '_connect__') else 'connect'  # differs across versions
+        base = [c for c in type(server).__mro__ if name in vars(c)][-1]
+        # Test mode makes the real method a no-op before SMTP, so stand in for it on the base class:
+        # reached outside a preview (returns the marker), never reached inside one.
+        with patch('smtplib.SMTP', side_effect=AssertionError('SMTP touched')), \
+                patch('smtplib.SMTP_SSL', side_effect=AssertionError('SMTP touched')), \
+                patch.object(base, name, return_value='real') as real:
+            with safe_run(self.env):
+                self.assertIsNone(getattr(server, name)(host='localhost', port=25))
+            self.assertFalse(real.called)
+            self.assertEqual(getattr(server, name)(host='localhost', port=25), 'real')
