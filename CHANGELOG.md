@@ -4,7 +4,7 @@ All notable changes to this module are listed here. The format follows [Keep a C
 
 ## [Unreleased] - 18.0
 
-First release of the 18.0 port, ported from 20.0.
+First release of the 18.0 port, ported from 20.0 (20.0 release 1.0.0 plus the Where fixes of #101).
 
 ### Added
 - Switch in the top bar that turns previews on and off per user.

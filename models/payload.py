@@ -230,7 +230,8 @@ def build_preview(env, model, method, res_ids, args, kwargs, label):
         for change in merged[:MAX_ROWS]:
             if change['model'] not in menus:
                 menus[change['model']] = candidates(env, change['model'])
-            wheres.append(locate(env, change['model'], change['res_id'], menus[change['model']]))
+            wheres.append(locate(env, change['model'], change['res_id'], menus[change['model']],
+                                 recorder.deleted_values.get((change['model'], change['res_id']))))
         try:
             sections = [] if timed_out else _sections(env, model, method, res_ids, merged)
         except Exception:  # noqa: BLE001 - a third-party section must never break the preview
