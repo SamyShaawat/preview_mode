@@ -6,7 +6,7 @@ class ResUsers(models.Model):
 
     preview_mode_enabled = fields.Boolean(string='Preview Mode', default=False)
 
-    # PORT: Odoo 20 uses `user_writeable=True` on the field; 16 to 19 use these properties.
+    # PORT: Odoo 20 uses `user_writeable=True` on the field; on 16 to 19 the field is listed here.
     @property
     def SELF_READABLE_FIELDS(self):
         return super().SELF_READABLE_FIELDS + ['preview_mode_enabled']
