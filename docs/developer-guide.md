@@ -2,7 +2,7 @@
 
 ## Architecture
 
-The repo root is the module (`preview_mode`, depends on `base` and `web`).
+The repository root holds the community files (README, LICENSE, docs, CI, scripts). The module is the folder `preview_mode/` (depends on `base` and `web`); the paths below are relative to it. This is the layout the Odoo Apps Store expects: it registers a Git repository and finds modules as folders in it.
 
 | File | Role |
 |---|---|
@@ -23,6 +23,18 @@ The repo root is the module (`preview_mode`, depends on `base` and `web`).
 | `tests/`, `static/tests/tours/` | Python tests and browser tours. |
 
 Flow: the client sends model, method, ids and context to `/preview_mode/run`. The server runs the method under the user's rights inside a savepoint, flushes, reads the recorder, rolls back and returns JSON. The client decides on the flag `show`, never on an empty change list.
+
+## Local development
+
+A clone of this repo sits at `odoo-<V>/addons/preview_mode`, so the module is at `odoo-<V>/addons/preview_mode/preview_mode`. Odoo only finds a module in a folder listed in `addons_path`, so add the clone itself to `odoo.conf`:
+
+```
+addons_path = <...>/odoo-<V>/addons/preview_mode,<existing entries>
+```
+
+Or pass it on the command line: `--addons-path=<...>/odoo-<V>/addons/preview_mode,<odoo addons>`. After pulling this layout change, restart the server and press Update Apps List. Test command from the Odoo checkout:
+
+    ./odoo-bin -c odoo.conf --addons-path=<repo root>,<odoo addons> -d <db> -u preview_mode --test-tags /preview_mode --stop-after-init
 
 ## Extension point
 
@@ -103,7 +115,7 @@ This is the 16.0 branch, ported from 20.0. Every version difference sits in a pl
 | `controllers/main.py` | Route type `json`. |
 | `__manifest__.py` | ACL and rule files in `data`. |
 | `static/src/preview_service.js` | Owl 2 `reactive`, `rpc` and `user` services, `sprintf(_t(...))` because `_t` takes one argument. |
-| `static/src/preview_toggle.js`, `preview_toggle.xml` | `useState`, Font Awesome eye, `owl="1"` templates without `this.`. |
+| `static/src/preview_toggle.js`, `preview_toggle.xml` | `useState`, Font Awesome eye, `owl="1"` templates without `this.`; the systray registry has no `isDisplayed` on 16, so the template hides the switch with `t-if="available"` when `preview_mode.enabled` is `False`. |
 | `static/src/preview_dialog.js`, `preview_dialog.xml` | `static props`, templates without `this.`. |
 | `static/src/preview_list.js` | Archive, Unarchive and Delete are patched on `ListController` (`toggleArchiveState`, `getActionMenuItems`, `deleteConfirmationDialogProps`), not on `DynamicList`. |
 | `static/src/preview_statusbar.js` | Items are `{id, name}`; `patch(obj, name, ...)` with `this._super`. |

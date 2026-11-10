@@ -8,13 +8,13 @@ The eye switch is in the top bar, on every page. Click it to turn previews on, c
 
 | Off | On |
 |---|---|
-| ![Switch off](../static/description/toggle-off.png) | ![Switch on](../static/description/toggle-on.png) |
+| ![Switch off](../preview_mode/static/description/toggle-off.png) | ![Switch on](../preview_mode/static/description/toggle-on.png) |
 
 ## Preview a click
 
 Open a quotation with the switch on and click **Confirm**. Instead of confirming, Odoo opens this popup:
 
-![Preview popup for Confirm](../static/description/main_screenshot.png)
+![Preview popup for Confirm](../preview_mode/static/description/main_screenshot.png)
 
 From top to bottom:
 
@@ -34,7 +34,7 @@ After a real run, a notification lists the records that were created, each as a 
 
 Creating an invoice from an order looks the same, with the new invoice and its lines in the list:
 
-![Preview popup for Create Invoice](../static/description/popup-create.png)
+![Preview popup for Create Invoice](../preview_mode/static/description/popup-create.png)
 
 ## Which clicks open a popup
 

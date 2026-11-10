@@ -28,8 +28,8 @@ A free, open-source Odoo app (LGPL-3, OCA-style conventions, also listed free on
 
 ## Repo, clones, databases
 
-- GitHub: `SamyShaawat/preview_mode` (private). Branches `16.0 17.0 18.0 19.0 20.0` only; the repo root IS the module. Default branch 20.0.
-- Clones: one clone per version branch, each in `odoo-<V>/addons/preview_mode` of a matching Odoo checkout. Machine-specific paths, database names and ports live in `CLAUDE.local.md` (git-ignored, not in the repo).
+- GitHub: `SamyShaawat/preview_mode` (private). Branches `16.0 17.0 18.0 19.0 20.0` only; the module is the folder `preview_mode/` inside the repo (layout of 2026-11-10, what the Odoo Apps Store expects); community files, docs, CI and scripts are at the root. Default branch 20.0.
+- Clones: one clone per version branch, each in `odoo-<V>/addons/preview_mode` of a matching Odoo checkout. The module is then at `addons/preview_mode/preview_mode`, so `odoo.conf` `addons_path` must include `<...>/odoo-<V>/addons/preview_mode`. Odoo.sh: its FAQ says the folder holding a submodule is detected as an addons folder, so a submodule whose root contains `preview_mode/` works. Machine-specific paths, database names and ports live in `CLAUDE.local.md` (git-ignored, not in the repo).
 - Run Odoo from the checkout with its own venv (Python 3.12) and `odoo.conf`. Use a database that is not the owner's own, and a free HTTP port for tests that start HTTP. A running server caches the module manifest: restart it and press "Update Apps List" after code changes.
 - Odoo 19 does not load demo data from the CLI unless `--with-demo`; 16 to 18 do by default.
 - Tests: from `odoo-<V>`: `./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm<NN> -u preview_mode --test-tags /preview_mode --http-port=<free port> --stop-after-init`; expect `0 failed, 0 error(s) of N tests`. Odoo 20 API notes: config parameters are read with `get_str/get_int/get_float` (set with `set_str`), not `get_param`. The mail test needs the `mail` app: run it on a scratch DB, `-d pm20mail -i mail,preview_mode --without-demo=all`.
@@ -44,7 +44,7 @@ A free, open-source Odoo app (LGPL-3, OCA-style conventions, also listed free on
 
 ## Status (2026-11-10)
 
-Release `v1.0.0` (Preview Mode 1.0.0 for Odoo 20.0) is published on GitHub; `CHANGELOG.md` lists what is in it. 20.0 is the reference; Enterprise 20 is not verified (no Enterprise 20 source here). Ports 16.0 to 19.0 are in progress (ordered 2026-11-10); until each port PR merges, those branches hold the old skeleton/recorder code and are not released. Raw SQL writes are detected by `models/rawwrites.py` (PostgreSQL `pg_stat_xact_user_tables` counters before and after the click; a table that moved without a matching recorder entry, after allowing for ignored models, many2many link tables and foreign key cascades, makes the preview incomplete).
+All five versions (16.0 to 20.0) are merged and share the Apps Store layout; `CHANGELOG.md` lists what is in the release. 20.0 is the reference. Raw SQL writes are detected by `models/rawwrites.py` (PostgreSQL `pg_stat_xact_user_tables` counters before and after the click; a table that moved without a matching recorder entry, after allowing for ignored models, many2many link tables and foreign key cascades, makes the preview incomplete).
 
 Known gaps: a raw UPDATE on a table the ORM also wrote in the same click is not seen; the timeout only bounds SQL statements; `display_name` of a created record is stored at create time and can be stale; when no visible menu matches a model, Where falls back to the model's description (so a transfer row can show the model name).
 

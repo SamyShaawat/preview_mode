@@ -1,4 +1,4 @@
-<img src="static/description/icon.png" alt="Preview Mode icon" width="64" align="right">
+<img src="preview_mode/static/description/icon.png" alt="Preview Mode icon" width="64" align="right">
 
 # Preview Mode
 
@@ -11,13 +11,24 @@ It works on every such button in every app, for every internal user. There is no
 
 ## Install
 
-Put the `16.0` branch in your addons path under the folder name `preview_mode`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
+The repository holds one module, the folder `preview_mode/`. Clone the branch for your Odoo version, add the clone (the repository root, not the module folder) to `addons_path`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
+
+| Odoo | Branch |
+|---|---|
+| 20.0 | `20.0` (reference) |
+| 19.0 | `19.0` |
+| 18.0 | `18.0` |
+| 17.0 | `17.0` |
+| 16.0 | `16.0` |
 
 ```bash
-git clone --branch 16.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode
+git clone --branch 16.0 https://github.com/SamyShaawat/preview_mode.git /path/to/extra-addons/preview_mode
+# odoo.conf: addons_path = ...,/path/to/extra-addons/preview_mode
 ```
 
-On Odoo.sh, add the repository as a git submodule named `preview_mode`.
+On Odoo.sh, add the repository as a git submodule. Odoo.sh treats the folder that holds a submodule as an addons folder ([Odoo.sh FAQ](https://www.odoo.sh/faq): "the folder holding the submodule will be detected as an addons folder to include in the addons path"), so the `preview_mode/` module inside it is found.
+
+Without git, download `preview_mode-<version>.zip` from the [Releases](https://github.com/SamyShaawat/preview_mode/releases) page and unzip it into an addons folder. It holds a single `preview_mode/` folder.
 
 ## Use
 
@@ -48,7 +59,7 @@ Audit fields, tracking values, followers, chatter messages and attachments are l
 
 ## Languages
 
-Arabic (right-to-left), French and Spanish translations are in `i18n/`. The template is `i18n/preview_mode.pot`.
+Arabic (right-to-left), French and Spanish translations are in `preview_mode/i18n/`. The template is `preview_mode/i18n/preview_mode.pot`.
 
 ## Settings
 
