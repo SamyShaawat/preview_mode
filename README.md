@@ -1,4 +1,4 @@
-<img src="static/description/icon.png" alt="Preview Mode icon" width="64" align="right">
+<img src="preview_mode/static/description/icon.png" alt="Preview Mode icon" width="64" align="right">
 
 # Preview Mode
 
@@ -11,13 +11,24 @@ It works on every such button in every app, for every internal user. There is no
 
 ## Install
 
-Put the `19.0` branch in your addons path under the folder name `preview_mode`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
+The repository holds one module, the folder `preview_mode/`. Clone the branch for your Odoo version, add the clone (the repository root, not the module folder) to `addons_path`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
+
+| Odoo | Branch | Status |
+|---|---|---|
+| 20.0 | `20.0` (reference) | Released |
+| 19.0 | `19.0` (this branch) | Released |
+| 18.0 | `18.0` | Released |
+| 17.0 | `17.0` | Released |
+| 16.0 | `16.0` | In progress |
 
 ```bash
-git clone --branch 19.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode
+git clone --branch 19.0 https://github.com/SamyShaawat/preview_mode.git /path/to/extra-addons/preview_mode
+# odoo.conf: addons_path = ...,/path/to/extra-addons/preview_mode
 ```
 
-On Odoo.sh, add the repository as a git submodule named `preview_mode`.
+On Odoo.sh, add the repository as a git submodule. Odoo.sh treats the folder that holds a submodule as an addons folder ([Odoo.sh FAQ](https://www.odoo.sh/faq): "the folder holding the submodule will be detected as an addons folder to include in the addons path"), so the `preview_mode/` module inside it is found.
+
+Without git, download `preview_mode-<version>.zip` from the [Releases](https://github.com/SamyShaawat/preview_mode/releases) page and unzip it into an addons folder. It holds a single `preview_mode/` folder.
 
 ## Use
 
@@ -46,13 +57,17 @@ More detail, with screenshots, is in the [user guide](docs/user-guide.md).
 
 Audit fields, tracking values, followers, chatter messages and attachments are left out of the list.
 
+## Languages
+
+Arabic (right-to-left), French and Spanish translations are in `preview_mode/i18n/`. The template is `preview_mode/i18n/preview_mode.pot`.
+
 ## Settings
 
 All optional. An administrator sets them in Settings > Technical > System Parameters.
 
 | Key | Default | Effect |
 |---|---|---|
-| `preview_mode.enabled` | on | Set to `False` to stop previews for everyone. The click then runs as in stock Odoo and says "Preview Mode is switched off by your administrator." |
+| `preview_mode.enabled` | on | Set to `False` to hide the switch and stop previews for everyone. Reload the page after changing it. A click then runs as in stock Odoo; if the page was opened before the change, it says "Preview Mode is switched off by your administrator." |
 | `preview_mode.timeout` | 10 | Seconds a preview may spend in database statements (clamped to 1-120). Past that the popup says it timed out. |
 | `preview_mode.max_records` | 0 | Skip the preview when a click acts on more records than this. 0 means no limit. |
 
@@ -86,12 +101,11 @@ Another module can add its own table to the popup by overriding `preview.mode.se
 
 ## Compatibility
 
-This branch is for Odoo 19.0 (Community). It installs and runs with Enterprise 19; the switch and the popup were checked there, see [Enterprise verification](docs/enterprise-verification.md). The `20.0` branch is the reference version; `16.0` to `18.0` are separate ports.
-
-Differences from 20.0: none in what the module does. Internally the switch uses Owl 2 (`useState`), the user field is listed in `SELF_WRITEABLE_FIELDS`, and the system parameters are stored as text (set `preview_mode.enabled` to the text `False` to switch it off). See the `# PORT:` comments.
+This is the 19.0 branch, ported from 20.0; every feature of 20.0 works on it. Community; it installs and runs with Enterprise, checked on Enterprise 19 (see [docs/enterprise-verification.md](docs/enterprise-verification.md)). 20.0, 18.0 and 17.0 are released too; 16.0 is still in progress.
 
 ## Documentation
 
+- [Publishing on the Odoo Apps Store](docs/publishing-on-odoo-store.md)
 - [User guide](docs/user-guide.md)
 - [Developer guide](docs/developer-guide.md)
 - [Changelog](CHANGELOG.md)

@@ -8,4 +8,4 @@ ignore = E203,E501,W503,B950,B905
 per-file-ignores =
     __init__.py:F401
     __manifest__.py:B018
-    tests/*:B017,B908,F401
+    */tests/*:B017,B908,F401
