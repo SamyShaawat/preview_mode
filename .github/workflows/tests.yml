@@ -46,7 +46,7 @@ jobs:
           # Odoo exits 0 even when tests fail, so the log is checked too.
           docker run --rm --network host \
             -e HOST=127.0.0.1 -e USER=odoo -e PASSWORD=odoo \
-            -v "$GITHUB_WORKSPACE":/mnt/extra-addons/preview_mode:ro \
+            -v "$GITHUB_WORKSPACE":/mnt/extra-addons:ro \
             odoo:${{ matrix.odoo }} odoo \
             -d test -i mail,preview_mode --without-demo=all \
             --test-tags /preview_mode --http-port=8069 \

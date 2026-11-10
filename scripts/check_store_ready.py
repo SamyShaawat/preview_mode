@@ -11,7 +11,8 @@ import re
 import struct
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.join(REPO, 'preview_mode')  # the module folder
 DESC = os.path.join(ROOT, 'static', 'description')
 errors = []
 

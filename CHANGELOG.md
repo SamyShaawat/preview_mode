@@ -18,6 +18,7 @@ All notable changes to this module are listed here. The format follows [Keep a C
 ### Notes on this port
 - Ported from 20.0 at commit e7db8bb and adapted to Odoo 16: Owl 2 `reactive`/`useState`, `rpc` and `user` services, one-argument `_t`, `patch(obj, name, ...)`, `ListController` for the list mass actions, `_write` instead of `_write_multi`, `get_param`, `ir.rule` for the created-rows model, `SELF_WRITEABLE_FIELDS`.
 - Not run on Odoo 16 Enterprise (no source available).
+- The module now lives in the `preview_mode/` folder of the repository (Apps Store layout), with the community files, docs, CI and scripts at the root, as on 20.0. Clone the repository and add its root, not the module folder, to `addons_path`.
 
 ### Added
 - Switch in the top bar that turns previews on and off per user.
