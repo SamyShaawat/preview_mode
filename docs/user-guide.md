@@ -14,7 +14,7 @@ The eye switch is in the top bar, on every page. Click it to turn previews on, c
 
 Open a quotation with the switch on and click **Confirm**. Instead of confirming, Odoo opens this popup:
 
-![Preview popup for Confirm](../static/description/popup-confirm.png)
+![Preview popup for Confirm](../static/description/main_screenshot.png)
 
 From top to bottom:
 
