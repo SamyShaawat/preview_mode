@@ -142,8 +142,11 @@ class IrSequence(models.Model):
 
     def _next(self, sequence_date=None):
         # Postgres sequences ignore rollback: never draw a real number in a preview.
-        if guarded() is not None:
-            return '(new)'
+        recorder = guarded()
+        if recorder is not None:
+            # Repeats get '(new 2)', '(new 3)': unique(name) constraints (stock.picking...) would abort the preview.
+            recorder.sequence_draws += 1
+            return '(new)' if recorder.sequence_draws == 1 else '(new %d)' % recorder.sequence_draws
         return super()._next(sequence_date=sequence_date)
 
 
