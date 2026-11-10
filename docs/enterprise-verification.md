@@ -9,10 +9,20 @@ Preview Mode depends only on `base` and `web`. This page records what was checke
 | 16.0 | No | NOT RUN | No 16.0 Enterprise source on this machine. |
 | 17.0 | Yes (`odoo-17.0/enterprise`) | NOT RUN | Not part of this pass (module on 17.0 is still at the old state). |
 | 18.0 | Yes (`odoo-18.0/enterprise`) | NOT RUN | Same. |
-| 19.0 | Yes (`odoo-19.0/enterprise`) | PASS after the fix below (observed on a clone of `pm19e`, 19.0 branch code unchanged) | See details. |
+| 19.0 | Yes (`odoo-19.0/enterprise`) | PASS, run on the 19.0 branch (this port) and earlier on the 20.0 code | See details. |
 | 20.0 | No | NOT RUN | No 20.0 Enterprise source. Static review only, see risks. |
 
-### 19.0 + `web_enterprise`, observed in Chrome (own port, clone of `pm19e`)
+### 19.0 branch + `web_enterprise`, port check (clone of `pm19e`, dark scheme only)
+
+| Check | Result |
+|---|---|
+| Module updates and loads on a DB with `web_enterprise` installed | PASS |
+| Toggle visible in the Enterprise top bar, click turns it on | PASS |
+| Popup opens on Settings > Scheduled Actions > Run Manually (shows "Preview incomplete", the job opens a separate transaction), buttons `Run Manually` / `Go back`, not clipped | PASS |
+| Browser console errors | PASS (none; tracked after page load) |
+| Light colour scheme, Arabic, phone width on Enterprise | NOT RUN here |
+
+### 19.0 + `web_enterprise`, observed earlier on the 20.0 code (own port, clone of `pm19e`)
 
 | Check | Result |
 |---|---|
@@ -25,7 +35,7 @@ Preview Mode depends only on `base` and `web`. This page records what was checke
 | Toggle OFF state on the white Enterprise top bar (light scheme) | FAIL before the fix: white knob on a white-ish track, only the eye was visible. |
 | Same, with `currentColor` colours (this PR) | PASS: grey track and dark knob visible, checked by injecting the new CSS into the page. |
 
-Cause: `web_enterprise` sets `$o-navbar-background: $o-white` in the light scheme, while the toggle used fixed white colours made for a dark bar. The same fixed colours were in the 20.0 file. The fix in `static/src/preview.scss` uses `currentColor`, which follows the top bar text colour. The ON state (purple track, white knob) is unchanged. The 19.0 branch was not touched; it has the same SCSS and needs the same fix when ports are ordered.
+Cause: `web_enterprise` sets `$o-navbar-background: $o-white` in the light scheme, while the toggle used fixed white colours made for a dark bar. The same fixed colours were in the 20.0 file. The fix in `static/src/preview.scss` uses `currentColor`, which follows the top bar text colour. The ON state (purple track, white knob) is unchanged. The 19.0 branch carries the same SCSS fix.
 
 ### Static review for 20.0 (no Enterprise source)
 

@@ -47,6 +47,8 @@ A free, open-source Odoo app (LGPL-3, OCA-style conventions, also listed free on
 
 ## Status (2026-11-10)
 
+This is the 19.0 branch: the 20.0 module ported to Odoo 19.0 (Owl 2, `get_param`, `SELF_WRITEABLE_FIELDS`, `ir.model.access.csv` plus a record rule). All features of 20.0 work on 19.0; no feature is missing. Enterprise 19 was checked (dark scheme).
+
 Release `v1.0.0` (Preview Mode 1.0.0 for Odoo 20.0) is published on GitHub; `CHANGELOG.md` lists what is in it. 20.0 is the reference; Enterprise 20 is not verified (no Enterprise 20 source here). Ports 16.0 to 19.0 are in progress (ordered 2026-11-10); until each port PR merges, those branches hold the old skeleton/recorder code and are not released. Raw SQL writes are detected by `models/rawwrites.py` (PostgreSQL `pg_stat_xact_user_tables` counters before and after the click; a table that moved without a matching recorder entry, after allowing for ignored models, many2many link tables and foreign key cascades, makes the preview incomplete).
 
 Known gaps: a raw UPDATE on a table the ORM also wrote in the same click is not seen; the timeout only bounds SQL statements; `display_name` of a created record is stored at create time and can be stale; when no visible menu matches a model, Where falls back to the model's description (so a transfer row can show the model name).
