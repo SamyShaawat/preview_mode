@@ -53,6 +53,7 @@ class ChangeRecorder:
         self.emails = []
         self.queued_subjects = set()  # subjects of mail.mail records, so send_email does not count them twice
         self.incomplete = False
+        self.sequence_draws = 0  # placeholder numbers handed out in this preview, see IrSequence._next
         self.deleted_values = {}  # (model, id) -> simple field values before the delete, to find the record's menu
         self._previous = None
         self._formatted = {}  # (model, field, value) -> text, see _text
