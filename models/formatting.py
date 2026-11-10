@@ -1,10 +1,13 @@
 """Show a changed value the way the user's form shows it (amounts, numbers, dates)."""
+from odoo import _
 from odoo.tools.misc import format_amount, format_date, format_datetime, formatLang
 
 
 def display_value(record, field, value):
     """The value as the user's language and currency show it, or None to keep the plain text."""
     env = record.env
+    if field.type == 'boolean':
+        return _('Yes') if value else _('No')
     if field.type == 'monetary':
         currency = record[field.get_currency_field(record) or 'currency_id']
         if currency:
