@@ -48,6 +48,29 @@ class TestGuards(TransactionCase):
             self.assertEqual(self.env['ir.sequence'].next_by_code(code), '(new)')
         self.assertEqual(self.env['ir.sequence'].next_by_code(code), 'PT001')
 
+    def test_sequence_placeholders_are_distinct_within_one_preview(self):
+        code = 'preview_mode.test2'
+        self.env['ir.sequence'].create({'name': 'Preview test 2', 'code': code, 'prefix': 'PT', 'padding': 3})
+        seq = self.env['ir.sequence']
+        with safe_run(self.env):
+            first, second, third = (seq.next_by_code(code) for _i in range(3))
+        self.assertEqual((first, second, third), ('(new)', '(new 2)', '(new 3)'))
+        with safe_run(self.env):  # the counter restarts with the next preview
+            self.assertEqual(seq.next_by_code(code), '(new)')
+
+    def test_two_pickings_with_unique_names_in_one_preview(self):
+        if 'stock.picking' not in self.env:
+            self.skipTest('needs stock')
+        picking_type = self.env['stock.picking.type'].search([('code', '=', 'outgoing')], limit=1)
+        if not picking_type:
+            self.skipTest('no outgoing picking type')
+        vals = {'picking_type_id': picking_type.id,
+                'location_id': picking_type.default_location_src_id.id,
+                'location_dest_id': self.env.ref('stock.stock_location_customers').id}
+        with safe_run(self.env):  # unique(name, company_id) must not abort the savepoint
+            names = self.env['stock.picking'].create([dict(vals), dict(vals)]).mapped('name')
+        self.assertEqual(len(set(names)), 2)
+
     def test_email_listed_not_sent(self):
         server = self.env['ir.mail_server']
         message = EmailMessage()  # stdlib: build_email was renamed _build_email__ in 20
