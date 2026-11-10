@@ -2,8 +2,8 @@
 
 # Preview Mode
 
-[![tests](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml/badge.svg?branch=20.0)](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml)
-![License: LGPL-3](https://img.shields.io/badge/license-LGPL--3-blue.svg) ![Odoo 20.0](https://img.shields.io/badge/odoo-20.0-875a7b.svg) [![Support](https://img.shields.io/badge/support-discussions-blue.svg)](SUPPORT.md) [![Security](https://img.shields.io/badge/security-policy-green.svg)](SECURITY.md) [![Contributing](https://img.shields.io/badge/contributing-guide-lightgrey.svg)](CONTRIBUTING.md)
+[![tests](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml/badge.svg?branch=17.0)](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml)
+![License: LGPL-3](https://img.shields.io/badge/license-LGPL--3-blue.svg) ![Odoo 17.0](https://img.shields.io/badge/odoo-17.0-875a7b.svg) [![Support](https://img.shields.io/badge/support-discussions-blue.svg)](SUPPORT.md) [![Security](https://img.shields.io/badge/security-policy-green.svg)](SECURITY.md) [![Contributing](https://img.shields.io/badge/contributing-guide-lightgrey.svg)](CONTRIBUTING.md)
 
 Preview Mode shows what a button click would create, change or delete, and where, before you commit to it. With the switch in the top bar on, a button that changes data opens a popup instead of acting; nothing is saved until you press Confirm.
 
@@ -11,10 +11,10 @@ It works on every such button in every app, for every internal user. There is no
 
 ## Install
 
-Put the `20.0` branch in your addons path under the folder name `preview_mode`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
+Put the `17.0` branch in your addons path under the folder name `preview_mode`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
 
 ```bash
-git clone --branch 20.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode
+git clone --branch 17.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode
 ```
 
 On Odoo.sh, add the repository as a git submodule named `preview_mode`.
@@ -36,7 +36,7 @@ More detail, with screenshots, is in the [user guide](docs/user-guide.md).
 | Click | Previewed |
 |---|---|
 | Buttons that call a model method (Confirm, Validate, Post, wizard buttons) | Yes |
-| List view Archive, Unarchive, Delete on the selected records | Yes (Odoo's own "Are you sure?" comes first) |
+| List view Archive, Unarchive, Delete on the selected records | Yes (Archive skips Odoo's own "Are you sure?", the popup is the confirmation; Delete keeps Odoo's question) |
 | Status bar stage click | Yes, as the write of the stage field at click time |
 | Server actions in the list Actions menu | No |
 | Kanban drag and drop | No |
@@ -60,7 +60,7 @@ All optional. An administrator sets them in Settings > Technical > System Parame
 
 1. The browser asks `POST /preview_mode/run` before the click.
 2. The server runs the clicked method with the user's own rights inside a database savepoint.
-3. A recorder on `create`, `write`, `unlink` and `_write_multi` collects the changes. `flush_all()` runs before the end so delayed writes (recomputed totals, states) are seen.
+3. A recorder on `create`, `write`, `unlink` and `_write` (Odoo 17 flushes delayed writes through `_write`) collects the changes. `flush_all()` runs before the end so delayed writes (recomputed totals, states) are seen.
 4. The savepoint is rolled back, always.
 5. Raw SQL writes are caught by comparing PostgreSQL's per-transaction row counters before and after.
 6. The client shows the popup. On Confirm the real click runs, and the ids it creates are stored for the notification.
@@ -86,7 +86,7 @@ Another module can add its own table to the popup by overriding `preview.mode.se
 
 ## Compatibility
 
-Odoo 20.0 only, Community; it installs and runs with Enterprise but Enterprise 20 has not been tested here. Other versions are planned and not ready. The `16.0` to `19.0` branches hold older, incomplete code and should not be used.
+Odoo 17.0, Community and Enterprise. It was checked with Enterprise 17.0 (see [docs/enterprise-verification.md](docs/enterprise-verification.md)). On 17.0 a raw `UPDATE` on `res_partner` is not reported (Accounting raises the customer and supplier rank that way). Screenshots in `static/description` were taken on 20.0.
 
 ## Documentation
 

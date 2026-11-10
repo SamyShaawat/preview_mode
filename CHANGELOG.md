@@ -1,8 +1,10 @@
 # Changelog
 
-All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Only the 20.0 branch is released; other versions are not ready.
+All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This file is for the 17.0 branch.
 
-## [1.0.0] - 2026-11-10 - 20.0
+## [1.0.0] - 2026-11-10 - 17.0
+
+First release on 17.0, ported from 20.0 (commit 87271e5). Same features. 17.0 specifics: delayed writes are recorded through `_write`; Archive in a list view skips Odoo's own confirmation; Accounting's raw `UPDATE` of the partner rank is not reported as a raw write.
 
 ### Added
 - Switch in the top bar that turns previews on and off per user.

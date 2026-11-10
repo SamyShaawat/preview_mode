@@ -10,7 +10,7 @@ Read the [user guide](docs/user-guide.md) first. The "What it cannot promise" se
 
 ## Supported versions
 
-One branch per Odoo version. A fix lands on `20.0` first and is ported to the others as separate pull requests.
+One branch per Odoo version. A fix lands on `20.0` first and is ported to the others as separate pull requests. This is the 17.0 branch.
 
 | Odoo | Branch | Fixes |
 |---|---|---|

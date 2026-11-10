@@ -10,7 +10,7 @@ The repo root is the module (`preview_mode`, depends on `base` and `web`).
 | `models/payload.py` | `build_preview()`: checks, runs the method in `safe_run`, merges changes, builds summary, journal view and sections. Holds `UNSAFE_MODELS`, the timeout, the per-user advisory lock. |
 | `models/guards.py` | `safe_run()` and the guards: no-op commit, rollback marks incomplete, `(new)` sequences, recorded not sent email, blocked `requests`/`urllib`/`http.client`, no second DB cursor. |
 | `models/recorder.py` | `ChangeRecorder`: collects creates, writes, unlinks and queued `mail.mail` rows. The ignore lists `IGNORED_MODELS` and `IGNORED_FIELDS` live here only. |
-| `models/base.py` | Hooks `create`, `write`, `unlink` and `_write_multi` on `base`; also stores created ids for the toast when the context carries a token. |
+| `models/base.py` | Hooks `create`, `write`, `unlink` and `_write` (`_write_multi` on 18+) on `base`; also stores created ids for the toast when the context carries a token. |
 | `models/rawwrites.py` | Compares `pg_stat_xact_user_tables` counters before and after the click to flag raw SQL writes. |
 | `models/where.py` | `locate()`: turns a model into the menu path the user can open. |
 | `models/formatting.py` | Formats values the way the form shows them. |
@@ -33,7 +33,7 @@ Another module can add a table to the popup. Make a small glue module that depen
 ```python
 {
     'name': 'Preview Mode: Inventory impact',
-    'version': '20.0.1.0.0',
+    'version': '17.0.1.0.0',
     'depends': ['preview_mode', 'stock'],
     'auto_install': True,
     'license': 'LGPL-3',
@@ -76,19 +76,33 @@ Rules:
 
 ## Run the tests
 
-From the `odoo-20.0` checkout, with the module in the addons path:
+From the `odoo-17.0` checkout, with the module in the addons path:
 
 ```bash
-./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm20 -u preview_mode \
+./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm17 -u preview_mode \
   --test-tags /preview_mode --http-port=8079 --stop-after-init
 ```
 
 Expect `0 failed, 0 error(s) of N tests`. Use a free HTTP port that is not your running server's. The mail test needs the `mail` app, so run it on a scratch database created with `-i mail,preview_mode --without-demo=all`. Browser tours need headless Chrome and skip without it.
 
-If your venv's `python` lacks `babel` (this happened with a Python 3.14 venv), run the same command with Python 3.12: `PYTHONPATH=<venv>/lib/python3.12/site-packages /usr/bin/python3.12 odoo-bin ...`. I ran it that way on a `pm20` clone: `0 failed, 0 error(s) of 85 tests`.
+If your venv's `python` lacks `babel` (this happened with a Python 3.14 venv), run the same command with Python 3.12: `PYTHONPATH=<venv>/lib/python3.12/site-packages /usr/bin/python3.12 odoo-bin ...`. On 17.0 it gives `0 failed, 0 error(s) of 95 tests` on a database with `mail`.
 
 Lint: `pre-commit run --all-files` (see `CONTRIBUTING.md`).
 
 ## Porting notes
 
-Only 20.0 is supported today. Version differences are kept in places marked `# PORT:`; find them with `grep -rn "PORT:" .`. They cover, among others: the ACL file (`ir.access.csv` on 20, `ir.model.access.csv` before), the route type (`jsonrpc` on 19 and 20, `json` before), `user_writeable` against `SELF_WRITEABLE_FIELDS`, `has_access`, the config parameter getters, the `doActionButton` location in JS and the list method names in `preview_list.js`. Ports are one pull request per version; see `CONTRIBUTING.md`.
+This is the 17.0 branch, ported from 20.0. Version differences are marked `# PORT:`; find them with `grep -rn "PORT:" .`. On 17.0 they are:
+
+- `__manifest__.py` and `security/`: `ir.model.access.csv` plus an `ir.rule` (20.0 has one `ir.access.csv` with a domain).
+- `controllers/main.py`: route type `json` (20.0: `jsonrpc`).
+- `models/recorder.py`: `_can_read` uses `check_access_rights` and `check_access_rule` (20.0: `has_access`); the old-value query is plain SQL (20.0: `odoo.tools.SQL`).
+- `models/base.py`: delayed writes arrive in `_write(vals)` (20.0: `_write_multi(vals_list)`).
+- `models/payload.py`: config parameters are read with `get_param` (20.0: `get_int/get_float/get_bool`); `call_kw` is imported from `odoo.api`.
+- `models/res_users.py`: `SELF_READABLE_FIELDS` / `SELF_WRITEABLE_FIELDS` (20.0: `user_writeable=True`).
+- `models/formatting.py`: `format_datetime(..., dt_format=False)` so datetimes follow the user's language format.
+- `models/rawwrites.py`: `RAW_UPDATE_OK`, the partner rank UPDATE of Accounting.
+- JS: `/** @odoo-module **/` header, `reactive` and `useState` (Owl 2), `rpc` and `user` services, static `props`, `fa fa-eye` icon, `ListController.getStaticActionMenuItems` patch so Archive skips Odoo's question.
+- Tours: `test: true`, `run: () => {}` on check-only steps, `/web#action=...` start URL.
+- Tests: 17.0 field names (`acc_number`, `tax_id`, `detailed_type`, `reversal_move_id`, `groups_id`), `set_param`.
+
+Ports are one pull request per version; see `CONTRIBUTING.md`.

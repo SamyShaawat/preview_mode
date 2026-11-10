@@ -43,7 +43,7 @@ Only clicks that change data. Smart buttons, report printing and buttons that on
 | Click | Popup |
 |---|---|
 | Buttons such as Confirm, Validate, Post | Yes |
-| List view: Archive, Unarchive, Delete on the selected rows | Yes, after Odoo's own "Are you sure?" |
+| List view: Archive, Unarchive, Delete on the selected rows | Yes (Archive skips Odoo's own "Are you sure?"; Delete keeps it) |
 | Status bar stage click | Yes |
 | List Actions menu server actions, kanban drag and drop, Delete from a form's Actions menu | No, they run as usual |
 | Installing or upgrading apps, saving Settings, editing models, fields and views | No, they run as usual |

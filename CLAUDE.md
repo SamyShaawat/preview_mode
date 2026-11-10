@@ -47,10 +47,10 @@ A free, open-source Odoo app (LGPL-3, OCA-style conventions, also listed free on
 
 ## Status (2026-11-10)
 
-Release `v1.0.0` (Preview Mode 1.0.0 for Odoo 20.0) is published on GitHub; `CHANGELOG.md` lists what is in it. 20.0 is the reference; Enterprise 20 is not verified (no Enterprise 20 source here). Ports 16.0 to 19.0 are in progress (ordered 2026-11-10); until each port PR merges, those branches hold the old skeleton/recorder code and are not released. Raw SQL writes are detected by `models/rawwrites.py` (PostgreSQL `pg_stat_xact_user_tables` counters before and after the click; a table that moved without a matching recorder entry, after allowing for ignored models, many2many link tables and foreign key cascades, makes the preview incomplete).
+This is the 17.0 branch: the full 20.0 module ported (ordered 2026-11-10), tested on Odoo 17.0 (Community and with Enterprise 17 installed). 20.0 stays the reference. The version differences are the `# PORT:` places listed in `docs/developer-guide.md`. Enterprise 17 was verified (`docs/enterprise-verification.md`). Raw SQL writes are detected by `models/rawwrites.py` (PostgreSQL `pg_stat_xact_user_tables` counters before and after the click; a table that moved without a matching recorder entry, after allowing for ignored models, many2many link tables and foreign key cascades, makes the preview incomplete).
 
 Known gaps: a raw UPDATE on a table the ORM also wrote in the same click is not seen; the timeout only bounds SQL statements; `display_name` of a created record is stored at create time and can be stale; when no visible menu matches a model, Where falls back to the model's description (so a transfer row can show the model name).
 
 ## Open questions for the owner
 
-Whether the toggle may stay top right (systray); Enterprise source for 16.0 and 20.0 to verify there.
+Whether the toggle may stay top right (systray); Enterprise source for 16.0 and 20.0 to verify there. On 17.0: screenshots in the Store page come from 20.0; a real phone-width check was not run.
