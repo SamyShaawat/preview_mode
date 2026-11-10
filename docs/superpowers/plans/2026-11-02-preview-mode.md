@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python (Odoo ORM, werkzeug), OWL (JS) per Odoo version, QWeb XML, PostgreSQL savepoints. No external dependencies.
 
-**Spec:** `/media/samy/Home/My-Github/Odoo/preview_mode/docs/superpowers/specs/2026-11-02-preview-mode-design.md`
+**Spec:** `docs/superpowers/specs/2026-11-02-preview-mode-design.md`
 
 ## Global Constraints
 
@@ -60,7 +60,7 @@ Each file has one job: `recorder` collects changes; `base` hooks the ORM into it
 
 **Files:**
 - Create: the tree above as empty modules plus `__manifest__.py`.
-- Place: the repo at `/media/samy/Home/My-Github/Odoo/odoo-20.0/addons/preview_mode`.
+- Place: the repo at `odoo-20.0/addons/preview_mode`.
 
 **Interfaces:**
 - Produces: an installable module `preview_mode` on 20.0 that later tasks fill.

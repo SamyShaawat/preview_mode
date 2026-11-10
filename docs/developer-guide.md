@@ -2,7 +2,7 @@
 
 ## Architecture
 
-The repo root is the module (`preview_mode`, depends on `base` and `web`).
+The repository root holds the community files (README, LICENSE, docs, CI, scripts). The module is the folder `preview_mode/` (depends on `base` and `web`); the paths below are relative to it. This is the layout the Odoo Apps Store expects: it registers a Git repository and finds modules as folders in it.
 
 | File | Role |
 |---|---|
@@ -16,13 +16,25 @@ The repo root is the module (`preview_mode`, depends on `base` and `web`).
 | `models/formatting.py` | Formats values the way the form shows them. |
 | `models/section.py` | `preview.mode.section`, the extension point. |
 | `models/created.py` | Transient `preview.mode.created`: created ids per token and user. |
-| `models/res_users.py`, `models/ir_http.py` | The per-user flag `preview_mode_enabled` and its session value. |
+| `models/res_users.py`, `models/ir_http.py` | The per-user flag `preview_mode_enabled` and its session values (`preview_mode_enabled`, and `preview_mode_available`, which is false when the kill switch is off and hides the systray item). |
 | `static/src/preview_service.js` | Wraps `doActionButton`, calls `/preview_mode/run`, opens the popup or the "Preview unavailable" dialog, shows the toast. |
 | `static/src/preview_list.js`, `preview_statusbar.js` | Previews for list Archive/Unarchive/Delete and status bar clicks. |
 | `static/src/preview_dialog.*`, `preview_toggle.*`, `preview.scss` | Popup, top-bar switch, styles. |
 | `tests/`, `static/tests/tours/` | Python tests and browser tours. |
 
 Flow: the client sends model, method, ids and context to `/preview_mode/run`. The server runs the method under the user's rights inside a savepoint, flushes, reads the recorder, rolls back and returns JSON. The client decides on the flag `show`, never on an empty change list.
+
+## Local development
+
+A clone of this repo sits at `odoo-<V>/addons/preview_mode`, so the module is at `odoo-<V>/addons/preview_mode/preview_mode`. Odoo only finds a module in a folder listed in `addons_path`, so add the clone itself to `odoo.conf`:
+
+```
+addons_path = <...>/odoo-<V>/addons/preview_mode,<existing entries>
+```
+
+Or pass it on the command line: `--addons-path=<...>/odoo-<V>/addons/preview_mode,<odoo addons>`. After pulling this layout change, restart the server and press Update Apps List. Test command from the Odoo checkout:
+
+    ./odoo-bin -c odoo.conf --addons-path=<repo root>,<odoo addons> -d <db> -u preview_mode --test-tags /preview_mode --stop-after-init
 
 ## Extension point
 
@@ -97,9 +109,11 @@ This is the 18.0 branch. Version differences are kept in places marked `# PORT:`
 - `models/res_users.py`: `SELF_READABLE_FIELDS` / `SELF_WRITEABLE_FIELDS` instead of `user_writeable=True`.
 - `controllers/main.py`: route type `json` (`jsonrpc` on 19 and 20).
 - `models/payload.py`: `get_param` instead of `get_float` / `get_int` / `get_bool`.
+- `models/formatting.py`: datetimes are formatted with the user's language date and time format, passed explicitly.
+- `static/src/preview_dialog.js`, `preview_service.js`, `preview_toggle.js`: Owl 2 (`static props`, `reactive`, `useState`) where 20.0 uses Owl 3 (`useProps`, `proxy`).
 - `static/src/preview_toggle.xml`: Font Awesome eye icon.
 - `static/src/preview_list.js`: the Archive confirmation is built in `ListController.getStaticActionMenuItems` on 18.0 (on 19 and 20 it is `DynamicList.toggleArchiveWithConfirmation`).
 - `static/src/preview_service.js`: `doActionButton` is in `webclient/actions/action_service.js`.
-- Tests: `groups_id` instead of `group_ids`, `set_param` instead of `set_bool` / `set_str`.
+- Tests: `groups_id` instead of `group_ids`, `set_param` instead of `set_bool` / `set_str`, `acc_number` instead of `account_number`.
 
 Ports are one pull request per version; see `CONTRIBUTING.md`.

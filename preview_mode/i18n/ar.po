@@ -1,0 +1,572 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* preview_mode
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 20.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-10 01:52+0000\n"
+"PO-Revision-Date: 2026-11-10 01:52+0000\n"
+"Last-Translator: Samy Mostafa Shaawat\n"
+"Language-Team: Arabic\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "%(first)s and %(last)s"
+msgstr "%(first)s و%(last)s"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/recorder.py:0
+msgid "%s hidden"
+msgstr "%s مخفي"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.js:0
+msgid "(empty)"
+msgstr "(فارغ)"
+
+#. module: preview_mode
+#: model:ir.module.module,description:base.module_preview_mode
+msgid ""
+"<img src=\"static/description/icon.png\" alt=\"Preview Mode icon\" width=\"64\" align=\"right\">\n"
+"\n"
+"# Preview Mode\n"
+"\n"
+"[![tests](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml/badge.svg?branch=20.0)](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml)\n"
+"![License: LGPL-3](https://img.shields.io/badge/license-LGPL--3-blue.svg) ![Odoo 20.0](https://img.shields.io/badge/odoo-20.0-875a7b.svg) [![Support](https://img.shields.io/badge/support-discussions-blue.svg)](SUPPORT.md) [![Security](https://img.shields.io/badge/security-policy-green.svg)](SECURITY.md) [![Contributing](https://img.shields.io/badge/contributing-guide-lightgrey.svg)](CONTRIBUTING.md)\n"
+"\n"
+"Preview Mode shows what a button click would create, change or delete, and where, before you commit to it. With the switch in the top bar on, a button that changes data opens a popup instead of acting; nothing is saved until you press Confirm.\n"
+"\n"
+"It works on every such button in every app, for every internal user. There is no per-app or per-user setup.\n"
+"\n"
+"## Install\n"
+"\n"
+"Put the `20.0` branch in your addons path under the folder name `preview_mode`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.\n"
+"\n"
+"```bash\n"
+"git clone --branch 20.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode\n"
+"```\n"
+"\n"
+"On Odoo.sh, add the repository as a git submodule named `preview_mode`.\n"
+"\n"
+"## Use\n"
+"\n"
+"1. Click the eye switch in the top bar. It stays on until you click it again, and Odoo remembers it per user.\n"
+"2. Click a button that changes data, for example Confirm on a quotation or Post on an invoice.\n"
+"3. A popup titled `Preview: <button name>` lists the changes. **What** is New, Changed (old value struck through, then the new one) or Deleted. **Where** is the Odoo menu path, for example `Sales › Orders › Quotations`. A click that creates a journal entry also gets a Debit/Credit table.\n"
+"4. Press the primary button (it has the same label as the button you clicked) to run it for real, or **Go back** to leave everything untouched. **Copy** puts the preview on the clipboard as text.\n"
+"5. After a real run, a notification links to the records that were created.\n"
+"\n"
+"Buttons that change nothing (smart buttons, report printing, buttons that only open a wizard) run normally without a popup. If the click would fail, the popup says `Confirming will fail: <message>`; Confirm stays available because the real run decides.\n"
+"\n"
+"More detail, with screenshots, is in the [user guide](docs/user-guide.md).\n"
+"\n"
+"## What is covered\n"
+"\n"
+"| Click | Previewed |\n"
+"|---|---|\n"
+"| Buttons that call a model method (Confirm, Validate, Post, wizard buttons) | Yes |\n"
+"| List view Archive, Unarchive, Delete on the selected records | Yes (Odoo's own \"Are you sure?\" comes first) |\n"
+"| Status bar stage click | Yes, as the write of the stage field at click time |\n"
+"| Server actions in the list Actions menu | No |\n"
+"| Kanban drag and drop | No |\n"
+"| Delete from a form's Actions menu | No (tested: the record is deleted after Odoo's own question) |\n"
+"| Buttons on module install/upgrade, Settings, `ir.model`, `ir.model.fields`, `ir.ui.view` | No, they run as usual: a savepoint cannot undo registry changes |\n"
+"| Reports and printing, imports, scheduled actions, automations | No |\n"
+"\n"
+"Audit fields, tracking values, followers, chatter messages and attachments are left out of the list.\n"
+"\n"
+"## Settings\n"
+"\n"
+"All optional. An administrator sets them in Settings > Technical > System Parameters.\n"
+"\n"
+"| Key | Default | Effect |\n"
+"|---|---|---|\n"
+"| `preview_mode.enabled` | on | Set to `False` to stop previews for everyone. The click then runs as in stock Odoo and says \"Preview Mode is switched off by your administrator.\" |\n"
+"| `preview_mode.timeout` | 10 | Seconds a preview may spend in database statements (clamped to 1-120). Past that the popup says it timed out. |\n"
+"| `preview_mode.max_records` | 0 | Skip the preview when a click acts on more records than this. 0 means no limit. |\n"
+"\n"
+"## How it works\n"
+"\n"
+"1. The browser asks `POST /preview_mode/run` before the click.\n"
+"2. The server runs the clicked method with the user's own rights inside a database savepoint.\n"
+"3. A recorder on `create`, `write`, `unlink` and `_write_multi` collects the changes. `flush_all()` runs before the end so delayed writes (recomputed totals, states) are seen.\n"
+"4. The savepoint is rolled back, always.\n"
+"5. Raw SQL writes are caught by comparing PostgreSQL's per-transaction row counters before and after.\n"
+"6. The client shows the popup. On Confirm the real click runs, and the ids it creates are stored for the notification.\n"
+"\n"
+"## Safety guards during a preview\n"
+"\n"
+"- `commit` is a no-op on the preview's cursor, and `rollback` marks the preview incomplete.\n"
+"- Sequences return `(new)`, so no real number is used.\n"
+"- Emails are recorded, not sent. Queued `mail.mail` rows are listed too.\n"
+"- Outgoing calls through `requests`, `urllib` and `http.client` are blocked and reported.\n"
+"- Opening any other database connection (cron, bus) marks the preview incomplete. Post-commit callbacks are dropped.\n"
+"- One preview per user at a time (advisory lock). A second one is skipped with a notice.\n"
+"\n"
+"## What it cannot promise\n"
+"\n"
+"A preview is an estimate. Sequence numbers, random values, the time and other users' changes can differ at the real run. It can miss plain sockets, files written to the filestore, work in threads, and Python loops that never touch the database (the timeout only bounds SQL statements). A raw `UPDATE` on a table the ORM also wrote in the same click is not detected. When the module sees something it cannot cover, the popup says \"Preview incomplete\" instead of an all-clear.\n"
+"\n"
+"The click runs twice, so a heavy button takes about twice as long.\n"
+"\n"
+"## Extending the popup\n"
+"\n"
+"Another module can add its own table to the popup by overriding `preview.mode.section._preview_sections`. See the [developer guide](docs/developer-guide.md#extension-point) for a working example.\n"
+"\n"
+"## Compatibility\n"
+"\n"
+"Odoo 20.0 only, Community; it installs and runs with Enterprise but Enterprise 20 has not been tested here. Other versions are planned and not ready. The `16.0` to `19.0` branches hold older, incomplete code and should not be used.\n"
+"\n"
+"## Documentation\n"
+"\n"
+"- [User guide](docs/user-guide.md)\n"
+"- [Developer guide](docs/developer-guide.md)\n"
+"- [Changelog](CHANGELOG.md)\n"
+"\n"
+"## Contributing\n"
+"\n"
+"Every change is a pull request against the version branch. Outside contributions need a DCO sign-off. See [CONTRIBUTING.md](CONTRIBUTING.md).\n"
+"\n"
+"## Support, security, contributing\n"
+"\n"
+"- Questions and bugs: [SUPPORT.md](SUPPORT.md)\n"
+"- Reporting a vulnerability: [SECURITY.md](SECURITY.md)\n"
+"- Pull requests and branches: [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md)\n"
+"\n"
+"## License\n"
+"\n"
+"LGPL-3, see [LICENSE](LICENSE). Author: Samy Mostafa Shaawat.\n"
+msgstr ""
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "A preview is already running. This click ran without a preview."
+msgstr "هناك معاينة قيد التشغيل بالفعل. تم تنفيذ هذه النقرة دون معاينة."
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "Account"
+msgstr "الحساب"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_list.js:0
+msgid "Archive"
+msgstr "أرشفة"
+
+#. module: preview_mode
+#: model:ir.model,name:preview_mode.model_base
+msgid "Base"
+msgstr "الأساس"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.js:0
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "Changed"
+msgstr "تم التغيير"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "Confirming will %s."
+msgstr "سيؤدي التأكيد إلى %s."
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "Confirming will fail: %s"
+msgstr "سيفشل التأكيد: %s"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "Copy"
+msgstr "نسخ"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "Could not check whether the click wrote to the database directly."
+msgstr "تعذر التحقق مما إذا كانت النقرة قد كتبت في قاعدة البيانات مباشرة."
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.js:0
+msgid "Could not copy the preview."
+msgstr "تعذر نسخ المعاينة."
+
+#. module: preview_mode
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_created__create_uid
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#. module: preview_mode
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_created__create_date
+msgid "Created on"
+msgstr "أنشئ في"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_service.js:0
+msgid "Created:"
+msgstr "تم الإنشاء:"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "Credit"
+msgstr "دائن"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "Debit"
+msgstr "مدين"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_list.js:0
+msgid "Delete"
+msgstr "حذف"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.js:0
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "Deleted"
+msgstr "تم الحذف"
+
+#. module: preview_mode
+#: model:ir.model.fields,field_description:preview_mode.field_ir_http__display_name
+#: model:ir.model.fields,field_description:preview_mode.field_ir_mail_server__display_name
+#: model:ir.model.fields,field_description:preview_mode.field_ir_sequence__display_name
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_created__display_name
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_section__display_name
+#: model:ir.model.fields,field_description:preview_mode.field_res_users__display_name
+msgid "Display Name"
+msgstr "اسم العرض"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.js:0
+msgid "Email (not sent): %(subject)s -> %(to)s"
+msgstr "بريد إلكتروني (لم يُرسل): %(subject)s -> %(to)s"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "Emails (not sent during the preview)"
+msgstr "رسائل البريد الإلكتروني (لا تُرسل أثناء المعاينة)"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+#: code:addons/preview_mode/static/src/preview_service.js:0
+msgid "Go back"
+msgstr "رجوع"
+
+#. module: preview_mode
+#: model:ir.model,name:preview_mode.model_ir_http
+msgid "HTTP Routing"
+msgstr "توجيه HTTP"
+
+#. module: preview_mode
+#: model:ir.model.fields,field_description:preview_mode.field_ir_http__id
+#: model:ir.model.fields,field_description:preview_mode.field_ir_mail_server__id
+#: model:ir.model.fields,field_description:preview_mode.field_ir_sequence__id
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_created__id
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_section__id
+#: model:ir.model.fields,field_description:preview_mode.field_res_users__id
+msgid "ID"
+msgstr "المعرف"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "Invalid model."
+msgstr "نموذج غير صالح."
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "Journal entry"
+msgstr "قيد يومية"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.js:0
+msgid "Journal entry %s"
+msgstr "قيد يومية %s"
+
+#. module: preview_mode
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_created__write_uid
+msgid "Last Updated by"
+msgstr "آخر تحديث بواسطة"
+
+#. module: preview_mode
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_created__write_date
+msgid "Last Updated on"
+msgstr "آخر تحديث في"
+
+#. module: preview_mode
+#: model:ir.model,name:preview_mode.model_ir_mail_server
+msgid "Mail Server"
+msgstr "خادم البريد"
+
+#. module: preview_mode
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_created__model
+msgid "Model"
+msgstr "النموذج"
+
+#. module: preview_mode
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_created__name
+msgid "Name"
+msgstr "الاسم"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.js:0
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "New"
+msgstr "جديد"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/formatting.py:0
+msgid "No"
+msgstr "لا"
+
+#. module: preview_mode
+#: model:ir.model.fields,field_description:preview_mode.field_res_users__preview_mode_enabled
+#: model:ir.module.module,shortdesc:base.module_preview_mode
+msgid "Preview Mode"
+msgstr "وضع المعاينة"
+
+#. module: preview_mode
+#: model:ir.model,name:preview_mode.model_preview_mode_created
+msgid "Preview Mode Created Record"
+msgstr "سجل أنشئ في وضع المعاينة"
+
+#. module: preview_mode
+#: model:ir.model,name:preview_mode.model_preview_mode_section
+msgid "Preview Mode Extra Sections"
+msgstr "أقسام إضافية لوضع المعاينة"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "Preview Mode is switched off by your administrator."
+msgstr "قام المسؤول بإيقاف وضع المعاينة."
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.js:0
+msgid "Preview copied."
+msgstr "تم نسخ المعاينة."
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_toggle.xml:0
+msgid "Preview mode"
+msgstr "وضع المعاينة"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_toggle.xml:0
+msgid "Preview mode: see what a button will do before it does it"
+msgstr "وضع المعاينة: شاهد ما سيفعله الزر قبل أن ينفذه"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_service.js:0
+msgid "Preview unavailable"
+msgstr "المعاينة غير متاحة"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_service.js:0
+msgid "Preview: %s"
+msgstr "معاينة: %s"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "Private methods cannot be previewed."
+msgstr "لا يمكن معاينة الدوال الخاصة."
+
+#. module: preview_mode
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_created__res_id
+msgid "Res"
+msgstr "المورد"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_service.js:0
+msgid "Run without preview"
+msgstr "تنفيذ بدون معاينة"
+
+#. module: preview_mode
+#: model:ir.model,name:preview_mode.model_ir_sequence
+msgid "Sequence"
+msgstr "التسلسل"
+
+#. module: preview_mode
+#: model:ir.module.module,summary:base.module_preview_mode
+msgid ""
+"Shows what a button click will create, change or delete, and where, before "
+"you confirm it"
+msgstr "يعرض ما سينشئه النقر على الزر أو يعدّله أو يحذفه، وأين، قبل أن تؤكده"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.js:0
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid ""
+"Some effects could not be previewed and may still happen when you confirm."
+msgstr "تعذرت معاينة بعض التأثيرات وقد تحدث رغم ذلك عند التأكيد."
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid ""
+"The click wrote directly to the database (%s). The preview cannot show those"
+" changes."
+msgstr ""
+"كتبت النقرة في قاعدة البيانات مباشرة (%s). لا تستطيع المعاينة عرض هذه "
+"التغييرات."
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_service.js:0
+msgid ""
+"The preview could not be built, so nothing is known about what %s will do."
+msgstr "تعذر إنشاء المعاينة، لذلك لا يُعرف ما سيفعله «%s»."
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "The preview timed out after %s seconds. Confirming may still work."
+msgstr "انتهت مهلة المعاينة بعد %s ثانية. قد ينجح التأكيد مع ذلك."
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "This is a preview. Nothing from this click has been saved yet."
+msgstr "هذه معاينة. لم يتم حفظ أي شيء من هذه النقرة بعد."
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid ""
+"This is an estimate. Numbers shown as (new), random values, the time, and "
+"changes by other users can differ when you confirm."
+msgstr ""
+"هذا تقدير. قد تختلف عند التأكيد الأرقام المعروضة بالشكل (new) والقيم "
+"العشوائية والوقت وتغييرات المستخدمين الآخرين."
+
+#. module: preview_mode
+#: model:ir.model.fields,field_description:preview_mode.field_preview_mode_created__token
+msgid "Token"
+msgstr "الرمز"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "Too many records to preview (%(count)s, limit %(limit)s)."
+msgstr "عدد السجلات أكبر من أن يُعاين (%(count)s، الحد %(limit)s)."
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_list.js:0
+msgid "Unarchive"
+msgstr "إلغاء الأرشفة"
+
+#. module: preview_mode
+#: model:ir.model,name:preview_mode.model_res_users
+msgid "User"
+msgstr "المستخدم"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "What"
+msgstr "ماذا"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "What will happen"
+msgstr "ما الذي سيحدث"
+
+#. module: preview_mode
+#. odoo-javascript
+#: code:addons/preview_mode/static/src/preview_dialog.xml:0
+msgid "Where"
+msgstr "أين"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/formatting.py:0
+msgid "Yes"
+msgstr "نعم"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "and %s more"
+msgstr "و%s أخرى"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "changed"
+msgstr "تم التغيير"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "create %(count)s %(what)s"
+msgstr "إنشاء %(count)s %(what)s"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "delete %(count)s %(what)s"
+msgstr "حذف %(count)s %(what)s"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "deleted"
+msgstr "تم الحذف"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "queue %s email (not sent during the preview)"
+msgstr "وضع %s رسالة بريد في قائمة الانتظار (لا تُرسل أثناء المعاينة)"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "queue %s emails (not sent during the preview)"
+msgstr "وضع %s رسائل بريد في قائمة الانتظار (لا تُرسل أثناء المعاينة)"
+
+#. module: preview_mode
+#. odoo-python
+#: code:addons/preview_mode/models/payload.py:0
+msgid "update %(count)s %(what)s"
+msgstr "تحديث %(count)s %(what)s"
