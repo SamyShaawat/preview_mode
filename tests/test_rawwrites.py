@@ -72,7 +72,7 @@ class TestRawWrites(TransactionCase):
 
     def test_cascade_delete_is_not_a_raw_write(self):
         # Deleting a partner removes its bank accounts through a database foreign key cascade.
-        self.env['res.partner.bank'].create({'partner_id': self.partner.id, 'account_number': 'RAW-1'})
+        self.env['res.partner.bank'].create({'partner_id': self.partner.id, 'acc_number': 'RAW-1'})
 
         def button(self):
             self.unlink()

@@ -1,6 +1,8 @@
 """Show a changed value the way the user's form shows it (amounts, numbers, dates)."""
 from odoo import _
-from odoo.tools.misc import format_amount, format_date, format_datetime, formatLang
+from odoo.tools.misc import format_amount, format_date, formatLang
+
+from .compat import format_datetime_user
 
 
 def display_value(record, field, value):
@@ -19,5 +21,5 @@ def display_value(record, field, value):
     elif field.type == 'date':
         return format_date(env, value)
     elif field.type == 'datetime':
-        return format_datetime(env, value)
+        return format_datetime_user(env, value)
     return None

@@ -121,7 +121,7 @@ class TestPayload(TransactionCase):
         self.assertIn('Too many records', payload['notice'])
 
     def test_kill_switch_stops_previews(self):
-        self.env['ir.config_parameter'].set_bool('preview_mode.enabled', False)
+        self.env['ir.config_parameter'].set_param('preview_mode.enabled', 'False')
         payload = build_preview(self.env, 'res.partner', 'copy', [self.partner.id], [], {}, 'Copy')
         self.assertFalse(payload['show'])
         self.assertIn('switched off', payload['notice'])
@@ -135,14 +135,14 @@ class TestPayload(TransactionCase):
             self.assertFalse(payload['show'], model)
 
     def test_payload_shows_recomputed_stored_field(self):
-        # complete_name is a stored computed field: it is flushed through _write_multi, not write().
+        # display_name is a stored computed field (PORT: complete_name on 17 and later): it is flushed through _write_multi (_write on 16), not write().
         def button(self):
             self.name = 'Renamed Co'
         with self._patch(button):
             payload = build_preview(self.env, 'res.partner', 'preview_mode_test_button', [self.partner.id], [], {}, 'Go')
         fields = {f['label']: (f['old'], f['new']) for row in payload['changes'] for f in row['fields']}
-        self.assertEqual(fields.get('Complete Name'), ('Preview Co', 'Renamed Co'), payload)
-        self.assertEqual(self.partner.complete_name, 'Preview Co')
+        self.assertEqual(fields.get('Display Name'), ('Preview Co', 'Renamed Co'), payload)
+        self.assertEqual(self.partner.display_name, 'Preview Co')
 
     def test_payload_caps_rows(self):
         partners = self.env['res.partner'].create([{'name': 'P%s' % i} for i in range(300)])

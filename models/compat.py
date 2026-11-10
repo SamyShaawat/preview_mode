@@ -53,3 +53,11 @@ def old_column_values(cr, table, names, ids):
     columns = ', '.join('"%s"' % name for name in ['id'] + list(names))
     cr.execute('SELECT %s FROM "%s" WHERE id IN %%s' % (columns, table), [tuple(ids)])
     return cr.fetchall()
+
+
+def format_datetime_user(env, value):
+    """A datetime the way the user's language writes it (date and time format of the language)."""
+    # PORT: Odoo 16 formats 'medium' with babel ("Jan 31, 2026, 10:00:00 AM"); dt_format=False
+    # gives the language's own date and time format. 17 to 20 use the language format by default.
+    from odoo.tools.misc import format_datetime
+    return format_datetime(env, value, dt_format=False)

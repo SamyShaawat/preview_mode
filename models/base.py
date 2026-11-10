@@ -36,13 +36,15 @@ class Base(models.AbstractModel):
             recorder.note_unlink(self)
         return super().unlink()
 
-    def _write_multi(self, vals_list):
-        # Odoo flushes delayed writes (recomputed stored fields, cascades) here, not through write().
+    def _write(self, vals):
+        # PORT: Odoo 16 has no _write_multi; delayed writes (recomputed stored fields, cascades) reach the
+        # database through _write(vals). write() calls it too, so a record may be noted twice; the merge in
+        # payload._merge keeps the first old value and the last new one. 18 to 20 hook _write_multi(vals_list).
         recorder = active_recorder()
         if recorder is None:
-            return super()._write_multi(vals_list)
-        names, old = recorder.snapshot_columns(self, vals_list)
-        result = super()._write_multi(vals_list)
+            return super()._write(vals)
+        names, old = recorder.snapshot_columns(self, [vals])
+        result = super()._write(vals)
         if names:
             recorder.note_write(self, old, dict.fromkeys(names))
         return result

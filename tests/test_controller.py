@@ -1,9 +1,20 @@
+import json
+
 from odoo.exceptions import AccessError
 from odoo.tests.common import HttpCase, new_test_user, tagged
 
 
 @tagged('post_install', '-at_install')
 class TestController(HttpCase):
+
+    def make_jsonrpc_request(self, route, params):
+        # PORT: Odoo 16 has no make_jsonrpc_request on HttpCase; 17+ has.
+        response = self.url_open(route, data=json.dumps({'jsonrpc': '2.0', 'method': 'call', 'params': params}),
+                                 headers={'Content-Type': 'application/json'})
+        body = response.json()
+        if 'error' in body:
+            raise Exception(body['error'])
+        return body['result']
 
     def test_created_endpoint_returns_and_clears(self):
         admin = self.env.ref('base.user_admin')
@@ -19,7 +30,7 @@ class TestController(HttpCase):
         admin = self.env.ref('base.user_admin')
         partner = self.env['res.partner'].with_user(admin).with_context(preview_mode_token='t9').create({'name': 'P'})
         self.env['res.partner.bank'].with_user(admin).with_context(preview_mode_token='t9').create({
-            'partner_id': partner.id, 'account_number': '123456'})
+            'partner_id': partner.id, 'acc_number': '123456'})
         self.authenticate('admin', 'admin')
         models = [r['model'] for r in self.make_jsonrpc_request('/preview_mode/created', {'token': 't9'})]
         self.assertEqual(models, ['res.partner'])
@@ -101,5 +112,5 @@ class TestController(HttpCase):
         self.env.ref('base.user_admin').preview_mode_enabled = True
         self.authenticate('admin', 'admin')
         self.assertTrue(self.make_jsonrpc_request('/web/session/get_session_info', {})['preview_mode_enabled'])
-        self.env['ir.config_parameter'].set_bool('preview_mode.enabled', False)
+        self.env['ir.config_parameter'].set_param('preview_mode.enabled', 'False')
         self.assertFalse(self.make_jsonrpc_request('/web/session/get_session_info', {})['preview_mode_enabled'])
