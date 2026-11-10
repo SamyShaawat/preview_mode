@@ -1,10 +1,10 @@
 # Changelog
 
-All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This file is for the 17.0 branch.
+All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This file is for the 17.0 branch. The 20.0 branch has the reference changelog.
 
 ## [1.0.0] - 2026-11-10 - 17.0
 
-First release on 17.0, ported from 20.0 (commit 87271e5). Same features. 17.0 specifics: delayed writes are recorded through `_write`; Archive in a list view skips Odoo's own confirmation; Accounting's raw `UPDATE` of the partner rank is not reported as a raw write.
+First release on 17.0, ported from 20.0. Same features. 17.0 specifics: delayed writes are recorded through `_write`; Archive in a list view skips Odoo's own confirmation; Accounting's raw `UPDATE` of the partner rank is not reported as a raw write. The Apps Store layout (module in `preview_mode/`), Store images, Arabic, French and Spanish translations and `scripts/check_store_ready.py` match 20.0. `preview_mode.enabled` set to `False` also hides the switch in the top bar (after a page reload).
 
 ### Added
 - Switch in the top bar that turns previews on and off per user.

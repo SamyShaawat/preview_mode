@@ -42,3 +42,22 @@ registry.category("web_tour.tours").add("preview_mode_no_popup", {
         } },
     ],
 });
+
+registry.category("web_tour.tours").add("preview_mode_switched_off", {
+    test: true,
+    steps: () => [
+        // The form is loaded, the toggle is not in the top bar, and the button runs as in stock Odoo.
+        { trigger: "button[name=copy]", run: () => {
+            if (document.querySelector(".o_preview_toggle")) {
+                throw new Error("The toggle must be hidden when preview_mode.enabled is False");
+            }
+        } },
+        { trigger: "button[name=copy]", run: "click" },
+        // No popup; the click ran for real (the test checks the copy exists).
+        { trigger: ".o_form_view:not(.o_loading)", run: () => {
+            if (document.querySelector(".o_preview_mode_dialog")) {
+                throw new Error("No preview popup when preview_mode.enabled is False");
+            }
+        } },
+    ],
+});
