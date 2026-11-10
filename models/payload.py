@@ -128,8 +128,10 @@ def _sections(env, model, method, res_ids, merged):
 
 def switched_on(env):
     """The administrator's kill switch: system parameter preview_mode.enabled, on unless set to false."""
-    # PORT: Odoo 20 has get_bool; on 16 to 19 read get_param and compare with 'False'.
-    return env['ir.config_parameter'].sudo().get_bool('preview_mode.enabled', True)
+    # PORT: Odoo 20 has get_bool; on 16 to 19 read the text with get_param (an unset
+    # parameter, or one set to False, reads back as False, so the text 'False' is the switch).
+    value = env['ir.config_parameter'].sudo().get_param('preview_mode.enabled')
+    return not value or value.strip().lower() not in ('false', '0', 'no', 'off')
 
 
 # First key of the per-user advisory lock (second key is the user id).

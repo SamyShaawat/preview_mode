@@ -1,4 +1,4 @@
-import { Component } from "@odoo/owl";
+import { Component, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
@@ -7,6 +7,8 @@ export class PreviewToggle extends Component {
 
     setup() {
         this.preview = useService("preview_mode");
+        // PORT: Owl 2 (Odoo 16 to 19) needs useState to re-render on a reactive object.
+        this.state = useState(this.preview.state);
     }
 }
 

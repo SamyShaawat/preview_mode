@@ -1,4 +1,4 @@
-import { Component, t, useProps } from "@odoo/owl";
+import { Component } from "@odoo/owl";
 import { Dialog } from "@web/core/dialog/dialog";
 import { _t } from "@web/core/l10n/translation";
 import { useService } from "@web/core/utils/hooks";
@@ -6,19 +6,20 @@ import { useService } from "@web/core/utils/hooks";
 export class PreviewDialog extends Component {
     static template = "preview_mode.Dialog";
     static components = { Dialog };
-    props = useProps({
-        close: t.function(),
-        title: t.string(),
-        confirmLabel: t.string(),
-        summary: t.string().optional(""),
-        warnings: t.any(),
-        changes: t.any(),
-        emails: t.any(),
-        journal: t.any(),
-        sections: t.any(),
-        incomplete: t.any(),
-        onConfirm: t.function(),
-    });
+    // PORT: Owl 2 (Odoo 16 to 19) declares props with `static props`; Odoo 20 (Owl 3) uses useProps.
+    static props = {
+        close: Function,
+        title: String,
+        confirmLabel: String,
+        summary: { type: String, optional: true },
+        warnings: Array,
+        changes: Array,
+        emails: Array,
+        journal: Array,
+        sections: Array,
+        incomplete: { type: Boolean, optional: true },
+        onConfirm: Function,
+    };
 
     setup() {
         this.notification = useService("notification");

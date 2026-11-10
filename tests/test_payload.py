@@ -121,7 +121,7 @@ class TestPayload(TransactionCase):
         self.assertIn('Too many records', payload['notice'])
 
     def test_kill_switch_stops_previews(self):
-        self.env['ir.config_parameter'].set_bool('preview_mode.enabled', False)
+        self.env['ir.config_parameter'].set_param('preview_mode.enabled', 'False')
         payload = build_preview(self.env, 'res.partner', 'copy', [self.partner.id], [], {}, 'Copy')
         self.assertFalse(payload['show'])
         self.assertIn('switched off', payload['notice'])
