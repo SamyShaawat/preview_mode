@@ -1,0 +1,34 @@
+name: release
+
+# Tag `v1.0.0` or `20.0-v1.0.0` -> build the Store zip and attach it to that tag's release.
+on:
+  push:
+    tags: ["v*", "*.0-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    # Only tags pushed by the owner. Steps below skip if the script is absent.
+    if: ${{ github.actor == github.repository_owner }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for the build script
+        id: has
+        run: echo "found=$([ -f scripts/build_store_zip.sh ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Build the Store zip
+        if: steps.has.outputs.found == 'true'
+        run: bash scripts/build_store_zip.sh
+      - name: Attach the zip to the release
+        if: steps.has.outputs.found == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --generate-notes
+          shopt -s nullglob
+          zips=(*.zip dist/*.zip)
+          test "${#zips[@]}" -gt 0
+          gh release upload "$TAG" "${zips[@]}" --clobber
