@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="preview_mode.Toggle" owl="1">
+        <button type="button" role="switch" class="o_nav_entry o_preview_toggle"
+                t-att-class="{ o_preview_on: state.enabled }"
+                t-att-aria-checked="state.enabled ? 'true' : 'false'"
+                title="Preview mode: see what a button will do before it does it"
+                aria-label="Preview mode" t-on-click="toggle">
+            <!-- PORT: Odoo 16 to 19 use Font Awesome; 20 uses Odoo icons. -->
+            <i class="fa fa-eye o_preview_icon" role="presentation"/>
+            <span class="o_preview_track" aria-hidden="true"><span class="o_preview_knob"/></span>
+        </button>
+    </t>
+</templates>

@@ -4,6 +4,7 @@ Every guard keys on the per-thread ``_guard.recorder`` that only ``safe_run`` se
 so other threads and requests that are not a preview are untouched.
 """
 import functools
+import http.client
 import threading
 from contextlib import contextmanager
 from urllib.parse import urlsplit
@@ -12,6 +13,8 @@ import requests
 
 from odoo import models, sql_db
 from odoo.tools.misc import Callbacks
+
+from odoo.addons.base.models import ir_mail_server
 
 from .recorder import ChangeRecorder
 
@@ -57,7 +60,7 @@ def safe_run(env):
     previous = guarded()  # nested run: the outer preview's guards must stay on
     savepoint = cr.savepoint()
     try:
-        with ChangeRecorder() as recorder:
+        with ChangeRecorder(env.uid) as recorder:
             # Instance attributes: shadow Cursor.commit/rollback for this cursor only, no class patch.
             cr.commit = _no_commit
             cr.rollback = _no_rollback
@@ -89,6 +92,18 @@ def _guarded_send(send):
     return guarded_send
 
 
+def _guarded_connect(connect):
+    @functools.wraps(connect)
+    def guarded_connect(self, *args, **kwargs):
+        recorder = guarded()
+        if recorder is not None:
+            recorder.warnings.append('Blocked a call to %s' % self.host)
+            raise PreviewBlocked(self.host)
+        return connect(self, *args, **kwargs)
+    guarded_connect._preview_guard = True
+    return guarded_connect
+
+
 def _guarded_cursor(cursor):
     @functools.wraps(cursor)
     def guarded_cursor(self, *args, **kwargs):
@@ -101,15 +116,21 @@ def _guarded_cursor(cursor):
 
 
 guarded_send = None
+guarded_http_connect = None
 
 
 def install_patches():
-    """Called once from post_load. Both patches are inert unless this thread runs a preview."""
-    global guarded_send
+    """Called once from post_load. All patches are inert unless this thread runs a preview."""
+    global guarded_send, guarded_http_connect
     # WHY: outgoing HTTP is not transactional; Session.send is the single chokepoint of requests.
     if not getattr(requests.Session.send, '_preview_guard', False):
         requests.Session.send = _guarded_send(requests.Session.send)
     guarded_send = requests.Session.send
+    # WHY: urllib.request.urlopen and raw http.client both open the socket in HTTPConnection.connect
+    # (HTTPSConnection.connect calls it too), so one patch covers both; requests is blocked above.
+    if not getattr(http.client.HTTPConnection.connect, '_preview_guard', False):
+        http.client.HTTPConnection.connect = _guarded_connect(http.client.HTTPConnection.connect)
+    guarded_http_connect = http.client.HTTPConnection.connect
     # WHY: a new cursor commits independently of the preview savepoint. Connection.cursor is
     # where Registry.cursor, db_connect(...).cursor() (cron, bus) all meet, before a pool borrow.
     if not getattr(sql_db.Connection.cursor, '_preview_guard', False):
@@ -126,21 +147,52 @@ class IrSequence(models.Model):
         return super()._next(sequence_date=sequence_date)
 
 
+class ResPartner(models.Model):
+    _inherit = 'res.partner'
+
+    # PORT: Odoo 16 Accounting bumps customer_rank/supplier_rank with a raw UPDATE, which the raw-write
+    # check would report as a false alarm on every invoice post. The counters mean nothing in a preview.
+    # 17 and later go through the ORM or the post-commit queue. Accounting loads after this module, so its
+    # method would win a plain override; wrap it once every module is loaded (_register_hook).
+    def _register_hook(self):
+        super()._register_hook()
+        cls = type(self)
+        original = getattr(cls, '_increase_rank', None)
+        if original is not None and not getattr(original, '_preview_guard', False):
+            @functools.wraps(original)
+            def _increase_rank(records, *args, **kwargs):
+                if guarded() is not None:
+                    return None
+                return original(records, *args, **kwargs)
+            _increase_rank._preview_guard = True
+            cls._increase_rank = _increase_rank
+
+
+# The SMTP connect method is `_connect__` on Odoo 19/20 and `connect` on 16 to 18. Class names
+# differ too, so find the base model class by _name and detect the name once, no rename per port.
+_base_mail = next(c for c in vars(ir_mail_server).values() if getattr(c, '_name', None) == 'ir.mail_server')
+_CONNECT = '_connect__' if hasattr(_base_mail, '_connect__') else 'connect'
+
+
 class IrMailServer(models.Model):
     _inherit = 'ir.mail_server'
 
-    # PORT: the only Odoo-20-only name in this module; rename to `connect` for Odoo 16 to 19.
-    def connect(self, *args, **kwargs):  # noqa: PLW3201
+    # PORT: none needed, the connect method name is detected (see _CONNECT above).
+    def _guarded_connect(self, *args, **kwargs):
         if guarded() is not None:
             return None
-        return super().connect(*args, **kwargs)
+        return getattr(super(), _CONNECT)(*args, **kwargs)
+
+    vars()[_CONNECT] = _guarded_connect
+    del _guarded_connect
 
     def send_email(self, message, *args, **kwargs):
         recorder = guarded()
         if recorder is None:
             return super().send_email(message, *args, **kwargs)
-        recorder.emails.append({
-            'to': message['To'] or '',
-            'subject': message['Subject'] or '',
-        })
+        if (message['Subject'] or '') not in recorder.queued_subjects:  # already counted as a mail.mail row
+            recorder.emails.append({
+                'to': message['To'] or '',
+                'subject': message['Subject'] or '',
+            })
         return message['Message-Id']

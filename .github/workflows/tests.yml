@@ -1,0 +1,57 @@
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: ["16.0", "17.0", "18.0", "19.0", "20.0"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # One job per Odoo version in the matrix. The matrix holds the version of
+    # the branch under test (PR base branch, or the pushed branch), so the
+    # branch's own version is authoritative and unported versions never show a
+    # red job. Extension point: to test more versions at once, replace the
+    # fromJSON expression below with a list, e.g. ["19.0", "20.0"].
+    if: ${{ contains('16.0 17.0 18.0 19.0 20.0', github.base_ref || github.ref_name) }}
+    name: tests (${{ matrix.odoo }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        odoo: ${{ fromJSON(format('["{0}"]', github.base_ref || github.ref_name)) }}
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U odoo"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Store-readiness checks (manifest, icon, images, description page, i18n)
+        run: python3 scripts/check_store_ready.py
+      - name: Pull the official Odoo image
+        run: docker pull odoo:${{ matrix.odoo }}
+      - name: Install the module and run its tests
+        run: |
+          # `mail` is installed so the mail-queue test runs instead of skipping.
+          # Odoo exits 0 even when tests fail, so the log is checked too.
+          docker run --rm --network host \
+            -e HOST=127.0.0.1 -e USER=odoo -e PASSWORD=odoo \
+            -v "$GITHUB_WORKSPACE":/mnt/extra-addons/preview_mode:ro \
+            odoo:${{ matrix.odoo }} odoo \
+            -d test -i mail,preview_mode --without-demo=all \
+            --test-tags /preview_mode --http-port=8069 \
+            --stop-after-init 2>&1 | tee odoo.log
+          test "${PIPESTATUS[0]}" -eq 0
+          grep -E "[0-9]+ failed, [0-9]+ error" odoo.log
+          # ERROR lines are expected (timeout test), only the summary counts matter.
+          ! grep -E "[1-9][0-9]* failed|, [1-9][0-9]* error\(s\)" odoo.log

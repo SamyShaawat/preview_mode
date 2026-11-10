@@ -99,7 +99,7 @@ Security
 - Must work on Odoo.sh (owner requirement, 2026-11-02): no external Python packages and no `requirements.txt`, no system or `subprocess` calls, no writes to the file system outside Odoo's own storage, all state in the database (several workers share no memory), no route marked `readonly`, no dependence on `odoo.conf` options or server flags, no Enterprise-only code. Odoo.sh users add the repo as a git submodule named `preview_mode`.
 - Must work when installed next to Odoo Enterprise (owner requirement, 2026-11-02): it stays a Community module with no Enterprise dependency, but it must install and run with the Enterprise addons present. Enterprise's `web_enterprise` replaces parts of the web client (navbar, control panel), so UI hooks use stable, documented entry points and the Preview mode switch must render in both layouts.
 - No allow-list or deny-list of any kind: once the module is installed and the Preview mode toggle is on, it works on every button that changes data, in every app (core, Enterprise, third-party or custom), for every internal user. No per-app, per-model, per-button or per-user configuration.
-- Licence: OPL-1, the Odoo Proprietary License v1.0 (owner decision, 2026-11-02). Store review required per version. A paid listing also needs `price` and `currency` in the manifest.
+- Licence: LGPL-3 (owner decision, 2026-11-05; replaces OPL-1 of 2026-11-02). Free listing; no `price` in the manifest.
 - No commit or push by the assistant: the owner commits.
 
 ## 6. Repository and versions
@@ -107,7 +107,7 @@ Security
 - One private GitHub repo, `SamyShaawat/preview_mode` (same as the module's technical name, so a plain clone lands in the right folder), with branches `16.0`, `17.0`, `18.0`, `19.0`, `20.0`. The repo root is the Odoo module itself (the manifest is at the root), so a clone loads straight from an addons folder. (Owner approved on 2026-11-02, replacing the earlier nested-folder layout.)
 - Each `odoo-X.0/addons/preview_mode` is a clone of that repo with branch `X.0` checked out, so the module shows up in all five without hand-edited copies. Add `preview_mode` to each Odoo checkout's `.git/info/exclude` so Odoo's own repo stays clean.
 - Build order: 20.0 as the reference and default branch, then 19.0, 18.0, 17.0 and 16.0. Shared Python is ported by cherry-pick; frontend ported by hand.
-- Checkouts: all five exist at `/media/samy/Home/My-Github/Odoo/odoo-X.0/`, each with `odoo-venv/` (Python 3.12) and `odoo.conf`. 16.0 and 20.0 were cloned from GitHub on 2026-11-02 like the other three.
+- Checkouts: all five exist at `odoo-X.0/`, each with `odoo-venv/` (Python 3.12) and `odoo.conf`. 16.0 and 20.0 were cloned from GitHub on 2026-11-02 like the other three.
 - Manifest version format follows Odoo: `20.0.1.0.0`, and so on per branch.
 - Done means: milestone 1 is 20.0 working end to end (toggle, popup, Where column, journal entry view, toast links, no commit, no email sent, no real sequence number burned). Each other version is done when its branch meets the same list. The Store release can go version by version. The `20.0` branch exists on GitHub (checked 2026-11-02), so no fallback is needed; if it later turns out unusable, drop 20.0 and say so.
 
@@ -137,7 +137,7 @@ Approved visuals were shown in a browser session (three screens: the popup with 
 6. External HTTP calls are blocked during preview and flagged as incomplete.
 7. Sequences replaced by placeholders during preview.
 8. Restricted to internal users, no extra group.
-9. License OPL-1 (decided by the owner, no longer just a default).
+9. License LGPL-3 (decided by the owner on 2026-11-05; was OPL-1).
 10. Build order 20, 19, 18, 17, 16. Changed by the owner on 2026-11-02: 20.0 is the reference and the default branch (it was 19.0).
 11. The real run records created ids only to build toast links; it changes nothing else.
 12. A dirty form is saved normally before the preview; the popup says "Nothing from this click has been saved yet".
