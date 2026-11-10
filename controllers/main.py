@@ -1,4 +1,3 @@
-from odoo.exceptions import AccessError
 from odoo.http import Controller, request, route
 
 from ..models.payload import build_preview
@@ -10,15 +9,7 @@ RPC = 'json'
 
 def _readable(records):
     # PORT: has_access exists on Odoo 18+; 16 and 17 need the rights + rules pair.
-    if hasattr(records, 'has_access'):
-        return records.has_access('read')
-    if not records.check_access_rights('read', raise_exception=False):
-        return False
-    try:
-        records.check_access_rule('read')
-    except AccessError:
-        return False
-    return True
+    return records.has_access('read')
 
 
 def _is_child_model(model):
@@ -50,7 +41,7 @@ class PreviewModeController(Controller):
             'model': row.model,
             'res_id': row.res_id,
             'name': row.name,
-            'menu_path': locate(request.env, row.model),
+            'menu_path': locate(request.env, row.model, row.res_id),
         } for row in rows_shown]
         rows.unlink()
         return result

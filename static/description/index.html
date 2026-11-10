@@ -1,11 +1,89 @@
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>Preview Mode</title></head>
-<body>
-<h1>Preview Mode</h1>
-<p><strong>See what a button click will do before it does it.</strong></p>
-<p>Turn on a switch, click a button that changes data (Confirm, Validate, Post, and so on), and a popup lists what the click would create, change or delete, and where each change lands in Odoo's menus.</p>
-<p>Then you confirm for real or go back. Nothing from the click is saved during the preview.</p>
-<p>It works for every user of every app: sales, purchase, inventory, manufacturing, CRM, HR, project and third-party apps.</p>
-</body>
-</html>
+<section class="oe_container" style="max-width:960px;margin:0 auto;padding:24px 16px;font-family:sans-serif;color:#212529;line-height:1.5;">
+
+  <div style="text-align:center;margin-bottom:32px;">
+    <img src="icon.png" alt="Preview Mode icon" width="96" height="96"/>
+    <h1 style="margin-top:12px;">Preview Mode</h1>
+    <p style="font-size:1.25em;color:#714b67;"><strong>See what a button click will do before it does it.</strong></p>
+    <p>Free and open source (LGPL-3). For every user of every app. Nothing to configure.</p>
+  </div>
+
+  <h2 style="color:#714b67;">Why</h2>
+  <p>Confirming a vendor bill posts journal entries. Confirming a sales order changes its lines. Creating an invoice
+    creates new records. These clicks are hard to undo, and Odoo does not show you the result first. Preview Mode does.</p>
+  <p>Turn on the switch in the top bar, click a button that changes data (Confirm, Validate, Post, Create Draft and so on),
+    and a popup lists what the click would create, change or delete, and where each change lands in Odoo's menus.
+    Then you confirm for real or go back. Nothing from the click is saved during the preview.</p>
+
+  <h2 style="color:#714b67;">Why Preview Mode</h2>
+  <p>Other tools tell you what happened, or ask you to be sure. Preview Mode shows the result of the click, so you can
+    preview a button click before you confirm it. The same idea exists in some ERPs for accounting postings; here it covers every
+    app. That makes risky operations safer without a second step to undo them.</p>
+  <div style="overflow-x:auto;margin-bottom:24px;">
+    <table style="border-collapse:collapse;width:100%;min-width:640px;font-size:0.95em;">
+      <tr><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #714b67;vertical-align:bottom;">Approach</th><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #714b67;vertical-align:bottom;">Shows the result before the click is saved</th><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #714b67;vertical-align:bottom;">Works in</th><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #714b67;vertical-align:bottom;">Setup</th><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #714b67;vertical-align:bottom;">Cost</th></tr>
+      <tr><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Audit trail modules (for example OCA auditlog, AuditGuard)</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">No. Records the change after it happened.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Only the models you set up.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Rules per model (auditlog).</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Auditlog is free. AuditGuard has a free and a Pro version.</td></tr>
+      <tr><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Confirmation dialog modules for server actions</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">No. Shows fixed text such as "Are you sure?".</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Server actions only.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Enable per server action.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Varies by module.</td></tr>
+      <tr><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Undo or reversal modules (for example OCA account_reversal)</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">No. Fixes the mistake after it was saved.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Accounting documents.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Install the module.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Varies by module.</td></tr>
+      <tr><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Accounting preview in other ERPs (SAP Simulate Posting, Dynamics 365 Preview Posting)</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Yes, for ledger entries.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Accounting postings only.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Built into those products.</td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;">Part of those products.</td></tr>
+      <tr><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;"><strong>Preview Mode</strong></td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;"><strong>Yes. Runs the real click, shows the result, rolls it back.</strong></td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;"><strong>Every button that changes data, in every app.</strong></td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;"><strong>None. Install and turn the switch on.</strong></td><td style="padding:6px 8px;border-bottom:1px solid #dee2e6;vertical-align:top;"><strong>Free, LGPL-3.</strong></td></tr>
+    </table>
+  </div>
+  <p style="color:#6c757d;font-size:0.9em;">Audit trails still have a job: they keep a record for compliance. Preview Mode does not replace them, it comes before them.</p>
+
+  <h2 style="color:#714b67;">One switch in the top bar</h2>
+  <p>The switch sits in the top bar on every page, in the same place on Community and Enterprise. It lights up while
+    preview is on, and your choice is remembered for your user.</p>
+  <table style="border-collapse:collapse;margin:0 0 24px 0;">
+    <tr>
+      <td style="padding:0 16px 8px 0;"><img src="toggle-off.png" alt="Preview mode switch, off" style="max-width:100%;"/></td>
+      <td style="padding:0 0 8px 0;"><img src="toggle-on.png" alt="Preview mode switch, on" style="max-width:100%;"/></td>
+    </tr>
+    <tr>
+      <td style="padding-right:16px;color:#6c757d;">Off: buttons run as usual.</td>
+      <td style="color:#6c757d;">On: buttons that change data open a preview.</td>
+    </tr>
+  </table>
+
+  <h2 style="color:#714b67;">What the popup shows</h2>
+  <p>Click <strong>Confirm</strong> on a quotation with the switch on. You see each change as New, Changed or Deleted,
+    with old values struck through, and the place in Odoo where it lands.</p>
+  <p><img src="popup-confirm.png" alt="Preview popup for confirming a sales order" style="max-width:100%;border:1px solid #dee2e6;"/></p>
+  <p>Create an invoice from that order and the popup lists the new invoice and its lines, plus the changes to the order.
+    The primary button of the popup carries the same label as the button you clicked, next to <strong>Go back</strong>.</p>
+  <p><img src="popup-create.png" alt="Preview popup for creating an invoice from a sales order" style="max-width:100%;border:1px solid #dee2e6;"/></p>
+  <ul>
+    <li>A one-sentence summary and a yellow notice that nothing has been saved yet.</li>
+    <li>If the click would fail, for example a locked period, the popup says "Confirming will fail" and shows the reason. The real run still decides.</li>
+    <li>Emails the click would send are listed as not sent during the preview.</li>
+    <li>Journal entry lines (account, debit, credit) when a journal entry would be created and Accounting is installed.</li>
+    <li>A Copy button puts the preview on your clipboard as plain text.</li>
+    <li>After a real run, a message lists the records that were created, each as a link.</li>
+    <li>Buttons that only open something (smart buttons, Print, buttons that just open a wizard) run normally, with no popup.</li>
+  </ul>
+
+  <h2 style="color:#714b67;">Works everywhere, nothing to configure</h2>
+  <ul>
+    <li>Every internal user and every app: Sales, Purchase, Inventory, Accounting, CRM, HR, third-party and custom apps. There is no list of supported apps, models, buttons or users.</li>
+    <li>Depends only on <code>base</code> and <code>web</code>. Works on Community and when Enterprise is installed.</li>
+    <li>Runs with your own access rights, so it never shows or does more than the real click.</li>
+    <li>Built for Odoo.sh: no external Python packages, no system changes, safe with several workers.</li>
+    <li>Optional kill switch: an administrator sets the system parameter <code>preview_mode.enabled</code> to <code>False</code> to hide the switch and stop previews for everyone.</li>
+  </ul>
+
+  <h2 style="color:#714b67;">Good to know</h2>
+  <p>The preview runs the real click inside a database savepoint and always rolls it back. It sends no email, blocks
+    outgoing web requests made with Python <code>requests</code>, and does not use up a real sequence number.</p>
+  <p>It is a careful estimate, not a promise. If a click opens a separate database connection, the preview says
+    "Preview incomplete". Raw SQL writes are detected and flagged the same way. Calls to outside services other than
+    <code>requests</code>, files written to the filestore and work done in threads are not seen. Sequence numbers show as
+    <code>(new)</code>, and changes by other users between the preview and your click can differ.
+    A heavy button runs twice, once as a preview and once for real.</p>
+  <p>Not covered: printing, imports and scheduled actions.</p>
+
+  <h2 style="color:#714b67;">Version and licence</h2>
+  <p>This is the Odoo 18.0 version. The screenshots were taken on Odoo 20.0; the popup looks the same on 18.0.</p>
+  <p>It depends only on <code>base</code> and <code>web</code>, so it is built for Community and Enterprise. It was checked
+    with Enterprise on 18.0 (the switch and the popup).</p>
+  <p>Licence: LGPL-3. Author: Samy Mostafa Shaawat.</p>
+
+</section>

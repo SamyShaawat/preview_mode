@@ -1,4 +1,6 @@
+import http.client
 import threading
+import urllib.request
 from email.message import EmailMessage
 from unittest.mock import patch
 
@@ -65,6 +67,33 @@ class TestGuards(TransactionCase):
             with self.assertRaises(PreviewBlocked):
                 requests.get('http://example.invalid')
         self.assertTrue(any('example.invalid' in w for w in rec.warnings))
+
+    def test_urllib_and_http_client_blocked(self):
+        # Same as above: the framework may replace these, so restore the installed guard.
+        with patch.object(http.client.HTTPConnection, 'connect', guards.guarded_http_connect):
+            with safe_run(self.env) as rec:
+                with self.assertRaises(PreviewBlocked):
+                    urllib.request.urlopen('http://example.invalid/')
+                with self.assertRaises(PreviewBlocked):
+                    http.client.HTTPSConnection('example.invalid').request('GET', '/')
+            self.assertEqual(sum('example.invalid' in w for w in rec.warnings), 2)
+            # Inert outside a preview and in other threads: the real connect runs (and fails on DNS).
+            conn = http.client.HTTPConnection('example.invalid')
+            with self.assertRaises(OSError):
+                conn.connect()
+            errors = []
+
+            def work():
+                try:
+                    conn.connect()
+                except Exception as e:  # noqa: BLE001
+                    errors.append(e)
+
+            with safe_run(self.env):
+                thread = threading.Thread(target=work)
+                thread.start()
+                thread.join()
+            self.assertTrue(errors and isinstance(errors[0], OSError))
 
     def test_separate_cursor_marks_incomplete(self):
         with safe_run(self.env) as rec:

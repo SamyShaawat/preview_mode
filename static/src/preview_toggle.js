@@ -4,11 +4,10 @@ import { useService } from "@web/core/utils/hooks";
 
 export class PreviewToggle extends Component {
     static template = "preview_mode.Toggle";
-    static props = {};
 
     setup() {
         this.preview = useService("preview_mode");
-        // PORT: Owl 2 (16 to 19) must subscribe to the shared state; Owl 3 (20) tracks it on its own.
+        // PORT: Owl 2 (Odoo 17 to 19) needs useState to re-render on a reactive; Owl 3 (Odoo 20) tracks reads itself.
         this.state = useState(this.preview.state);
     }
 }

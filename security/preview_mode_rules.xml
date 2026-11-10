@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- PORT: Odoo 20 puts this domain on the ACL line; 16 to 19 need a global record rule. -->
+    <!-- PORT: on Odoo 20 this rule is the `domain` column of security/ir.access.csv. -->
     <record id="rule_preview_mode_created_own" model="ir.rule">
         <field name="name">preview.mode.created: own rows</field>
         <field name="model_id" ref="model_preview_mode_created"/>
         <field name="domain_force">[('create_uid', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
 </odoo>
