@@ -3,6 +3,7 @@ from unittest.mock import patch
 from odoo.models import BaseModel
 from odoo.tests.common import TransactionCase, tagged
 
+from ..models.payload import _merge
 from ..models.recorder import ChangeRecorder, active_recorder
 
 
@@ -32,7 +33,11 @@ class TestRecorder(TransactionCase):
         with ChangeRecorder() as rec:
             partner.unlink()
         # Other installed apps may also write to related records when a partner goes away: look at the partner only.
-        self.assertEqual([c.kind for c in rec.changes if (c.model, c.res_id) == ('res.partner', partner.id)][-1:], ['deleted'])
+        mine = [c for c in rec.changes if (c.model, c.res_id) == ('res.partner', partner.id)]
+        # PORT: on Odoo 16 pending recomputes flush inside unlink() through _write, so a 'changed' entry can
+        # follow the 'deleted' one; what matters is that the merged row for the record is 'deleted'.
+        self.assertIn('deleted', [c.kind for c in mine])
+        self.assertEqual([r['kind'] for r in _merge(mine)], ['deleted'])
 
     def test_ignored_models_and_fields(self):
         partner = self.env['res.partner'].create({'name': 'A'})
