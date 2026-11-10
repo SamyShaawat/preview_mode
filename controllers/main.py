@@ -50,7 +50,7 @@ class PreviewModeController(Controller):
             'model': row.model,
             'res_id': row.res_id,
             'name': row.name,
-            'menu_path': locate(request.env, row.model),
+            'menu_path': locate(request.env, row.model, row.res_id),
         } for row in rows_shown]
         rows.unlink()
         return result

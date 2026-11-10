@@ -1,0 +1,58 @@
+name: Bug report
+description: The popup is wrong, missing, or the real click did something else.
+labels: [bug, needs-info]
+body:
+  - type: dropdown
+    id: version
+    attributes:
+      label: Odoo version
+      options: ["20.0", "19.0", "18.0", "17.0", "16.0"]
+    validations:
+      required: true
+  - type: dropdown
+    id: edition
+    attributes:
+      label: Edition
+      options: [Community, Enterprise, Odoo.sh]
+    validations:
+      required: true
+  - type: textarea
+    id: modules
+    attributes:
+      label: Other apps and modules installed
+      description: Standard apps involved, plus any third-party or custom modules.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      description: App, menu, record, and the exact button you clicked, with Preview mode on.
+      placeholder: |
+        1. Sales > Orders, open S00005
+        2. Turn Preview on in the top bar
+        3. Click Confirm
+    validations:
+      required: true
+  - type: textarea
+    id: popup
+    attributes:
+      label: What the popup showed
+      description: Paste the text from the Copy button, or describe it. Say "no popup" if none opened.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected, and what the real click did
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console or server errors
+      description: Red errors from the browser console (F12) and the Odoo log, if any.
+      render: text
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Drag an image here.

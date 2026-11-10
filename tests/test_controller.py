@@ -15,12 +15,11 @@ class TestController(HttpCase):
         self.assertEqual(first[0]['name'], 'Real run')
         self.assertEqual(self.make_jsonrpc_request('/preview_mode/created', {'token': 't1'}), [])
 
-    # PORT: the bank account field is account_number on Odoo 20, acc_number on 16 to 19.
     def test_created_endpoint_skips_child_lines(self):
         admin = self.env.ref('base.user_admin')
         partner = self.env['res.partner'].with_user(admin).with_context(preview_mode_token='t9').create({'name': 'P'})
         self.env['res.partner.bank'].with_user(admin).with_context(preview_mode_token='t9').create({
-            'partner_id': partner.id, 'acc_number': '123456'})
+            'partner_id': partner.id, 'acc_number': '123456'})  # PORT: 'account_number' on Odoo 20
         self.authenticate('admin', 'admin')
         models = [r['model'] for r in self.make_jsonrpc_request('/preview_mode/created', {'token': 't9'})]
         self.assertEqual(models, ['res.partner'])
@@ -34,6 +33,18 @@ class TestController(HttpCase):
         self.assertTrue(payload['changes'], payload)
         self.assertEqual(payload['changes'][0]['kind'], 'new')
         self.assertEqual(self.env['res.partner'].search_count([('name', 'like', 'Route Co')]), 1)
+
+    def test_run_route_previews_field_write(self):
+        # A status bar click is previewed as a plain `write` of the field.
+        partner = self.env['res.partner'].create({'name': 'Before Co'})
+        self.authenticate('admin', 'admin')
+        payload = self.make_jsonrpc_request('/preview_mode/run', {
+            'model': 'res.partner', 'method': 'write', 'res_ids': [partner.id],
+            'args': [{'name': 'After Co'}], 'kwargs': {}, 'label': 'After'})
+        self.assertTrue(payload['show'], payload)
+        fields = payload['changes'][0]['fields']
+        self.assertEqual((fields[0]['old'], fields[0]['new']), ('Before Co', 'After Co'))
+        self.assertEqual(partner.name, 'Before Co')
 
     def test_sudo_create_not_recorded(self):
         admin = self.env.ref('base.user_admin')
@@ -85,3 +96,10 @@ class TestController(HttpCase):
         result = self.make_jsonrpc_request('/preview_mode/created', {'token': 'iso3'})
         self.assertEqual([r['name'] for r in result], ['A made'])
         self.assertFalse(rows_a.exists())
+
+    def test_kill_switch_hides_the_toggle_in_session_info(self):
+        self.env.ref('base.user_admin').preview_mode_enabled = True
+        self.authenticate('admin', 'admin')
+        self.assertTrue(self.make_jsonrpc_request('/web/session/get_session_info', {})['preview_mode_enabled'])
+        self.env['ir.config_parameter'].set_param('preview_mode.enabled', 'False')
+        self.assertFalse(self.make_jsonrpc_request('/web/session/get_session_info', {})['preview_mode_enabled'])

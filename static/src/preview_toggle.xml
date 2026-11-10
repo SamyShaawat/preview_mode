@@ -6,6 +6,7 @@
                 t-att-aria-checked="this.state.enabled ? 'true' : 'false'"
                 title="Preview mode: see what a button will do before it does it"
                 aria-label="Preview mode" t-on-click="this.preview.toggle">
+            <!-- PORT: Odoo 16 to 19 use the Font Awesome eye; Odoo 20 uses an Odoo icon. -->
             <i class="fa fa-eye o_preview_icon" role="presentation"/>
             <span class="o_preview_track" aria-hidden="true"><span class="o_preview_knob"/></span>
         </button>

@@ -22,15 +22,17 @@ class TestRecorder(TransactionCase):
         partner = self.env['res.partner'].create({'name': 'A'})
         with ChangeRecorder() as rec:
             partner.write({'name': 'B'})
-        self.assertEqual(len(rec.changes), 1)
-        self.assertEqual(rec.changes[0].kind, 'changed')
-        self.assertEqual(rec.changes[0].fields, [('Name', 'A', 'B')])
+        # Two entries for one record: the write itself, and the recomputed stored field (complete_name)
+        # seen at flush. The payload merges them into one row.
+        self.assertEqual({(c.kind, c.res_id) for c in rec.changes}, {('changed', partner.id)})
+        self.assertIn([('Name', 'A', 'B')], [c.fields for c in rec.changes])
 
     def test_unlink_is_recorded(self):
         partner = self.env['res.partner'].create({'name': 'A'})
         with ChangeRecorder() as rec:
             partner.unlink()
-        self.assertEqual([c.kind for c in rec.changes], ['deleted'])
+        # Other installed apps may also write to related records when a partner goes away: look at the partner only.
+        self.assertEqual([c.kind for c in rec.changes if (c.model, c.res_id) == ('res.partner', partner.id)][-1:], ['deleted'])
 
     def test_ignored_models_and_fields(self):
         partner = self.env['res.partner'].create({'name': 'A'})
@@ -90,3 +92,74 @@ class TestRecorder(TransactionCase):
         self.assertEqual(partner.name, 'B')
         self.assertTrue(rec.incomplete)
         self.assertTrue(rec.warnings)
+
+
+@tagged('post_install', '-at_install')
+class TestDisplayValue(TransactionCase):
+    def test_numbers_and_dates_are_formatted_for_the_user(self):
+        from datetime import date, datetime
+
+        from ..models.formatting import display_value
+        partner = self.env['res.partner'].create({'name': 'Fmt Co'})
+        latitude = partner._fields['partner_latitude']
+        self.assertEqual(display_value(partner, latitude, 1234.5), '1,234.5000000')
+        self.assertTrue(display_value(partner, partner._fields['create_date'], datetime(2026, 1, 31, 10, 0))
+                        .startswith('01/31/2026'))
+        cron = self.env['ir.cron'].search([], limit=1)
+        self.assertTrue(display_value(cron, cron._fields['nextcall'], datetime(2026, 1, 31, 10, 0))
+                        .startswith('01/31/2026'))
+        rate = self.env['res.currency.rate']
+        self.assertEqual(display_value(rate, rate._fields['name'], date(2026, 1, 31)), '01/31/2026')
+        self.assertIsNone(display_value(partner, partner._fields['name'], 'x'))
+
+
+@tagged('post_install', '-at_install')
+class TestSnapshotColumns(TransactionCase):
+    def test_empty_many2one_column_is_read_without_marking_incomplete(self):
+        # Stock moves, pickings and most real records have empty many2one columns.
+        partner = self.env['res.partner'].create({'name': 'No Parent Co'})
+        recorder = ChangeRecorder()
+        names, old = recorder.snapshot_columns(partner, [{'parent_id': False, 'name': 'x'}])
+        self.assertIn('parent_id', names)
+        self.assertEqual(old[partner.id]['parent_id'], '')
+        self.assertEqual(old[partner.id]['name'], 'No Parent Co')
+        self.assertFalse(recorder.incomplete, recorder.warnings)
+
+
+@tagged('post_install', '-at_install')
+class TestX2manyNames(TransactionCase):
+
+    def test_names_batched_and_accurate(self):
+        partners = self.env['res.partner'].create([{'name': 'P%d' % i} for i in range(20)])
+        tags = [self.env['res.partner.category'].create([{'name': 't%d_%d' % (i, j)} for j in range(5)])
+                for i in range(20)]
+        for partner, tag in zip(partners, tags):
+            partner.category_id = tag[:2]
+        self.env.invalidate_all()
+        with ChangeRecorder() as rec:
+            old = rec.snapshot(partners, {'category_id': 1})
+        self.assertEqual(old[partners[0].id]['category_id'], ', '.join(tags[0][:2].mapped('display_name')))
+        # Query count of the snapshot must not grow with the number of records (one batch per comodel).
+        self.env.invalidate_all()
+        cr = self.env.cr
+        before = cr.sql_log_count
+        with ChangeRecorder() as rec:
+            rec.snapshot(partners, {'category_id': 1})
+        many = cr.sql_log_count - before
+        self.env.invalidate_all()
+        before = cr.sql_log_count
+        with ChangeRecorder() as rec:
+            rec.snapshot(partners[:2], {'category_id': 1})
+        few = cr.sql_log_count - before
+        self.assertEqual(many, few)
+
+    def test_repeated_values_are_formatted_once(self):
+        """The same float or date on many lines is formatted once per preview, not once per line."""
+        partners = self.env['res.partner'].create([{'name': 'F%s' % i} for i in range(5)])
+        field = partners._fields['partner_latitude']
+        with ChangeRecorder() as rec, patch('odoo.addons.preview_mode.models.recorder.display_value',
+                                            return_value='1.5') as fmt:
+            texts = [rec._text(p, 'partner_latitude', 1.5) for p in partners]
+        self.assertEqual(field.type, 'float')
+        self.assertEqual(texts, ['1.5'] * 5)
+        self.assertEqual(fmt.call_count, 1)
