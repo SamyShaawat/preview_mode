@@ -46,13 +46,17 @@ More detail, with screenshots, is in the [user guide](docs/user-guide.md).
 
 Audit fields, tracking values, followers, chatter messages and attachments are left out of the list.
 
+## Languages
+
+Arabic (right-to-left), French and Spanish translations are in `i18n/`. The template is `i18n/preview_mode.pot`.
+
 ## Settings
 
 All optional. An administrator sets them in Settings > Technical > System Parameters.
 
 | Key | Default | Effect |
 |---|---|---|
-| `preview_mode.enabled` | on | Set to `False` to stop previews for everyone. The click then runs as in stock Odoo and says "Preview Mode is switched off by your administrator." |
+| `preview_mode.enabled` | on | Set to `False` to hide the switch and stop previews for everyone. Reload the page after changing it. A click then runs as in stock Odoo; if the page was opened before the change, it says "Preview Mode is switched off by your administrator." |
 | `preview_mode.timeout` | 10 | Seconds a preview may spend in database statements (clamped to 1-120). Past that the popup says it timed out. |
 | `preview_mode.max_records` | 0 | Skip the preview when a click acts on more records than this. 0 means no limit. |
 
@@ -90,6 +94,7 @@ This branch is for Odoo 16.0. It targets Community and depends only on `base` an
 
 ## Documentation
 
+- [Publishing on the Odoo Apps Store](docs/publishing-on-odoo-store.md)
 - [User guide](docs/user-guide.md)
 - [Developer guide](docs/developer-guide.md)
 - [Changelog](CHANGELOG.md)

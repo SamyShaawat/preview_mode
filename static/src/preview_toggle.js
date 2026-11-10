@@ -2,6 +2,7 @@
 
 import { Component, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
+import { session } from "@web/session";
 import { useService } from "@web/core/utils/hooks";
 
 export class PreviewToggle extends Component {
@@ -17,4 +18,4 @@ export class PreviewToggle extends Component {
     }
 }
 
-registry.category("systray").add("preview_mode.toggle", { Component: PreviewToggle }, { sequence: 2 });
+registry.category("systray").add("preview_mode.toggle", { Component: PreviewToggle, isDisplayed: () => Boolean(session.preview_mode_available) }, { sequence: 2 });

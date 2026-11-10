@@ -1,10 +1,11 @@
 {
     'name': 'Preview Mode',
-    'summary': 'See what a button click will do before it does it',
+    'summary': 'Shows what a button click will create, change or delete, and where, before you confirm it',
     'version': '16.0.1.0.0',
     'category': 'Productivity',
     'author': 'Samy Mostafa Shaawat',
     'website': 'https://github.com/SamyShaawat/preview_mode',
+    'maintainer': 'Samy Mostafa Shaawat',
     'maintainers': ['SamyShaawat'],
     'license': 'LGPL-3',
     'depends': ['base', 'web'],
@@ -18,8 +19,20 @@
             'preview_mode/static/tests/tours/**/*',
         ],
     },
-    'images': ['static/description/popup-confirm.png', 'static/description/popup-create.png'],
+    # The Store shows the first image as the banner and the one ending in
+    # _screenshot as the large screenshot.
+    'images': [
+        'static/description/banner.png',
+        'static/description/main_screenshot.png',
+        'static/description/popup-create.png',
+        'static/description/popup-journal.png',
+        'static/description/popup-archive.png',
+        'static/description/popup-fails.png',
+        'static/description/popup-arabic.png',
+        'static/description/toast-created.png',
+    ],
     'post_load': 'post_load',
     'installable': True,
+    # A background tool, not an app of its own: no menu, no entry in the Apps filter "Applications".
     'application': False,
 }

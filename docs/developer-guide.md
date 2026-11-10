@@ -16,7 +16,7 @@ The repo root is the module (`preview_mode`, depends on `base` and `web`).
 | `models/formatting.py` | Formats values the way the form shows them. |
 | `models/section.py` | `preview.mode.section`, the extension point. |
 | `models/created.py` | Transient `preview.mode.created`: created ids per token and user. |
-| `models/res_users.py`, `models/ir_http.py` | The per-user flag `preview_mode_enabled` and its session value. |
+| `models/res_users.py`, `models/ir_http.py` | The per-user flag `preview_mode_enabled` and its session values (`preview_mode_enabled`, and `preview_mode_available`, which is false when the kill switch is off and hides the systray item). |
 | `static/src/preview_service.js` | Wraps `doActionButton`, calls `/preview_mode/run`, opens the popup or the "Preview unavailable" dialog, shows the toast. |
 | `static/src/preview_list.js`, `preview_statusbar.js` | Previews for list Archive/Unarchive/Delete and status bar clicks. |
 | `static/src/preview_dialog.*`, `preview_toggle.*`, `preview.scss` | Popup, top-bar switch, styles. |

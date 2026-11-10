@@ -2,10 +2,21 @@
 
 All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This file is for the 16.0 branch.
 
+## [Unreleased]
+
+### Added
+- Odoo Apps Store package: banner, screenshots, a new description page, Arabic, French and Spanish translations (`i18n/`), `scripts/build_store_zip.sh`, `scripts/check_store_ready.py` (also run in CI) and `docs/publishing-on-odoo-store.md`.
+
+## [Unreleased]
+
+### Fixed
+- `preview_mode.enabled` set to `False` now hides the switch in the top bar (after a page reload), as well as stopping previews.
+- The `test_where` filter test is skipped when the `mail` app is not installed.
+
 ## [16.0.1.0.0] - 2026-11-10 - Port of 20.0 1.0.0
 
 ### Notes on this port
-- Ported from 20.0 at commit 87271e5 and adapted to Odoo 16: Owl 2 `reactive`/`useState`, `rpc` and `user` services, one-argument `_t`, `patch(obj, name, ...)`, `ListController` for the list mass actions, `_write` instead of `_write_multi`, `get_param`, `ir.rule` for the created-rows model, `SELF_WRITEABLE_FIELDS`.
+- Ported from 20.0 at commit e7db8bb and adapted to Odoo 16: Owl 2 `reactive`/`useState`, `rpc` and `user` services, one-argument `_t`, `patch(obj, name, ...)`, `ListController` for the list mass actions, `_write` instead of `_write_multi`, `get_param`, `ir.rule` for the created-rows model, `SELF_WRITEABLE_FIELDS`.
 - Not run on Odoo 16 Enterprise (no source available).
 
 ### Added
