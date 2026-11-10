@@ -10,7 +10,7 @@ The repo root is the module (`preview_mode`, depends on `base` and `web`).
 | `models/payload.py` | `build_preview()`: checks, runs the method in `safe_run`, merges changes, builds summary, journal view and sections. Holds `UNSAFE_MODELS`, the timeout, the per-user advisory lock. |
 | `models/guards.py` | `safe_run()` and the guards: no-op commit, rollback marks incomplete, `(new)` sequences, recorded not sent email, blocked `requests`/`urllib`/`http.client`, no second DB cursor. |
 | `models/recorder.py` | `ChangeRecorder`: collects creates, writes, unlinks and queued `mail.mail` rows. The ignore lists `IGNORED_MODELS` and `IGNORED_FIELDS` live here only. |
-| `models/base.py` | Hooks `create`, `write`, `unlink` and `_write_multi` on `base`; also stores created ids for the toast when the context carries a token. |
+| `models/base.py` | Hooks `create`, `write`, `unlink` and `_write` (`_write_multi` on 18 and later) on `base`; also stores created ids for the toast when the context carries a token. |
 | `models/rawwrites.py` | Compares `pg_stat_xact_user_tables` counters before and after the click to flag raw SQL writes. |
 | `models/where.py` | `locate()`: turns a model into the menu path the user can open. |
 | `models/formatting.py` | Formats values the way the form shows them. |
@@ -33,7 +33,7 @@ Another module can add a table to the popup. Make a small glue module that depen
 ```python
 {
     'name': 'Preview Mode: Inventory impact',
-    'version': '20.0.1.0.0',
+    'version': '16.0.1.0.0',
     'depends': ['preview_mode', 'stock'],
     'auto_install': True,
     'license': 'LGPL-3',
@@ -58,7 +58,7 @@ class PreviewModeSection(models.AbstractModel):
             sections.append({
                 'title': 'Inventory impact',
                 'columns': ['Product', 'Destination', 'Quantity'],
-                'rows': [[m.product_id.display_name, m.location_dest_id.display_name, str(m.quantity)]
+                'rows': [[m.product_id.display_name, m.location_dest_id.display_name, str(m.quantity_done)]
                          for m in moves],
             })
         return sections
@@ -76,10 +76,10 @@ Rules:
 
 ## Run the tests
 
-From the `odoo-20.0` checkout, with the module in the addons path:
+From the `odoo-16.0` checkout, with the module in the addons path:
 
 ```bash
-./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm20 -u preview_mode \
+./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm16 -u preview_mode \
   --test-tags /preview_mode --http-port=8079 --stop-after-init
 ```
 
@@ -91,4 +91,22 @@ Lint: `pre-commit run --all-files` (see `CONTRIBUTING.md`).
 
 ## Porting notes
 
-Only 20.0 is supported today. Version differences are kept in places marked `# PORT:`; find them with `grep -rn "PORT:" .`. They cover, among others: the ACL file (`ir.access.csv` on 20, `ir.model.access.csv` before), the route type (`jsonrpc` on 19 and 20, `json` before), `user_writeable` against `SELF_WRITEABLE_FIELDS`, `has_access`, the config parameter getters, the `doActionButton` location in JS and the list method names in `preview_list.js`. Ports are one pull request per version; see `CONTRIBUTING.md`.
+This is the 16.0 branch, ported from 20.0. Every version difference sits in a place marked `# PORT:`; find them with `grep -rn "PORT:" .`. On 16.0 they are:
+
+| Place | Difference from 20.0 |
+|---|---|
+| `models/compat.py` | `has_access` (rights + rule pair), config parameters through `get_param`, a plain quoted SQL query instead of `odoo.tools.SQL`, `format_datetime(dt_format=False)`. |
+| `models/base.py` | Delayed writes are hooked in `_write(vals)`; 18 and later have `_write_multi(vals_list)`. A normal `write()` reaches `_write` too, so a record can be noted twice; `_merge` keeps the first old value and the last new one. |
+| `models/res_users.py` | `SELF_READABLE_FIELDS` / `SELF_WRITEABLE_FIELDS` instead of `user_writeable=True`. |
+| `security/ir.model.access.csv`, `security/preview_mode_security.xml` | ACL file name and header; the own-rows domain is an `ir.rule`, not part of the ACL. |
+| `controllers/main.py` | Route type `json`. |
+| `__manifest__.py` | ACL and rule files in `data`. |
+| `static/src/preview_service.js` | Owl 2 `reactive`, `rpc` and `user` services, `sprintf(_t(...))` because `_t` takes one argument. |
+| `static/src/preview_toggle.js`, `preview_toggle.xml` | `useState`, Font Awesome eye, `owl="1"` templates without `this.`. |
+| `static/src/preview_dialog.js`, `preview_dialog.xml` | `static props`, templates without `this.`. |
+| `static/src/preview_list.js` | Archive, Unarchive and Delete are patched on `ListController` (`toggleArchiveState`, `getActionMenuItems`, `deleteConfirmationDialogProps`), not on `DynamicList`. |
+| `static/src/preview_statusbar.js` | Items are `{id, name}`; `patch(obj, name, ...)` with `this._super`. |
+| `static/tests/tours/`, `tests/test_tours.py` | `web_tour.tour` registration and `/web#action=...` URL. |
+| `tests/test_controller.py`, `test_payload.py`, `test_rawwrites.py` | `make_jsonrpc_request` helper, `acc_number`, `display_name` instead of `complete_name`, `groups_id`, `set_param`. |
+
+Ports are one pull request per version; see `CONTRIBUTING.md`.

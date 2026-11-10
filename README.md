@@ -2,8 +2,8 @@
 
 # Preview Mode
 
-[![tests](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml/badge.svg?branch=20.0)](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml)
-![License: LGPL-3](https://img.shields.io/badge/license-LGPL--3-blue.svg) ![Odoo 20.0](https://img.shields.io/badge/odoo-20.0-875a7b.svg)
+[![tests](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml/badge.svg?branch=16.0)](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml)
+![License: LGPL-3](https://img.shields.io/badge/license-LGPL--3-blue.svg) ![Odoo 20.0](https://img.shields.io/badge/odoo-16.0-875a7b.svg)
 
 Preview Mode shows what a button click would create, change or delete, and where, before you commit to it. With the switch in the top bar on, a button that changes data opens a popup instead of acting; nothing is saved until you press Confirm.
 
@@ -11,10 +11,10 @@ It works on every such button in every app, for every internal user. There is no
 
 ## Install
 
-Put the `20.0` branch in your addons path under the folder name `preview_mode`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
+Put the `16.0` branch in your addons path under the folder name `preview_mode`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
 
 ```bash
-git clone --branch 20.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode
+git clone --branch 16.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode
 ```
 
 On Odoo.sh, add the repository as a git submodule named `preview_mode`.
@@ -60,7 +60,7 @@ All optional. An administrator sets them in Settings > Technical > System Parame
 
 1. The browser asks `POST /preview_mode/run` before the click.
 2. The server runs the clicked method with the user's own rights inside a database savepoint.
-3. A recorder on `create`, `write`, `unlink` and `_write_multi` collects the changes. `flush_all()` runs before the end so delayed writes (recomputed totals, states) are seen.
+3. A recorder on `create`, `write`, `unlink` and `_write` (`_write_multi` on 18 and later) collects the changes. `flush_all()` runs before the end so delayed writes (recomputed totals, states) are seen.
 4. The savepoint is rolled back, always.
 5. Raw SQL writes are caught by comparing PostgreSQL's per-transaction row counters before and after.
 6. The client shows the popup. On Confirm the real click runs, and the ids it creates are stored for the notification.
@@ -86,7 +86,7 @@ Another module can add its own table to the popup by overriding `preview.mode.se
 
 ## Compatibility
 
-Odoo 20.0 only, Community; it installs and runs with Enterprise but Enterprise 20 has not been tested here. Other versions are planned and not ready. The `16.0` to `19.0` branches hold older, incomplete code and should not be used.
+This branch is for Odoo 16.0. It targets Community and depends only on `base` and `web`. It has not been run with Odoo Enterprise 16: no 16.0 Enterprise source was available to test, so that check is marked NOT RUN in [docs/enterprise-verification.md](docs/enterprise-verification.md). Python 3.7 syntax is used in the shared Python code; Odoo 16 itself runs on Python 3.8 to 3.12 depending on the host (it was tested here on 3.12).
 
 ## Documentation
 

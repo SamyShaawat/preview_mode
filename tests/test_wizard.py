@@ -69,7 +69,7 @@ class TestWizardButtons(TransactionCase):
         invoice.action_post()
         wizard = self.env['account.move.reversal'].with_context(
             active_model='account.move', active_ids=invoice.ids).create({'reason': 'Return', 'journal_id': invoice.journal_id.id})
-        payload = self._preview(wizard, 'refund_moves', 'Reverse')
+        payload = self._preview(wizard, 'reverse_moves', 'Reverse'  # PORT: refund_moves on 17 and later)
         self.assertTrue(payload['show'], payload)
         self.assertTrue(any(r['kind'] == 'new' and r['where'] for r in payload['changes']), payload)
         self.assertFalse(invoice.reversal_move_ids)

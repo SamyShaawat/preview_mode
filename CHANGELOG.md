@@ -1,8 +1,12 @@
 # Changelog
 
-All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Only the 20.0 branch is released; other versions are not ready.
+All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This file is for the 16.0 branch.
 
-## [Unreleased] - 20.0
+## [16.0.1.0.0] - Port from 20.0
+
+### Notes on this port
+- Ported from 20.0 at commit 20cded2 and adapted to Odoo 16: Owl 2 `reactive`/`useState`, `rpc` and `user` services, one-argument `_t`, `patch(obj, name, ...)`, `ListController` for the list mass actions, `_write` instead of `_write_multi`, `get_param`, `ir.rule` for the created-rows model, `SELF_WRITEABLE_FIELDS`.
+- Not run on Odoo 16 Enterprise (no source available).
 
 ### Added
 - Switch in the top bar that turns previews on and off per user.

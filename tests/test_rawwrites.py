@@ -88,7 +88,7 @@ class TestRawWrites(TransactionCase):
         tax = env['account.tax'].create({'name': 'Raw Tax', 'amount': 5, 'type_tax_use': 'sale'})
         order = env['sale.order'].create({
             'partner_id': self.partner.id,
-            'order_line': [(0, 0, {'name': 'Line', 'product_uom_qty': 1, 'price_unit': 10, 'tax_ids': [(6, 0, tax.ids)]})]})
+            'order_line': [(0, 0, {'name': 'Line', 'product_uom_qty': 1, 'price_unit': 10, 'tax_id': [(6, 0, tax.ids)]})]})  # PORT: tax_ids on 17 and later
         with patch.object(type(order), 'preview_mode_test_button', lambda self: self.unlink(), create=True):
             payload = build_preview(env, 'sale.order', 'preview_mode_test_button', order.ids, [], {}, 'Go')
         self.assertFalse(payload['incomplete'], payload['warnings'])
@@ -100,7 +100,8 @@ class TestRawWrites(TransactionCase):
         if missing or not env['account.journal'].search_count([('type', '=', 'purchase')]):
             self.skipTest('needs account (with a chart of accounts), sale and stock')
         product = env['product.product'].create({
-            'name': 'Raw Test Product', 'type': 'consu', 'is_storable': True, 'list_price': 10})
+            'name': 'Raw Test Product', 'type': 'product',  # PORT: type consu + is_storable on 18 and later
+             'list_price': 10})
         bill = env['account.move'].create({
             'move_type': 'in_invoice', 'partner_id': self.partner.id, 'invoice_date': '2026-11-05',
             'invoice_line_ids': [(0, 0, {'name': 'Item', 'quantity': 2, 'price_unit': 100})]})
@@ -113,10 +114,10 @@ class TestRawWrites(TransactionCase):
             'partner_id': self.partner.id, 'picking_type_id': warehouse.in_type_id.id,
             'location_id': supplier.id, 'location_dest_id': warehouse.lot_stock_id.id,
             'move_ids': [(0, 0, {
-                'product_id': product.id, 'product_uom_qty': 5,
+                'name': 'Raw move', 'product_id': product.id, 'product_uom_qty': 5,
                 'location_id': supplier.id, 'location_dest_id': warehouse.lot_stock_id.id})]})
         picking.action_confirm()
-        picking.move_ids.quantity = 5
+        picking.move_ids.quantity_done = 5  # PORT: quantity on 17 and later
         for model, method, record in (
                 ('account.move', 'action_post', bill),
                 ('sale.order', 'action_confirm', order),
