@@ -4,6 +4,10 @@ Sources, read on 2026-11-10: [Submit your Apps and Themes](https://apps.odoo.com
 
 The Store publishes from a Git repository that Odoo reads. It does not take a zip upload (the upload page describes only repository registration; a zip upload flow is NOT VERIFIED). The zip built by `scripts/build_store_zip.sh` is for people who install by hand and for GitHub releases.
 
+## Repository layout
+
+The repository root holds the community files; the module is the folder `preview_mode/`, like other multi-module Store repositories. The Store treats modules as folders of the repository, and the registration URL stays `ssh://git@github.com/SamyShaawat/preview_mode#20.0`.
+
 ## Before you start
 
 1. Run the checks and fix anything they print:
@@ -12,7 +16,7 @@ The Store publishes from a Git repository that Odoo reads. It does not take a zi
    python3 scripts/check_store_ready.py
    ```
 
-2. Open `static/description/index.html` in a browser. The Store only keeps resources from `static/description`, canonical YouTube links, Microsoft Teams links and `mailto:` or `skype:` links; other external links are invalidated, and scripts, widgets and modals are not allowed (Vendor Guidelines, Description). The page uses inline styles only and has no links, so nothing is stripped. The support section names the GitHub project as plain text on purpose.
+2. Open `preview_mode/static/description/index.html` in a browser. The Store only keeps resources from `static/description`, canonical YouTube links, Microsoft Teams links and `mailto:` or `skype:` links; other external links are invalidated, and scripts, widgets and modals are not allowed (Vendor Guidelines, Description). The page uses inline styles only and has no links, so nothing is stripped. The support section names the GitHub project as plain text on purpose.
 3. Check the manifest: `license` is `LGPL-3` (an accepted value), there is no `price`, the version starts with the Odoo series (`20.0.1.0.0`), and `images` lists the banner first and one image ending in `_screenshot.png`. Per the upload page, the first image whose name ends in `_screenshot` is shown large. A manifest error unpublishes every module of the repository (Vendor Guidelines, Removal).
 
 ## Account and repository access
@@ -41,10 +45,10 @@ The Store publishes from a Git repository that Odoo reads. It does not take a zi
 | One-line summary | `summary` |
 | Author, website | `author`, `website` |
 | Category | `category` (Productivity) |
-| Icon | `static/description/icon.png`, a real 128x128 PNG. Renamed files do not work. |
+| Icon | `preview_mode/static/description/icon.png`, a real 128x128 PNG. Renamed files do not work. |
 | Cover and screenshots | `images`, PNG, GIF or JPEG |
-| Description page | `static/description/index.html` |
-| License | `license` and the root `LICENSE` file |
+| Description page | `preview_mode/static/description/index.html` |
+| License | `license` and the `LICENSE` file (at the repository root; the Store zip also carries a copy inside `preview_mode/`). The Store loads the license from the module folder, or the repository root if there is none |
 | Price | none: no `price` key makes it free |
 
 Pixel sizes for the banner and screenshots are not stated on the upload page (NOT VERIFIED). The banner is 1200x600, the icon 128x128.
@@ -62,9 +66,9 @@ Pixel sizes for the banner and screenshots are not stated on the upload page (NO
 
 For each version branch, the same set of files, built from that branch:
 
-1. `__manifest__.py` with `version` `<series>.1.0.0` or higher.
-2. `static/description/icon.png`, `banner.png`, the screenshots and `index.html`.
-3. `i18n/preview_mode.pot`, `ar.po`, `fr.po`, `es.po` (re-exported on that version).
+1. `preview_mode/__manifest__.py` with `version` `<series>.1.0.0` or higher.
+2. `preview_mode/static/description/icon.png`, `banner.png`, the screenshots and `index.html`.
+3. `preview_mode/i18n/preview_mode.pot`, `ar.po`, `fr.po`, `es.po` (re-exported on that version).
 4. `LICENSE`.
 
 Screenshots show Odoo 20. When a port lands, retake the screenshots on that version if the UI differs; otherwise reuse them.
@@ -72,8 +76,8 @@ Screenshots show Odoo 20. When a port lands, retake the screenshots on that vers
 ## Update later
 
 1. Merge the change into the version branch through a pull request.
-2. Raise `version` in `__manifest__.py`. The Vendor Guidelines say each release should have a new version number and that it must rise whenever the database schema changes. Add a `CHANGELOG.md` entry.
-3. If strings changed, re-export the template and update the `.po` files (`odoo-bin i18n export -d <db> -l pot -o i18n/preview_mode.pot preview_mode` on a database where the module is updated), then run `python3 scripts/check_store_ready.py`.
+2. Raise `version` in `preview_mode/__manifest__.py`. The Vendor Guidelines say each release should have a new version number and that it must rise whenever the database schema changes. Add a `CHANGELOG.md` entry.
+3. If strings changed, re-export the template and update the `.po` files (`odoo-bin i18n export -d <db> -l pot -o preview_mode/i18n/preview_mode.pot preview_mode` on a database where the module is updated), then run `python3 scripts/check_store_ready.py`.
 4. Tag the release (`v1.0.1`). The release workflow builds `dist/preview_mode-<version>.zip` and attaches it to the GitHub release.
 5. How the Store picks up a new commit (automatic rescan or a manual refresh) is NOT VERIFIED on the pages above. After pushing, open the app on apps.odoo.com and check that the version shown matches.
 
