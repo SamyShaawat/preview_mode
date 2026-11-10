@@ -43,6 +43,8 @@ class TestWizardButtons(TransactionCase):
     def test_payment_register_wizard(self):
         if 'account.payment.register' not in self.env:
             self.skipTest('account is not installed')
+        if not self.env['account.journal'].search_count([('type', '=', 'sale')]):
+            self.skipTest('needs a chart of accounts')  # PORT: Odoo 16 creates no chart with account alone
         partner = self.env['res.partner'].create({'name': 'Customer Y'})
         invoice = self.env['account.move'].create({
             'move_type': 'out_invoice', 'partner_id': partner.id, 'invoice_date': fields.Date.today(),
@@ -61,6 +63,8 @@ class TestWizardButtons(TransactionCase):
     def test_credit_note_wizard(self):
         if 'account.move.reversal' not in self.env:
             self.skipTest('account is not installed')
+        if not self.env['account.journal'].search_count([('type', '=', 'sale')]):
+            self.skipTest('needs a chart of accounts')  # PORT: Odoo 16 creates no chart with account alone
         partner = self.env['res.partner'].create({'name': 'Customer Z'})
         invoice = self.env['account.move'].create({
             'move_type': 'out_invoice', 'partner_id': partner.id, 'invoice_date': fields.Date.today(),
