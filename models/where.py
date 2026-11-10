@@ -85,15 +85,18 @@ def _hits(record, cand):
             and fields_[leaf[0]].type == 'selection' for leaf in domain))
 
 
-def _menu_path(env, model_name, res_id=None, cands=None):
+def _menu_path(env, model_name, res_id=None, cands=None, values=None):
     """Path of the menu that really shows this kind of record, or None.
 
-    With a live record, a menu whose action domain excludes it is dropped. Then the app that owns the
+    With a live record (or the values it had before it was deleted), a menu whose action domain excludes it
+    is dropped. Then the app that owns the
     model wins, then the menu whose default filter picks the record's state or type (Orders over
     Quotations for a confirmed order), then the shortest path, then menu order.
     """
     cands = candidates(env, model_name) if cands is None else cands
     record = res_id and env[model_name].sudo().browse(res_id).exists()
+    if not record and values:  # deleted in the preview: a virtual record with its old values
+        record = env[model_name].sudo().new(values)
     if record:
         cands = [c for c in cands if _fits(record, c['domain'])]
     cands = sorted(cands, key=lambda c: (c['rank'][0], -(_hits(record, c) if record else 0), c['rank']))
@@ -101,21 +104,29 @@ def _menu_path(env, model_name, res_id=None, cands=None):
 
 
 def _parent_field(model):
-    """First required many2one that is the record's parent (not a delegation), or None."""
+    """First required many2one that is the record's parent (not a delegation), or None.
+
+    A parent is a record the child cannot outlive (``ondelete='cascade'``): an invoice line has one, a sales
+    order does not (its customer is no place to look for it).
+    """
     fields = [f for f in model._fields.values()
               if f.type == 'many2one' and f.required and f.name not in NOT_A_PARENT
-              and f.name not in model._inherits.values()]
+              and f.name not in model._inherits.values() and (f.ondelete == 'cascade' or f.name in PARENT_FIELDS)]
     fields.sort(key=lambda f: f.name not in PARENT_FIELDS)
     return fields[0] if fields else None
 
 
-def locate(env, model_name, res_id=None, cands=None):
-    """Menu path for a record of ``model_name`` (call inside the preview savepoint: the record must still exist)."""
+def locate(env, model_name, res_id=None, cands=None, values=None):
+    """Menu path for a record of ``model_name``; ``values`` are those of a record deleted in the preview.
+
+    Call inside the preview savepoint, while a live record still exists.
+    """
     model = env[model_name]
-    path = _menu_path(env, model_name, res_id, cands)
+    path = _menu_path(env, model_name, res_id, cands, values)
     if path is None:
         field = _parent_field(model)
         if field:
             record = res_id and model.sudo().browse(res_id).exists()
-            path = _menu_path(env, field.comodel_name, record and record[field.name].id or None)
+            parent = record and record[field.name].id or values and values.get(field.name) or None
+            path = _menu_path(env, field.comodel_name, parent)
     return path or model._description

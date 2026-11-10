@@ -1,6 +1,7 @@
 from odoo.tests.common import TransactionCase, new_test_user, tagged
 
-from ..models.where import candidates, locate
+from ..models.where import _parent_field, candidates, locate
+from ..models.recorder import ChangeRecorder
 
 
 @tagged('post_install', '-at_install')
@@ -35,6 +36,8 @@ class TestWhere(TransactionCase):
 
     def test_where_prefers_menu_whose_filter_picks_the_state(self):
         # The second menu's default filter tests a selection field the record matches, so it beats the first.
+        if 'notification_type' not in self.env['res.users']._fields:
+            self.skipTest('notification_type comes from the mail app')
         root = self.env['ir.ui.menu'].create({'name': 'PM state root'})
         view = self.env['ir.ui.view'].create({
             'name': 'pm.users.search', 'model': 'res.users', 'type': 'search',
@@ -46,3 +49,22 @@ class TestWhere(TransactionCase):
         cands = [c for c in candidates(self.env, 'res.users') if c['path'].startswith('PM state root')]
         self.assertEqual(len(cands[1]['filters']), 1)
         self.assertEqual(locate(self.env, 'res.users', self.env.uid, cands), 'PM state root › Internal')
+
+    def test_where_deleted_record_uses_its_values_from_before_the_delete(self):
+        root = self.env['ir.ui.menu'].create({'name': 'PM del root'})
+        for name, domain in (('Companies', "[('ref', '!=', False)]"), ('People', "[('ref', '=', False)]")):
+            action = self.env['ir.actions.act_window'].create({'name': name, 'res_model': 'res.partner', 'domain': domain})
+            self.env['ir.ui.menu'].create({'name': name, 'parent_id': root.id, 'action': '%s,%d' % (action._name, action.id)})
+        cands = [c for c in candidates(self.env, 'res.partner') if c['path'].startswith('PM del root')]
+        company = self.env['res.partner'].create({'name': 'PM Del Co', 'ref': 'X'})
+        person = self.env['res.partner'].create({'name': 'PM Del Joe'})
+        with ChangeRecorder() as recorder:
+            (company | person).unlink()
+        for partner, expected in ((company, 'PM del root › Companies'), (person, 'PM del root › People')):
+            values = recorder.deleted_values[('res.partner', partner.id)]
+            self.assertEqual(locate(self.env, 'res.partner', partner.id, cands, values), expected)
+
+    def test_where_parent_is_only_a_cascade_parent(self):
+        # A required many2one that is not a cascade parent (like the customer of an order) is no place to look.
+        self.assertIsNone(_parent_field(self.env['res.country.state']))  # country_id: restrict
+        self.assertEqual(_parent_field(self.env['res.users.apikeys']).name, 'user_id')
