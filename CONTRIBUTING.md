@@ -33,7 +33,7 @@ The Python core is identical on every version. A difference between Odoo version
 
 ## Running the module on each version
 
-Clone the repo into `addons/preview_mode` of an `odoo-<series>` checkout on the branch of the same series. Then, from that checkout:
+Clone the repo into `addons/preview_mode` of an `odoo-<series>` checkout on the branch of the same series. The module is the `preview_mode/` folder inside the clone, so add the clone to `addons_path` in `odoo.conf` (see `docs/developer-guide.md`, "Local development"). Then, from the Odoo checkout:
 
     ./odoo-bin -c odoo.conf -d <db> -i preview_mode --http-port=8079
 
@@ -41,7 +41,7 @@ Use a port other than your own server's. Restart after code changes and press Up
 
 ## Translations
 
-User-facing strings use `_()` in Python and `_t()` in JavaScript, and `string=` / text nodes in XML. To add a language, export the module's terms from Settings > Translations > Export Translation (or `odoo-bin --i18n-export=preview_mode/i18n/<lang>.po -l <lang> -d <db> --modules=preview_mode`) and put the `.po` file in `i18n/`. Translate in a PR like any other change.
+User-facing strings use `_()` in Python and `_t()` in JavaScript, and `string=` / text nodes in XML. To add a language, export the module's terms from Settings > Translations > Export Translation (or `odoo-bin --i18n-export=<repo>/preview_mode/i18n/<lang>.po -l <lang> -d <db> --modules=preview_mode`) and put the `.po` file in `preview_mode/i18n/`. Translate in a PR like any other change.
 
 ## Porting to other versions
 
