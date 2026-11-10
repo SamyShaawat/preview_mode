@@ -1,17 +1,12 @@
 # Changelog
 
-All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This is the 19.0 branch, ported from 20.0.
+All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This file is for the 19.0 branch.
 
 ## [Unreleased]
 
-### Added
-- Odoo Apps Store package: the module moved into the `preview_mode/` folder, banner, screenshots, a new description page, Arabic, French and Spanish translations (`i18n/`), `scripts/build_store_zip.sh`, `scripts/check_store_ready.py` (also run in CI) and `docs/publishing-on-odoo-store.md`.
+## [1.0.0] - 2026-11-10
 
-### Fixed
-- `preview_mode.enabled` set to `False` now hides the switch in the top bar (after a page reload), as well as stopping previews.
-- The `test_where` filter test is skipped when the `mail` app is not installed.
-
-## [1.0.0] - 2026-11-10 - 19.0
+First release on 19.0, ported from the 20.0 module.
 
 ### Added
 - Switch in the top bar that turns previews on and off per user.
@@ -26,12 +21,17 @@ All notable changes to this module are listed here. The format follows [Keep a C
 - System parameters `preview_mode.enabled`, `preview_mode.timeout` and `preview_mode.max_records`.
 - One running preview per user at a time.
 - Store page with screenshots, CI workflow, browser tour tests, OCA-style lint configuration, DCO section.
+- Odoo Apps Store package: banner, screenshots, a new description page, Arabic, French and Spanish translations (`i18n/`), `scripts/build_store_zip.sh`, `scripts/check_store_ready.py` (also run in CI) and `docs/publishing-on-odoo-store.md`.
 
 ### Changed
 - The preview summary uses real singular and plural wording.
 - Relicensed from OPL-1 to LGPL-3.
 - The toggle is visible on the white Enterprise top bar; the Where column keeps whole words on narrow screens.
 - Queued email addresses are shown only when the user may read them.
+- The module moved into the `preview_mode/` folder of the repository (Apps Store layout). Add the repository root, not the module folder, to `addons_path`.
+
+### Fixed
+- `preview_mode.enabled` set to `False` also hides the switch in the top bar (after a page reload).
 
 ### Safety
 - Buttons that change the registry or configuration (module install and upgrade, Settings, models, fields, views) are never previewed.

@@ -13,13 +13,13 @@ It works on every such button in every app, for every internal user. There is no
 
 The repository holds one module, the folder `preview_mode/`. Clone the branch for your Odoo version, add the clone (the repository root, not the module folder) to `addons_path`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
 
-| Odoo | Branch | Status |
-|---|---|---|
-| 20.0 | `20.0` (reference) | Released |
-| 19.0 | `19.0` (this branch) | Released |
-| 18.0 | `18.0` | Released |
-| 17.0 | `17.0` | Released |
-| 16.0 | `16.0` | In progress |
+| Odoo | Branch | Status | With Odoo Enterprise |
+|---|---|---|---|
+| 20.0 | `20.0` (reference) | Released | Not tested (no Enterprise 20 source) |
+| 19.0 | `19.0` (this branch) | Released | Tested |
+| 18.0 | `18.0` | Released | Tested |
+| 17.0 | `17.0` | Released | Tested |
+| 16.0 | `16.0` | Released | Not tested (no Enterprise 16 source) |
 
 ```bash
 git clone --branch 19.0 https://github.com/SamyShaawat/preview_mode.git /path/to/extra-addons/preview_mode
@@ -101,7 +101,7 @@ Another module can add its own table to the popup by overriding `preview.mode.se
 
 ## Compatibility
 
-This is the 19.0 branch, ported from 20.0; every feature of 20.0 works on it. Community; it installs and runs with Enterprise, checked on Enterprise 19 (see [docs/enterprise-verification.md](docs/enterprise-verification.md)). 20.0, 18.0 and 17.0 are released too; 16.0 is still in progress.
+Odoo 19.0, Community. It runs with Enterprise 19 (checked, see [docs/enterprise-verification.md](docs/enterprise-verification.md)). 20.0 is the reference branch; 18.0, 17.0 and 16.0 are released too.
 
 ## Documentation
 
