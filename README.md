@@ -13,13 +13,13 @@ It works on every such button in every app, for every internal user. There is no
 
 The repository holds one module, the folder `preview_mode/`. Clone the branch for your Odoo version, add the clone (the repository root, not the module folder) to `addons_path`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
 
-| Odoo | Branch |
-|---|---|
-| 20.0 | `20.0` (reference, released) |
-| 19.0 | `19.0` (released) |
-| 18.0 | `18.0` (released, this branch) |
-| 17.0 | `17.0` (released) |
-| 16.0 | `16.0` (port in progress) |
+| Odoo | Branch | Status | With Odoo Enterprise |
+|---|---|---|---|
+| 20.0 | `20.0` (reference) | Released | Not tested (no Enterprise 20 source) |
+| 19.0 | `19.0` | Released | Tested |
+| 18.0 | `18.0` (this branch) | Released | Tested |
+| 17.0 | `17.0` | Released | Tested |
+| 16.0 | `16.0` | Released | Not tested (no Enterprise 16 source) |
 
 ```bash
 git clone --branch 18.0 https://github.com/SamyShaawat/preview_mode.git /path/to/extra-addons/preview_mode
@@ -101,7 +101,7 @@ Another module can add its own table to the popup by overriding `preview.mode.se
 
 ## Compatibility
 
-Odoo 18.0, Community. It installs and runs with Enterprise 18 (checked, see [Enterprise verification](docs/enterprise-verification.md)). 20.0 is the reference branch; 19.0 and 17.0 are released, 16.0 is still being ported. On 18.0 the status bar, list Archive and Delete, and the Archive confirmation skip are patched at the 18.0 locations (see the developer guide).
+Odoo 18.0, Community. It installs and runs with Enterprise 18 (checked, see [Enterprise verification](docs/enterprise-verification.md)). 20.0 is the reference branch; 19.0, 17.0 and 16.0 are released too. On 18.0 the status bar, list Archive and Delete, and the Archive confirmation skip are patched at the 18.0 locations (see the developer guide).
 
 ## Documentation
 
