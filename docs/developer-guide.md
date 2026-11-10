@@ -97,7 +97,7 @@ From the `odoo-17.0` checkout, with the module in the addons path:
 
 Expect `0 failed, 0 error(s) of N tests`. Use a free HTTP port that is not your running server's. The mail test needs the `mail` app, so run it on a scratch database created with `-i mail,preview_mode --without-demo=all`. Browser tours need headless Chrome and skip without it.
 
-If your venv's `python` lacks `babel` (this happened with a Python 3.14 venv), run the same command with Python 3.12: `PYTHONPATH=<venv>/lib/python3.12/site-packages /usr/bin/python3.12 odoo-bin ...`. On 17.0 it gives `0 failed, 0 error(s) of TESTCOUNT tests` on a database with `mail`.
+If your venv's `python` lacks `babel` (this happened with a Python 3.14 venv), run the same command with Python 3.12: `PYTHONPATH=<venv>/lib/python3.12/site-packages /usr/bin/python3.12 odoo-bin ...`. On 17.0 it gives `0 failed, 0 error(s) of 96 tests` on a database with `mail`.
 
 Lint: `pre-commit run --all-files` (see `CONTRIBUTING.md`).
 
