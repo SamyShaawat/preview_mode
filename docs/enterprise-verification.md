@@ -7,9 +7,9 @@ Preview Mode depends only on `base` and `web`. This page records what was checke
 | Version | Enterprise source locally | Result | Notes |
 |---|---|---|---|
 | 16.0 | No | NOT RUN | No 16.0 Enterprise source on this machine. |
-| 17.0 | Yes (`odoo-17.0/enterprise`) | NOT RUN | Not part of this pass (module on 17.0 is still at the old state). |
-| 18.0 | Yes (`odoo-18.0/enterprise`) | NOT RUN | Same. |
-| 19.0 | Yes (`odoo-19.0/enterprise`) | PASS after the fix below (observed on a clone of `pm19e`, 19.0 branch code unchanged) | See details. |
+| 17.0 | Yes (`odoo-17.0/enterprise`) | PASS | See the 17.0 details. |
+| 18.0 | Yes (`odoo-18.0/enterprise`) | PASS | Observed on a fresh database with `web_enterprise` installed. |
+| 19.0 | Yes (`odoo-19.0/enterprise`) | PASS | See the 19.0 details. |
 | 20.0 | No | NOT RUN | No 20.0 Enterprise source. Static review only, see risks. |
 
 ### 19.0 + `web_enterprise`, observed in Chrome (own port, clone of `pm19e`)

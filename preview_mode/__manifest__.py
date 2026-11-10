@@ -1,7 +1,7 @@
 {
     'name': 'Preview Mode',
     'summary': 'Shows what a button click will create, change or delete, and where, before you confirm it',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.0.1',
     'category': 'Productivity',
     'author': 'Samy Mostafa Shaawat',
     'website': 'https://github.com/SamyShaawat/preview_mode',
