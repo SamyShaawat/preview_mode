@@ -2,8 +2,8 @@
 
 # Preview Mode
 
-[![tests](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml/badge.svg?branch=20.0)](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml)
-![License: LGPL-3](https://img.shields.io/badge/license-LGPL--3-blue.svg) ![Odoo 20.0](https://img.shields.io/badge/odoo-20.0-875a7b.svg)
+[![tests](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml/badge.svg?branch=19.0)](https://github.com/SamyShaawat/preview_mode/actions/workflows/tests.yml)
+![License: LGPL-3](https://img.shields.io/badge/license-LGPL--3-blue.svg) ![Odoo 19.0](https://img.shields.io/badge/odoo-19.0-875a7b.svg)
 
 Preview Mode shows what a button click would create, change or delete, and where, before you commit to it. With the switch in the top bar on, a button that changes data opens a popup instead of acting; nothing is saved until you press Confirm.
 
@@ -11,10 +11,10 @@ It works on every such button in every app, for every internal user. There is no
 
 ## Install
 
-Put the `20.0` branch in your addons path under the folder name `preview_mode`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
+Put the `19.0` branch in your addons path under the folder name `preview_mode`, update the apps list and install **Preview Mode**. It depends only on `base` and `web`.
 
 ```bash
-git clone --branch 20.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode
+git clone --branch 19.0 https://github.com/SamyShaawat/preview_mode.git /path/to/addons/preview_mode
 ```
 
 On Odoo.sh, add the repository as a git submodule named `preview_mode`.
@@ -86,7 +86,9 @@ Another module can add its own table to the popup by overriding `preview.mode.se
 
 ## Compatibility
 
-Odoo 20.0 only, Community; it installs and runs with Enterprise but Enterprise 20 has not been tested here. Other versions are planned and not ready. The `16.0` to `19.0` branches hold older, incomplete code and should not be used.
+This branch is for Odoo 19.0 (Community). It installs and runs with Enterprise 19; the switch and the popup were checked there, see [Enterprise verification](docs/enterprise-verification.md). The `20.0` branch is the reference version; `16.0` to `18.0` are separate ports.
+
+Differences from 20.0: none in what the module does. Internally the switch uses Owl 2 (`useState`), the user field is listed in `SELF_WRITEABLE_FIELDS`, and the system parameters are stored as text (set `preview_mode.enabled` to the text `False` to switch it off). See the `# PORT:` comments.
 
 ## Documentation
 

@@ -33,7 +33,7 @@ Another module can add a table to the popup. Make a small glue module that depen
 ```python
 {
     'name': 'Preview Mode: Inventory impact',
-    'version': '20.0.1.0.0',
+    'version': '19.0.1.0.0',
     'depends': ['preview_mode', 'stock'],
     'auto_install': True,
     'license': 'LGPL-3',
@@ -76,19 +76,28 @@ Rules:
 
 ## Run the tests
 
-From the `odoo-20.0` checkout, with the module in the addons path:
+From the `odoo-19.0` checkout, with the module in the addons path:
 
 ```bash
-./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm20 -u preview_mode \
+./odoo-venv/bin/python odoo-bin -c odoo.conf -d pm19 -u preview_mode \
   --test-tags /preview_mode --http-port=8079 --stop-after-init
 ```
 
 Expect `0 failed, 0 error(s) of N tests`. Use a free HTTP port that is not your running server's. The mail test needs the `mail` app, so run it on a scratch database created with `-i mail,preview_mode --without-demo=all`. Browser tours need headless Chrome and skip without it.
 
-If your venv's `python` lacks `babel` (this happened with a Python 3.14 venv), run the same command with Python 3.12: `PYTHONPATH=<venv>/lib/python3.12/site-packages /usr/bin/python3.12 odoo-bin ...`. I ran it that way on a `pm20` clone: `0 failed, 0 error(s) of 85 tests`.
+If your venv's `python` lacks `babel` (this happened with a Python 3.14 venv), run the same command with Python 3.12: `PYTHONPATH=<venv>/lib/python3.12/site-packages /usr/bin/python3.12 odoo-bin ...`. The 19.0 branch was checked that way.
 
 Lint: `pre-commit run --all-files` (see `CONTRIBUTING.md`).
 
 ## Porting notes
 
-Only 20.0 is supported today. Version differences are kept in places marked `# PORT:`; find them with `grep -rn "PORT:" .`. They cover, among others: the ACL file (`ir.access.csv` on 20, `ir.model.access.csv` before), the route type (`jsonrpc` on 19 and 20, `json` before), `user_writeable` against `SELF_WRITEABLE_FIELDS`, `has_access`, the config parameter getters, the `doActionButton` location in JS and the list method names in `preview_list.js`. Ports are one pull request per version; see `CONTRIBUTING.md`.
+This is the 19.0 branch, ported from 20.0. Differences are kept in places marked `# PORT:`; find them with `grep -rn "PORT:" .`. Those that apply to 19.0:
+
+- `security/ir.model.access.csv` (20.0 has `ir.access.csv`) plus a record rule in `security/preview_mode_security.xml`, because the 20.0 ACL file carries the "own rows" domain.
+- `res_users.py`: `preview_mode_enabled` is listed in `SELF_READABLE_FIELDS` / `SELF_WRITEABLE_FIELDS` (20.0: `user_writeable=True`).
+- `payload.py`: `get_param` instead of `get_str/get_int/get_float/get_bool`. `preview_mode.enabled` is the text `False` to switch off (19.0 deletes a parameter set to a falsy value, so a real boolean would turn the switch back on).
+- JS: `reactive` and `useState` (Owl 2) instead of `proxy`; `static props` instead of `useProps`; the toggle icon is Font Awesome (`fa fa-eye`).
+- Tests use `acc_number` on `res.partner.bank` (20.0: `account_number`).
+- Same on both: route type `jsonrpc`, `has_access`, `doActionButton` in `action_service.js`'s returned object, `_toggleArchive` / `_deleteRecords` in `preview_list.js`.
+
+Ports are one pull request per version; see `CONTRIBUTING.md`.

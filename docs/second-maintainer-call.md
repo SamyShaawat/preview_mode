@@ -6,7 +6,7 @@ Post this as a GitHub Discussion or issue on `SamyShaawat/preview_mode`, and/or 
 
 Preview Mode is a free, open-source (LGPL-3) Odoo app that shows what a button click would create, change or delete, and where, before you commit to it. Turn the toggle on in the top bar, click Confirm, Validate or Post, and a popup lists the changes. Nothing is saved until you confirm. It works on every app and needs only `base` and `web`.
 
-It currently runs on Odoo 20.0. Ports to 16.0 to 19.0 are planned. The goal is to submit it to the Odoo Community Association (OCA), which requires at least two maintainers. The repo already follows OCA conventions (pre-commit with isort, flake8 and pylint-odoo, DCO sign-off, LGPL-3).
+It runs on Odoo 19.0 and 20.0; ports to 16.0 to 18.0 are in progress. The goal is to submit it to the Odoo Community Association (OCA), which requires at least two maintainers. The repo already follows OCA conventions (pre-commit with isort, flake8 and pylint-odoo, DCO sign-off, LGPL-3).
 
 **What a second maintainer does**
 - Reviews and merges pull requests (every change goes through one, squash merge).
