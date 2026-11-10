@@ -2,7 +2,16 @@
 
 All notable changes to this module are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Each version branch has its own entries.
 
-## [Unreleased] - 18.0
+## [Unreleased]
+
+### Added
+- Odoo Apps Store package: banner, screenshots, a new description page, Arabic, French and Spanish translations (`i18n/`), `scripts/build_store_zip.sh`, `scripts/check_store_ready.py` (also run in CI) and `docs/publishing-on-odoo-store.md`.
+
+### Fixed
+- `preview_mode.enabled` set to `False` now hides the switch in the top bar (after a page reload), as well as stopping previews.
+- The `test_where` filter test is skipped when the `mail` app is not installed.
+
+## [1.0.0] - 2026-11-10 - 18.0
 
 First release of the 18.0 port, ported from 20.0 (20.0 release 1.0.0 plus the Where fixes of #101).
 

@@ -101,6 +101,10 @@ class TestController(HttpCase):
     def test_kill_switch_hides_the_toggle_in_session_info(self):
         self.env.ref('base.user_admin').preview_mode_enabled = True
         self.authenticate('admin', 'admin')
-        self.assertTrue(self.make_jsonrpc_request('/web/session/get_session_info', {})['preview_mode_enabled'])
+        info = self.make_jsonrpc_request('/web/session/get_session_info', {})
+        self.assertTrue(info['preview_mode_enabled'])
+        self.assertTrue(info['preview_mode_available'])
         self.env['ir.config_parameter'].set_param('preview_mode.enabled', 'False')
-        self.assertFalse(self.make_jsonrpc_request('/web/session/get_session_info', {})['preview_mode_enabled'])
+        info = self.make_jsonrpc_request('/web/session/get_session_info', {})
+        self.assertFalse(info['preview_mode_enabled'])
+        self.assertFalse(info['preview_mode_available'])
