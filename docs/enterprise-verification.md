@@ -8,7 +8,7 @@ Preview Mode depends only on `base` and `web`. This page records what was checke
 |---|---|---|---|
 | 16.0 | No | NOT RUN | No 16.0 Enterprise source on this machine. |
 | 17.0 | Yes (`odoo-17.0/enterprise`) | NOT RUN | Not part of this pass (module on 17.0 is still at the old state). |
-| 18.0 | Yes (`odoo-18.0/enterprise`) | NOT RUN | Same. |
+| 18.0 | Yes (`odoo-18.0/enterprise`) | PASS (observed on a fresh database with `web_enterprise` installed) | See the table below. |
 | 19.0 | Yes (`odoo-19.0/enterprise`) | PASS after the fix below (observed on a clone of `pm19e`, 19.0 branch code unchanged) | See details. |
 | 20.0 | No | NOT RUN | No 20.0 Enterprise source. Static review only, see risks. |
 
@@ -26,6 +26,15 @@ Preview Mode depends only on `base` and `web`. This page records what was checke
 | Same, with `currentColor` colours (this PR) | PASS: grey track and dark knob visible, checked by injecting the new CSS into the page. |
 
 Cause: `web_enterprise` sets `$o-navbar-background: $o-white` in the light scheme, while the toggle used fixed white colours made for a dark bar. The same fixed colours were in the 20.0 file. The fix in `static/src/preview.scss` uses `currentColor`, which follows the top bar text colour. The ON state (purple track, white knob) is unchanged. The 19.0 branch was not touched; it has the same SCSS and needs the same fix when ports are ordered.
+
+### 18.0 + `web_enterprise`, observed in Chrome (own port, fresh database with sale, account, stock, crm)
+
+| Check | Result |
+|---|---|
+| Toggle visible in the Enterprise top bar, click turns it on (`aria-checked` true), state kept after reload | PASS |
+| Popup on Sales Order Confirm, on invoice Post (journal table) and on list Archive | PASS |
+| Popup not clipped on a 1300 px and on a 400 px wide window, long partner name wraps | PASS |
+| Console errors after load and after the clicks | PASS (none) |
 
 ### Static review for 20.0 (no Enterprise source)
 
