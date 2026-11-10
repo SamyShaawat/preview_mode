@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/SamyShaawat/preview_mode/discussions
+    about: Ask how something works or propose an idea in Discussions.
+  - name: Security vulnerability
+    url: https://github.com/SamyShaawat/preview_mode/security/policy
+    about: Report it privately, not as an issue. See SECURITY.md.
