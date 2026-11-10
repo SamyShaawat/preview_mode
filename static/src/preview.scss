@@ -12,7 +12,8 @@
         width: 2.1rem;
         height: 1.1rem;
         border-radius: 1.1rem;
-        background: rgba(255, 255, 255, 0.35);
+        // currentColor follows the top bar text: light on a dark bar, dark on the white Enterprise bar.
+        background: color-mix(in srgb, currentColor 35%, transparent);
         transition: background 0.15s ease;
     }
     .o_preview_knob {
@@ -22,20 +23,27 @@
         width: 0.85rem;
         height: 0.85rem;
         border-radius: 50%;
-        background: #fff;
+        background: currentColor;
         transition: inset-inline-start 0.15s ease;
     }
     &.o_preview_on {
-        .o_preview_track { background: #714b67; box-shadow: 0 0 0 1px #fff; }
-        .o_preview_knob { inset-inline-start: 1.125rem; }
+        .o_preview_track { background: #714b67; box-shadow: 0 0 0 1px currentColor; }
+        .o_preview_knob { inset-inline-start: 1.125rem; background: #fff; }
     }
-    &:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    &:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 }
 .o_preview_mode_dialog {
     .modal-body { overflow-y: auto; }
     .o_preview_table {
         td, th { vertical-align: top; }
-        .o_preview_what, .o_preview_where { overflow-wrap: anywhere; }
-        .o_preview_value { white-space: nowrap; }
+        .o_preview_what { overflow-wrap: anywhere; }
+        // Where keeps whole words on a phone; only a single over-long word breaks.
+        .o_preview_where { overflow-wrap: break-word; min-width: 7rem; }
+        // Each value takes its own direction, so numbers and mixed text keep their order in RTL.
+        // A long value wraps; it must not push the table wider than the dialog.
+        .o_preview_value { overflow-wrap: anywhere; unicode-bidi: plaintext; }
+        td.text-end { unicode-bidi: plaintext; }
     }
 }
+// The arrow points the way the eye moves, also in RTL.
+.o_rtl .o_preview_mode_dialog .o_preview_arrow { transform: scaleX(-1); }

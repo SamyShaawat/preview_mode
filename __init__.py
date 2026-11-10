@@ -1,4 +1,4 @@
-from . import models, controllers
+from . import controllers, models
 
 
 def post_load():

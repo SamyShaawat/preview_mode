@@ -35,3 +35,15 @@ class Base(models.AbstractModel):
         if recorder is not None:
             recorder.note_unlink(self)
         return super().unlink()
+
+    def _write(self, vals):
+        # Odoo flushes delayed writes (recomputed stored fields, cascades) here, not through write().
+        # PORT: Odoo 16 and 17 flush through _write(vals); 18 and later through _write_multi(vals_list).
+        recorder = active_recorder()
+        if recorder is None:
+            return super()._write(vals)
+        names, old = recorder.snapshot_columns(self, [vals])
+        result = super()._write(vals)
+        if names:
+            recorder.note_write(self, old, dict.fromkeys(names))
+        return result

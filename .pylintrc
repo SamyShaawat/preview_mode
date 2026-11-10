@@ -1,0 +1,56 @@
+[MASTER]
+load-plugins=pylint_odoo
+score=n
+
+[ODOOLINT]
+readme_template_url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
+manifest_required_keys=license
+manifest_deprecated_keys=description,active
+license_allowed=AGPL-3,GPL-2,GPL-2 or any later version,GPL-3,GPL-3 or any later version,LGPL-3
+valid_odoo_versions=17.0
+
+# manifest-required-author and manifest-version-format are off: pylint-odoo 9.x
+# demands the OCA author string and knows versions only up to 18.0.
+# Test fakes raise UserError('...') untranslated, so tests are skipped.
+ignore-paths=.*/tests/.*
+
+[MESSAGES CONTROL]
+disable=all
+enable=anomalous-backslash-in-string,
+    api-one-deprecated,
+    api-one-multi-together,
+    attribute-deprecated,
+    class-camelcase,
+    dangerous-view-replace-wo-priority,
+    development-status-allowed,
+    duplicate-id-csv,
+    duplicate-xml-fields,
+    duplicate-xml-record-id,
+    eval-referenced,
+    eval-used,
+    incoherent-interpreter-exec-perm,
+    license-allowed,
+    manifest-deprecated-key,
+    manifest-required-key,
+    method-compute,
+    method-inverse,
+    method-required-super,
+    method-search,
+    missing-import-error,
+    missing-manifest-dependency,
+    openerp-exception-warning,
+    print-used,
+    redundant-modulename-xml,
+    relative-import,
+    renamed-field-parameter,
+    resource-not-exist,
+    sql-injection,
+    translation-field,
+    translation-required,
+    use-vim-comment,
+    wrong-tabs-instead-of-spaces,
+    xml-syntax-error
+
+[REPORTS]
+msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
+output-format=colorized

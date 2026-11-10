@@ -99,7 +99,7 @@ Security
 - Must work on Odoo.sh (owner requirement, 2026-11-02): no external Python packages and no `requirements.txt`, no system or `subprocess` calls, no writes to the file system outside Odoo's own storage, all state in the database (several workers share no memory), no route marked `readonly`, no dependence on `odoo.conf` options or server flags, no Enterprise-only code. Odoo.sh users add the repo as a git submodule named `preview_mode`.
 - Must work when installed next to Odoo Enterprise (owner requirement, 2026-11-02): it stays a Community module with no Enterprise dependency, but it must install and run with the Enterprise addons present. Enterprise's `web_enterprise` replaces parts of the web client (navbar, control panel), so UI hooks use stable, documented entry points and the Preview mode switch must render in both layouts.
 - No allow-list or deny-list of any kind: once the module is installed and the Preview mode toggle is on, it works on every button that changes data, in every app (core, Enterprise, third-party or custom), for every internal user. No per-app, per-model, per-button or per-user configuration.
-- Licence: OPL-1, the Odoo Proprietary License v1.0 (owner decision, 2026-11-02). Store review required per version. A paid listing also needs `price` and `currency` in the manifest.
+- Licence: LGPL-3 (owner decision, 2026-11-05; replaces OPL-1 of 2026-11-02). Free listing; no `price` in the manifest.
 - No commit or push by the assistant: the owner commits.
 
 ## 6. Repository and versions
@@ -137,7 +137,7 @@ Approved visuals were shown in a browser session (three screens: the popup with 
 6. External HTTP calls are blocked during preview and flagged as incomplete.
 7. Sequences replaced by placeholders during preview.
 8. Restricted to internal users, no extra group.
-9. License OPL-1 (decided by the owner, no longer just a default).
+9. License LGPL-3 (decided by the owner on 2026-11-05; was OPL-1).
 10. Build order 20, 19, 18, 17, 16. Changed by the owner on 2026-11-02: 20.0 is the reference and the default branch (it was 19.0).
 11. The real run records created ids only to build toast links; it changes nothing else.
 12. A dirty form is saved normally before the preview; the popup says "Nothing from this click has been saved yet".
