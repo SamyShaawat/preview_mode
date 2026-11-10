@@ -66,6 +66,6 @@ The popup says `Confirming will fail: <reason>` in a red banner, for example whe
 
 **"A preview is already running."** You can run one preview at a time. The second click ran normally, with no popup.
 
-**"Too many records to preview" or "Preview Mode is switched off by your administrator."** An administrator set `preview_mode.max_records`, or turned Preview Mode off with `preview_mode.enabled`. The click ran normally.
+**"Too many records to preview" or "Preview Mode is switched off by your administrator."** An administrator set `preview_mode.max_records`, or turned Preview Mode off with `preview_mode.enabled` (the switch is then hidden after a page reload). The click ran normally.
 
 **It feels slow.** The click runs once as a preview and once for real, so heavy buttons take about twice as long. Turn the switch off for bulk work.
